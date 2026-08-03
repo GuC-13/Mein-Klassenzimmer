@@ -1,0 +1,2137 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Klassenzimmer">
+<title>Klassenzimmer-Manager</title>
+<style>
+  :root {
+    --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --muted: #64748b;
+    --accent: #2563eb; --accent-dark: #1d4ed8; --danger: #dc2626; --success: #16a34a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overscroll-behavior: none; }
+  #app { max-width: 900px; margin: 0 auto; padding: 16px 16px 60px; }
+  .view { }
+  .view.hidden { display: none; }
+  h1 { font-size: 1.4rem; margin: 4px 0 4px; text-align: center; }
+  h2.sub { font-size: 1rem; text-align: center; margin: 0 0 18px; color: var(--muted); font-weight: 500; }
+  .row { display: flex; gap: 10px; }
+  .row.back-row { margin-bottom: 14px; }
+  .btn { border: none; border-radius: 10px; padding: 12px 18px; font-size: 1rem; font-weight: 700; cursor: pointer; color: white; background: var(--accent); }
+  .btn-big { width: 100%; padding: 20px; font-size: 1.15rem; border-radius: 16px; margin-bottom: 12px; }
+  .btn-secondary { background: #64748b; }
+  .btn-danger { background: var(--danger); }
+  .btn-outline { background: white; color: var(--accent); border: 2px solid var(--accent); }
+  .btn-outline.danger { color: var(--danger); border-color: var(--danger); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+
+  /* HOME */
+  .home-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 24px; }
+  .home-tile { border: none; border-radius: 18px; padding: 30px 18px; cursor: pointer; color: white; font-weight: 800; font-size: 1.2rem; text-align: left; display: flex; align-items: center; gap: 16px; }
+  .home-tile .ti { font-size: 2.2rem; }
+  .home-tile .sub-text { display: block; font-size: 0.85rem; font-weight: 500; opacity: 0.9; margin-top: 4px; }
+  .tile-classes { background: linear-gradient(135deg, #2563eb, #1e3a8a); }
+  .tile-seating { background: linear-gradient(135deg, #16a34a, #14532d); }
+  .tile-behavior { background: linear-gradient(135deg, #d97706, #92400e); }
+  .tile-board { background: linear-gradient(135deg, #7c3aed, #4c1d95); }
+  .tile-random { background: linear-gradient(135deg, #db2777, #831843); }
+  .tile-groups { background: linear-gradient(135deg, #0d9488, #134e4a); }
+  .tile-movement { background: linear-gradient(135deg, #ea580c, #7c2d12); }
+
+  /* LISTS / CARDS */
+  .list-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+  .list-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .list-row:last-child { border-bottom: none; }
+  .list-row .lr-title { font-weight: 700; }
+  .list-row .lr-sub { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+  .list-row .lr-actions { display: flex; gap: 8px; }
+  .icon-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 6px; color: var(--muted); }
+  .icon-btn.danger { color: var(--danger); }
+  .empty-hint { color: var(--muted); text-align: center; padding: 30px 10px; }
+
+  input[type="text"], input[type="date"], select, textarea {
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 1rem; width: 100%; background: white; color: var(--text); font-family: inherit;
+  }
+  label.field-label { font-size: 0.82rem; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; margin-top: 12px; }
+  .setup-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+
+  /* STUDENT CARD (roster) */
+  .student-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+  .student-card:last-child { border-bottom: none; }
+  .photo-drop { width: 52px; height: 52px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; cursor: pointer; border: 2px dashed var(--border); font-weight: 800; color: var(--muted); font-size: 1.1rem; position: relative; }
+  .photo-drop.drag-over { border-color: var(--accent); background: #dbeafe; }
+  .photo-drop img { width: 100%; height: 100%; object-fit: cover; }
+  .student-meta { flex: 1; min-width: 0; }
+  .student-name { font-weight: 700; }
+  .student-gender-badge { font-size: 0.75rem; color: var(--muted); }
+  .gender-m { color: #2563eb; } .gender-w { color: #db2777; } .gender-d { color: #16a34a; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+  .modal-overlay.hidden { display: none; }
+  .modal-box { background: var(--card); border-radius: 14px; padding: 20px; max-width: 420px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+
+  /* SEATING EDITOR */
+  .seating-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+  .seating-toolbar .btn { padding: 10px 14px; font-size: 0.85rem; margin-bottom: 0; }
+  .seating-layout { display: flex; gap: 12px; align-items: flex-start; }
+  .seating-pool { width: 150px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px; max-height: 640px; overflow-y: auto; }
+  .seating-pool h3 { font-size: 0.85rem; margin: 0 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+  .pool-chip { display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px; margin-bottom: 6px; cursor: grab; touch-action: none; user-select: none; }
+  .pool-chip .photo-drop { width: 30px; height: 30px; font-size: 0.75rem; border: none; cursor: default; }
+  .pool-chip .pc-name { font-size: 0.82rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .seating-canvas-wrap { flex: 1; overflow: auto; background: #eef2f7; border: 1px solid var(--border); border-radius: 12px; max-height: 640px; }
+  .seating-canvas { position: relative; width: 1900px; height: 1200px;
+    background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+    background-size: 40px 40px; }
+  .table-el, .object-el { position: absolute; top: 0; left: 0; touch-action: none; user-select: none; }
+  .table-shape { background: #d6c199; border: 2px solid #a3835a; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+  .table-1er .table-shape { width: 74px; height: 74px; }
+  .table-2er .table-shape { width: 150px; height: 74px; }
+  .object-shape { border-radius: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); color: white; font-weight: 700; font-size: 0.68rem; text-align: center; padding: 2px; line-height: 1.1; }
+  .object-shape span { transform-origin: center; }
+  .seat { width: 58px; height: 58px; border-radius: 50%; background: white; border: 2px solid #94a3b8; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: grab; overflow: hidden; touch-action: none; text-align: center; flex-shrink: 0; }
+  .seat.empty { border-style: dashed; color: var(--muted); font-size: 0.7rem; cursor: default; }
+  .seat .seat-photo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; margin-bottom: 2px; }
+  .seat .seat-name { font-size: 0.62rem; font-weight: 700; line-height: 1.05; padding: 0 2px; word-break: break-word; }
+  .table-remove-btn, .table-rotate-handle { position: absolute; width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .table-remove-btn { top: -10px; right: -10px; background: var(--danger); color: white; z-index: 3; }
+  .table-rotate-handle { bottom: -10px; right: -10px; background: var(--accent); color: white; cursor: grab; z-index: 3; touch-action: none; }
+  .drag-ghost { position: fixed; z-index: 500; pointer-events: none; opacity: 0.85; transform: translate(-50%, -50%); }
+  .toggle-line { display: flex; align-items: center; gap: 8px; }
+  .display-opt-btn { background: white; border: 2px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+  .display-opt-btn.active { border-color: var(--accent); background: #eff6ff; color: var(--accent); }
+
+  /* LEINWAND / BOARD */
+  #app.board-fullwidth { max-width: none; padding: 0; }
+  .board-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--border); }
+  .board-toolbar .btn { padding: 9px 13px; font-size: 0.82rem; margin-bottom: 0; }
+  .board-toolbar-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+  .fmt-btn { background: white; border: 2px solid var(--border); border-radius: 6px; width: 34px; height: 34px; font-weight: 800; cursor: pointer; font-size: 0.9rem; }
+  .fmt-swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; }
+  .board-canvas-wrap { position: relative; overflow: auto; background: #f8fafc; min-height: 78vh; }
+  .board-canvas-wrap.bg-dark { background: #0f172a; }
+  .board-canvas-wrap.bg-blue { background: #0c4a6e; }
+  .board-canvas { position: relative; width: 100%; min-height: 78vh; }
+  .board-item { position: absolute; touch-action: none; }
+  .board-item-inner { position: relative; width: 100%; height: 100%; }
+  .board-item .item-remove-btn { position: absolute; top: -12px; right: -12px; width: 26px; height: 26px; border-radius: 50%; background: var(--danger); color: white; border: 2px solid white; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .board-item .item-drag-handle { position: absolute; top: -12px; left: -12px; width: 26px; height: 26px; border-radius: 50%; background: var(--muted); color: white; border: 2px solid white; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; cursor: grab; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .board-item .item-resize-handle { position: absolute; bottom: -8px; right: -8px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); border: 2px solid white; cursor: nwse-resize; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .board-text { width: 100%; height: 100%; min-width: 80px; min-height: 40px; padding: 8px 10px; outline: none; overflow: auto; background: rgba(255,255,255,0.0); border: 2px dashed transparent; }
+  .board-text:focus { border-color: var(--accent); background: rgba(255,255,255,0.7); }
+  .board-image img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
+  .board-widget { background: var(--card); border-radius: 14px; box-shadow: 0 3px 10px rgba(0,0,0,0.15); padding: 14px; text-align: center; }
+  .board-clock { font-size: 2.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .board-clock-plain { font-size: 2.6rem; font-weight: 800; font-variant-numeric: tabular-nums; color: #0f172a; text-shadow: 0 0 8px rgba(255,255,255,0.9), 0 0 3px rgba(255,255,255,0.9); text-align: center; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  .board-timer-display { font-size: 2.6rem; font-weight: 800; font-variant-numeric: tabular-nums; margin: 6px 0; }
+  .board-timer-controls { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .board-timer-controls button { border: none; border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 0.78rem; cursor: pointer; color: white; background: var(--accent); }
+  .board-timer-setup { display: flex; gap: 6px; align-items: center; justify-content: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .board-timer-setup input[type="number"] { width: 52px; text-align: center; padding: 6px 4px; }
+  .board-timer-setup label { font-size: 0.75rem; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .material-widget-title { font-weight: 800; font-size: 0.95rem; margin-bottom: 8px; }
+  .material-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 6px 10px 2px; }
+  .material-icon { border-radius: 12px; padding: 8px 4px; cursor: pointer; position: relative; font-size: 1.7rem; border: 3px solid; user-select: none; }
+  .material-icon.allowed { border-color: var(--success); background: #f0fdf4; }
+  .material-icon.forbidden { border-color: var(--danger); background: #fef2f2; opacity: 0.55; }
+  .material-icon .mat-badge { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: white; }
+  .material-icon.allowed .mat-badge { background: var(--success); }
+  .material-icon.forbidden .mat-badge { background: var(--danger); }
+  .material-icon .mat-label { font-size: 0.6rem; font-weight: 700; margin-top: 4px; }
+
+  /* GRUPPEN */
+  .group-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+  .group-card h4 { margin: 0 0 8px; font-size: 0.95rem; color: var(--accent); }
+  .group-card .gm { display: inline-flex; align-items: center; gap: 6px; background: #f8fafc; border-radius: 20px; padding: 4px 10px 4px 4px; margin: 3px 4px 3px 0; font-size: 0.85rem; font-weight: 600; }
+  .group-card .gm .photo-drop { width: 26px; height: 26px; font-size: 0.7rem; border: none; cursor: default; }
+
+  /* BEWEGUNGSPAUSE */
+  .movement-cat-tile { background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 20px 14px; text-align: center; cursor: pointer; font-weight: 800; }
+  .movement-cat-tile .mc-icon { font-size: 2.2rem; display: block; margin-bottom: 6px; }
+  .movement-ex-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; display: flex; gap: 14px; align-items: flex-start; }
+  .movement-ex-icon { font-size: 2.6rem; flex-shrink: 0; }
+  .movement-ex-title { font-weight: 800; font-size: 1.05rem; margin-bottom: 4px; }
+  .movement-ex-duration { display: inline-block; background: #fef3c7; color: #92400e; font-size: 0.75rem; font-weight: 700; border-radius: 10px; padding: 2px 8px; margin-bottom: 6px; }
+  .movement-ex-text { font-size: 0.9rem; color: var(--text); line-height: 1.4; }
+
+  /* BEHAVIOR */
+  .behavior-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; }
+  .behavior-table th, .behavior-table td { text-align: left; padding: 10px 12px; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+  .behavior-table th { background: #f8fafc; cursor: pointer; user-select: none; white-space: nowrap; }
+  .behavior-table th .sort-arrow { font-size: 0.7rem; color: var(--muted); }
+  .behavior-table-wrap { overflow-x: auto; margin-top: 18px; }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .filter-row select, .filter-row input { width: auto; flex: 1; min-width: 140px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <div id="homeView" class="view">
+    <h1>🏫 Klassenzimmer-Manager</h1>
+    <h2 class="sub">Klassen, Sitzordnung &amp; Verhalten</h2>
+    <div class="home-grid">
+      <button class="home-tile tile-classes" data-home="classes"><span class="ti">👥</span><span><span>Klassen verwalten</span><span class="sub-text">Schüler:innen, Fotos, Geschlecht</span></span></button>
+      <button class="home-tile tile-seating" data-home="seatingPick"><span class="ti">🪑</span><span><span>Sitzordnung</span><span class="sub-text">Tische anordnen, SuS zuteilen</span></span></button>
+      <button class="home-tile tile-behavior" data-home="behaviorPick"><span class="ti">📝</span><span><span>Schülerverhalten</span><span class="sub-text">Kommentare erfassen &amp; auswerten</span></span></button>
+      <button class="home-tile tile-board" data-home="boardsList"><span class="ti">🖥️</span><span><span>Leinwand</span><span class="sub-text">Infoboard, Timer, Material-Anzeige</span></span></button>
+      <button class="home-tile tile-random" data-home="randomPick"><span class="ti">🎯</span><span><span>Zufallsschüler</span><span class="sub-text">Zufällig eine Person auswählen</span></span></button>
+      <button class="home-tile tile-groups" data-home="groupsPick"><span class="ti">👨‍👩‍👧‍👦</span><span><span>Gruppenerstellung</span><span class="sub-text">Zufallsgruppen bilden</span></span></button>
+      <button class="home-tile tile-movement" data-home="movementCats"><span class="ti">🤸</span><span><span>Bewegungspause</span><span class="sub-text">Kurze Auflockerungsübungen</span></span></button>
+    </div>
+  </div>
+
+  <!-- KLASSEN: Übersicht -->
+  <div id="classesView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>👥 Klassen verwalten</h1>
+    <div class="list-card" id="classesList"></div>
+    <div class="row">
+      <button class="btn btn-big" id="addClassBtn" style="flex:1;">+ Neue Klasse</button>
+      <button class="btn btn-big btn-outline" id="importClassBtn" style="flex:1;">📥 Aus Excel/CSV importieren</button>
+    </div>
+  </div>
+
+  <!-- KLASSEN: Import aus Excel/CSV -->
+  <div id="importClassView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-classes>← Klassen</button></div>
+    <h1>📥 Klasse importieren</h1>
+    <h2 class="sub">Unterstützt .xlsx (Excel) und .csv – es werden nur Vorname, Nachname und (falls vorhanden) Geschlecht übernommen.</h2>
+    <div class="setup-card">
+      <label class="field-label">Datei wählen</label>
+      <input type="file" id="importFileInput" accept=".xlsx,.csv">
+    </div>
+    <div id="importMappingArea" class="hidden">
+      <div class="setup-card">
+        <label class="field-label">Neuer Klassenname</label>
+        <input type="text" id="importClassNameInput" placeholder="z.B. 1Pb">
+        <label class="field-label">In welcher Zeile stehen die Spaltentitel?</label>
+        <input type="number" id="importHeaderRowInput" min="1" value="1">
+        <label class="field-label">Spalte für Nachname</label>
+        <select id="importColLastName"></select>
+        <label class="field-label">Spalte für Vorname</label>
+        <select id="importColFirstName"></select>
+        <label class="field-label">Spalte für Geschlecht (optional)</label>
+        <select id="importColGender"></select>
+      </div>
+      <div class="setup-card" style="overflow-x:auto;">
+        <label class="field-label">Vorschau</label>
+        <table id="importPreviewTable" style="border-collapse:collapse; font-size:0.78rem; width:100%;"></table>
+      </div>
+      <button class="btn btn-big" id="importConfirmBtn">Klasse importieren</button>
+    </div>
+  </div>
+
+  <!-- KLASSEN: Schülerliste einer Klasse -->
+  <div id="rosterView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-classes>← Klassen</button></div>
+    <h1 id="roster_title"></h1>
+    <div class="list-card" id="rosterList"></div>
+    <div class="row">
+      <button class="btn btn-big" id="addStudentBtn" style="flex:1;">+ Schüler:in hinzufügen</button>
+      <button class="btn btn-big btn-outline" id="manageColorsBtn" style="flex:1;">🎨 Farben verwalten</button>
+    </div>
+  </div>
+
+  <!-- SITZORDNUNG: Klasse wählen -->
+  <div id="seatingPickView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>🪑 Sitzordnung – Klasse wählen</h1>
+    <div class="list-card" id="seatingClassList"></div>
+  </div>
+
+  <!-- SITZORDNUNG: Liste der Sitzordnungen einer Klasse -->
+  <div id="seatingListView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-seatingpick>← Klassenwahl</button></div>
+    <h1 id="seatingList_title"></h1>
+    <div class="list-card" id="seatingListList"></div>
+    <button class="btn btn-big" id="addSeatingBtn">+ Neue Sitzordnung</button>
+  </div>
+
+  <!-- SITZORDNUNG: Editor -->
+  <div id="seatingEditorView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-seatinglist">← Sitzordnungen</button></div>
+    <h1 id="seatingEditor_title"></h1>
+    <h2 class="sub" id="seatingEditor_updated" style="margin-bottom:12px;"></h2>
+    <div class="seating-toolbar">
+      <button class="btn btn-outline" id="addTable1erBtn">+ 1er-Tisch</button>
+      <button class="btn btn-outline" id="addTable2erBtn">+ 2er-Tisch</button>
+      <button class="btn" id="randomAssignBtn">🎲 Zufällig verteilen</button>
+      <label class="toggle-line" style="font-size:0.85rem; font-weight:600;"><input type="checkbox" id="alternateGenderCheck" checked> ♂♀ nebeneinander bevorzugen</label>
+      <button class="btn btn-outline danger" id="clearSeatsBtn">Plätze leeren</button>
+    </div>
+    <div class="seating-toolbar">
+      <span style="font-size:0.82rem; font-weight:700; color:var(--muted);">Raum-Objekte:</span>
+      <button class="btn btn-outline" data-add-object="pult">+ Lehrerpult</button>
+      <button class="btn btn-outline" data-add-object="tafel">+ Wandtafel</button>
+      <button class="btn btn-outline" data-add-object="tuere">+ Türe</button>
+      <button class="btn btn-outline" data-add-object="lavabo">+ Lavabo</button>
+    </div>
+    <div class="seating-toolbar">
+      <span style="font-size:0.82rem; font-weight:700; color:var(--muted);">Name:</span>
+      <button class="display-opt-btn" data-namestyle="first">Vorname</button>
+      <button class="display-opt-btn" data-namestyle="full">Vor- &amp; Nachname</button>
+      <span style="font-size:0.82rem; font-weight:700; color:var(--muted); margin-left:10px;">Foto:</span>
+      <button class="display-opt-btn" data-showphoto="1">An</button>
+      <button class="display-opt-btn" data-showphoto="0">Aus</button>
+    </div>
+    <div class="seating-layout">
+      <div class="seating-pool">
+        <h3>Nicht zugeteilt</h3>
+        <div id="seatingPool"></div>
+      </div>
+      <div class="seating-canvas-wrap">
+        <div class="seating-canvas" id="seatingCanvas"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHÜLERVERHALTEN: Klasse wählen -->
+  <div id="behaviorPickView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>📝 Schülerverhalten – Klasse wählen</h1>
+    <div class="list-card" id="behaviorClassList"></div>
+  </div>
+
+  <!-- SCHÜLERVERHALTEN: Hauptansicht -->
+  <div id="behaviorView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-behaviorpick>← Klassenwahl</button></div>
+    <h1 id="behavior_title"></h1>
+    <div class="list-card" id="behaviorStudentList"></div>
+    <div class="behavior-table-wrap">
+      <div class="filter-row">
+        <select id="behaviorFilterStudent"><option value="">Alle Schüler:innen</option></select>
+        <input type="text" id="behaviorFilterText" placeholder="Suche im Kommentar...">
+      </div>
+      <table class="behavior-table" id="behaviorTable">
+        <thead>
+          <tr>
+            <th data-sort="date">Datum <span class="sort-arrow"></span></th>
+            <th data-sort="name">Schüler:in <span class="sort-arrow"></span></th>
+            <th data-sort="text">Kommentar <span class="sort-arrow"></span></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="behaviorTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LEINWAND: Liste -->
+  <div id="boardsListView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>🖥️ Leinwand</h1>
+    <div class="list-card" id="boardsList"></div>
+    <button class="btn btn-big" id="addBoardBtn">+ Neue Leinwand</button>
+  </div>
+
+  <!-- LEINWAND: Editor / Präsentation -->
+  <div id="boardEditorView" class="view hidden" style="max-width:none; padding:0;">
+    <div class="board-toolbar" id="boardToolbarMain">
+      <button class="btn btn-secondary" data-back-boardslist>← Leinwände</button>
+      <span style="font-weight:800;" id="boardEditor_title"></span>
+      <div class="board-toolbar-sep"></div>
+      <button class="btn btn-outline" id="addTextBtn">+ Text</button>
+      <button class="btn btn-outline" id="addImageBtn">+ Bild</button>
+      <button class="btn btn-outline" id="addTimerBtn">+ Timer</button>
+      <button class="btn btn-outline" id="addClockBtn">+ Uhr</button>
+      <button class="btn btn-outline" id="addMaterialBtn">+ Material</button>
+      <input type="file" accept="image/*" id="boardImageInput" style="display:none;">
+      <div class="board-toolbar-sep"></div>
+      <button class="fmt-btn" id="fmtBoldBtn" style="font-style:normal;"><b>B</b></button>
+      <button class="fmt-btn" id="fmtItalicBtn"><i>I</i></button>
+      <button class="fmt-btn" id="fmtUnderlineBtn"><u>U</u></button>
+      <button class="fmt-btn" id="fmtSizeMinusBtn">A-</button>
+      <button class="fmt-btn" id="fmtSizePlusBtn">A+</button>
+      <button class="fmt-swatch" style="background:#0f172a;" data-fmt-color="#0f172a"></button>
+      <button class="fmt-swatch" style="background:#dc2626;" data-fmt-color="#dc2626"></button>
+      <button class="fmt-swatch" style="background:#16a34a;" data-fmt-color="#16a34a"></button>
+      <button class="fmt-swatch" style="background:#2563eb;" data-fmt-color="#2563eb"></button>
+      <button class="fmt-swatch" style="background:#ffffff; border-color:#94a3b8;" data-fmt-color="#ffffff"></button>
+      <div class="board-toolbar-sep"></div>
+      <span style="font-size:0.8rem; font-weight:700; color:var(--muted);">Hintergrund:</span>
+      <button class="fmt-swatch" style="background:#f8fafc; border-color:#94a3b8;" data-board-bg="light"></button>
+      <button class="fmt-swatch" style="background:#0f172a;" data-board-bg="dark"></button>
+      <button class="fmt-swatch" style="background:#0c4a6e;" data-board-bg="blue"></button>
+      <div class="board-toolbar-sep"></div>
+      <button class="btn" id="presentModeBtn">🖥️ Präsentieren</button>
+    </div>
+    <div class="board-canvas-wrap" id="boardCanvasWrap">
+      <div class="board-canvas" id="boardCanvas"></div>
+    </div>
+    <button id="exitPresentBtn" class="btn btn-secondary" style="display:none; position:fixed; top:10px; right:10px; z-index:60;">✕ Bearbeiten</button>
+  </div>
+
+  <!-- ZUFALLSSCHÜLER: Klasse wählen -->
+  <div id="randomPickView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>🎯 Zufallsschüler – Klasse wählen</h1>
+    <div class="list-card" id="randomClassList"></div>
+  </div>
+
+  <!-- ZUFALLSSCHÜLER: Anzeige -->
+  <div id="randomStudentView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-randompick>← Klassenwahl</button></div>
+    <h1 id="randomStudent_title"></h1>
+    <div class="result-card" style="padding:40px 20px;">
+      <div class="photo-drop" id="randomStudentPhoto" style="width:160px; height:160px; margin:0 auto 20px; font-size:3rem; cursor:default;"></div>
+      <div id="randomStudentName" style="font-size:1.8rem; font-weight:800;"></div>
+      <div id="randomStudentRemaining" style="color:var(--muted); margin-top:6px; font-size:0.9rem;"></div>
+    </div>
+    <button class="btn btn-big" id="randomDrawBtn">🎲 Zufällig auswählen</button>
+    <button class="btn btn-big btn-outline" id="randomResetBtn">🔄 Alle zurücksetzen</button>
+  </div>
+
+  <!-- GRUPPENERSTELLUNG: Klasse wählen -->
+  <div id="groupsPickView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>👨‍👩‍👧‍👦 Gruppenerstellung – Klasse wählen</h1>
+    <div class="list-card" id="groupsClassList"></div>
+  </div>
+
+  <!-- GRUPPENERSTELLUNG: Setup & Ergebnis -->
+  <div id="groupsSetupView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-groupspick>← Klassenwahl</button></div>
+    <h1 id="groupsSetup_title"></h1>
+    <div class="setup-card">
+      <label class="field-label">Gruppengrösse</label>
+      <div class="choice-row" style="display:flex; gap:8px; margin-bottom:10px;">
+        <button class="display-opt-btn" data-groupsize="2">2er</button>
+        <button class="display-opt-btn" data-groupsize="3">3er</button>
+        <button class="display-opt-btn" data-groupsize="4">4er</button>
+      </div>
+      <label class="toggle-line" style="font-size:0.9rem; font-weight:600;"><input type="checkbox" id="groupsProportionalCheck" checked> Geschlecht proportional mischen</label>
+    </div>
+    <button class="btn btn-big" id="createGroupsBtn">Gruppen erstellen</button>
+    <div id="groupsResult" style="margin-top:18px;"></div>
+  </div>
+
+  <!-- BEWEGUNGSPAUSE: Kategorien -->
+  <div id="movementCatsView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>🤸 Bewegungspause</h1>
+    <h2 class="sub">Wähle eine Kategorie für kurze Auflockerungsübungen (2–5 Min.)</h2>
+    <div class="home-grid" id="movementCatsList"></div>
+  </div>
+
+  <!-- BEWEGUNGSPAUSE: Übungsliste -->
+  <div id="movementListView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-movementcats>← Kategorien</button></div>
+    <h1 id="movementList_title"></h1>
+    <div id="movementExerciseList"></div>
+  </div>
+
+</div>
+
+<!-- Add/Edit Class Modal -->
+<div class="modal-overlay hidden" id="classModal">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;" id="classModalTitle">Neue Klasse</p>
+    <label class="field-label">Klassenname</label>
+    <input type="text" id="classNameInput" placeholder="z.B. 2b">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="classModalCancel">Abbrechen</button>
+      <button class="btn" id="classModalSave">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Student Modal -->
+<div class="modal-overlay hidden" id="studentModal">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;" id="studentModalTitle">Neue/r Schüler:in</p>
+    <div style="text-align:center;">
+      <div class="photo-drop" id="studentPhotoDrop" style="width:90px; height:90px; margin:0 auto; font-size:1.6rem;">📷</div>
+      <input type="file" accept="image/*" id="studentPhotoInput" class="hidden" style="display:none;">
+    </div>
+    <label class="field-label">Vorname</label>
+    <input type="text" id="studentFirstNameInput" placeholder="Vorname">
+    <label class="field-label">Nachname</label>
+    <input type="text" id="studentLastNameInput" placeholder="Nachname">
+    <label class="field-label">Geschlecht</label>
+    <select id="studentGenderInput">
+      <option value="m">Junge</option>
+      <option value="w">Mädchen</option>
+      <option value="d">Divers</option>
+    </select>
+    <label class="field-label">Farben (max. 2, für Sitzordnung-Wünsche)</label>
+    <div id="studentColorsList"></div>
+    <div class="row" id="studentPrevNextRow" style="margin-top:14px;">
+      <button class="btn btn-outline" style="flex:1;" id="studentPrevBtn">◀ Vorherige/r</button>
+      <button class="btn btn-outline" style="flex:1;" id="studentNextBtn">Nächste/r ▶</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="studentModalCancel">Abbrechen</button>
+      <button class="btn" id="studentModalSave">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Seating Modal -->
+<div class="modal-overlay hidden" id="seatingModal">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;">Neue Sitzordnung</p>
+    <label class="field-label">Name</label>
+    <input type="text" id="seatingNameInput" placeholder="z.B. Sitzordnung Oktober">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="seatingModalCancel">Abbrechen</button>
+      <button class="btn" id="seatingModalSave">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Board Modal -->
+<div class="modal-overlay hidden" id="boardModal">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;">Neue Leinwand</p>
+    <label class="field-label">Name</label>
+    <input type="text" id="boardNameInput" placeholder="z.B. Prüfung Mathe 2b">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="boardModalCancel">Abbrechen</button>
+      <button class="btn" id="boardModalSave">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Comment Modal -->
+<div class="modal-overlay hidden" id="commentModal">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;" id="commentModalTitle">Kommentar hinzufügen</p>
+    <label class="field-label">Datum</label>
+    <input type="date" id="commentDateInput">
+    <label class="field-label">Kommentar</label>
+    <textarea id="commentTextInput" rows="4" placeholder="Beobachtung, Vorfall, Lob ..."></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="commentModalCancel">Abbrechen</button>
+      <button class="btn" id="commentModalSave">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Farben verwalten Modal -->
+<div class="modal-overlay hidden" id="colorsManageModal">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;">🎨 Farben verwalten</p>
+    <p style="font-size:0.82rem; color:var(--muted); margin-top:-8px;">Farben werden bei der Sitzordnung nicht angezeigt – sie steuern nur, ob die Zufallsverteilung SuS mit gleicher Farbe eher zusammen oder eher auf Abstand setzt.</p>
+    <div id="colorsManageList"></div>
+    <button class="btn btn-outline" style="width:100%; margin-top:10px;" id="addColorBtn">+ Neue Farbe</button>
+    <div class="modal-actions">
+      <button class="btn" id="colorsManageCloseBtn">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<!-- Einzelne Farbe bearbeiten Modal -->
+<div class="modal-overlay hidden" id="colorEditModal">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;" id="colorEditTitle">Neue Farbe</p>
+    <label class="field-label">Name</label>
+    <input type="text" id="colorNameInput" placeholder="z.B. Gruppe A">
+    <label class="field-label">Farbe</label>
+    <input type="color" id="colorHexInput" value="#2563eb" style="height:44px; padding:4px;">
+    <label class="field-label">Bedeutung bei Zufallsverteilung</label>
+    <select id="colorModeInput">
+      <option value="apart">Eher Abstand voneinander</option>
+      <option value="together">Eher zusammensitzen</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="colorEditCancel">Abbrechen</button>
+      <button class="btn" id="colorEditSave">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bewegungspause Detail Modal -->
+<div class="modal-overlay hidden" id="movementDetailModal">
+  <div class="modal-box" style="max-width:520px;">
+    <div style="text-align:center; font-size:3.2rem; margin-bottom:6px;" id="movementDetailIcon"></div>
+    <p style="font-weight:800; font-size:1.15rem; text-align:center; margin:0 0 4px;" id="movementDetailTitle"></p>
+    <div class="movement-ex-duration" style="display:block; text-align:center; margin:0 auto 14px; width:fit-content;" id="movementDetailDuration"></div>
+    <div style="font-size:0.95rem; line-height:1.6; white-space:pre-line;" id="movementDetailText"></div>
+    <div class="modal-actions">
+      <button class="btn" id="movementDetailClose">Schliessen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Generic Confirm Modal -->
+<div class="modal-overlay hidden" id="confirmOverlay">
+  <div class="modal-box">
+    <p id="confirmMessage" style="font-size:1.05rem; margin:0 0 16px;"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="confirmCancel">Abbrechen</button>
+      <button class="btn btn-danger" id="confirmOk">Bestätigen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   HILFSFUNKTIONEN
+   ========================================================================= */
+function escapeHtml(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function todayISO() { const d = new Date(); return d.toISOString().slice(0, 10); }
+function formatDateDE(iso) { if (!iso) return ""; const [y, m, d] = iso.split("-"); return `${d}.${m}.${y}`; }
+
+let confirmCb = null;
+function openConfirm(message, onConfirm, confirmLabel) {
+  document.getElementById("confirmMessage").textContent = message;
+  document.getElementById("confirmOk").textContent = confirmLabel || "Bestätigen";
+  confirmCb = onConfirm;
+  document.getElementById("confirmOverlay").classList.remove("hidden");
+}
+document.getElementById("confirmOk").addEventListener("click", () => { const cb = confirmCb; document.getElementById("confirmOverlay").classList.add("hidden"); confirmCb = null; if (cb) cb(); });
+document.getElementById("confirmCancel").addEventListener("click", () => { document.getElementById("confirmOverlay").classList.add("hidden"); confirmCb = null; });
+
+function processImageFile(file, callback) {
+  if (!file || !file.type || !file.type.startsWith("image/")) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const size = 200;
+      const canvas = document.createElement("canvas");
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      const scale = Math.max(size / img.width, size / img.height);
+      const w = img.width * scale, h = img.height * scale;
+      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+      callback(canvas.toDataURL("image/jpeg", 0.75));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function initials(student) { return ((student.firstName || "?")[0] || "?").toUpperCase(); }
+function studentDisplayName(student, style) {
+  if (!student) return "";
+  if (style === "full") return `${student.firstName} ${student.lastName || ""}`.trim();
+  return student.firstName;
+}
+
+/* =========================================================================
+   DATENHALTUNG (localStorage)
+   ========================================================================= */
+const CLASSES_KEY = "kz_classes";
+const SEATINGS_KEY = "kz_seatings";
+const BEHAVIOR_KEY = "kz_behavior";
+const COLORS_KEY = "kz_colors";
+
+let classesData = JSON.parse(localStorage.getItem(CLASSES_KEY) || "{}");
+let seatingsData = JSON.parse(localStorage.getItem(SEATINGS_KEY) || "{}");
+let behaviorData = JSON.parse(localStorage.getItem(BEHAVIOR_KEY) || "{}");
+let colorsData = JSON.parse(localStorage.getItem(COLORS_KEY) || "{}");
+
+function persistClasses() { localStorage.setItem(CLASSES_KEY, JSON.stringify(classesData)); }
+function persistSeatings() { localStorage.setItem(SEATINGS_KEY, JSON.stringify(seatingsData)); }
+function persistBehavior() { localStorage.setItem(BEHAVIOR_KEY, JSON.stringify(behaviorData)); }
+function persistColors() { localStorage.setItem(COLORS_KEY, JSON.stringify(colorsData)); }
+function formatDateTimeDE(ts) { if (!ts) return ""; const d = new Date(ts); const pad = n => String(n).padStart(2, "0"); return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+
+function getStudent(className, studentId) {
+  const list = classesData[className] || [];
+  return list.find(s => s.id === studentId) || null;
+}
+
+/* =========================================================================
+   NAVIGATION
+   ========================================================================= */
+function showView(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
+  document.getElementById(name + "View").classList.remove("hidden");
+}
+document.querySelectorAll("[data-back-home]").forEach(b => b.addEventListener("click", () => showView("home")));
+document.querySelectorAll("[data-back-classes]").forEach(b => b.addEventListener("click", () => showView("classes")));
+document.querySelectorAll("[data-back-seatingpick]").forEach(b => b.addEventListener("click", () => showView("seatingPick")));
+document.querySelectorAll("[data-back-seatinglist]").forEach(b => b.addEventListener("click", () => renderSeatingList(currentSeatingClass)));
+document.querySelectorAll("[data-back-behaviorpick]").forEach(b => b.addEventListener("click", () => showView("behaviorPick")));
+document.querySelectorAll("[data-back-boardslist]").forEach(b => b.addEventListener("click", () => { setPresentMode(false); renderBoardsList(); showView("boardsList"); }));
+document.querySelectorAll("[data-back-randompick]").forEach(b => b.addEventListener("click", () => showView("randomPick")));
+document.querySelectorAll("[data-back-groupspick]").forEach(b => b.addEventListener("click", () => showView("groupsPick")));
+document.querySelectorAll("[data-back-movementcats]").forEach(b => b.addEventListener("click", () => showView("movementCats")));
+
+document.querySelectorAll("[data-home]").forEach(btn => btn.addEventListener("click", () => {
+  const target = btn.dataset.home;
+  if (target === "classes") { renderClassesList(); showView("classes"); }
+  else if (target === "seatingPick") { renderClassPickerList("seatingClassList", (name) => openSeatingListForClass(name)); showView("seatingPick"); }
+  else if (target === "behaviorPick") { renderClassPickerList("behaviorClassList", (name) => openBehaviorForClass(name)); showView("behaviorPick"); }
+  else if (target === "boardsList") { renderBoardsList(); showView("boardsList"); }
+  else if (target === "randomPick") { renderClassPickerList("randomClassList", (name) => openRandomStudentForClass(name)); showView("randomPick"); }
+  else if (target === "groupsPick") { renderClassPickerList("groupsClassList", (name) => openGroupsSetupForClass(name)); showView("groupsPick"); }
+  else if (target === "movementCats") { renderMovementCats(); showView("movementCats"); }
+}));
+
+function renderClassPickerList(containerId, onPick) {
+  const el = document.getElementById(containerId);
+  const names = Object.keys(classesData);
+  if (names.length === 0) { el.innerHTML = '<div class="empty-hint">Noch keine Klassen. Erstelle zuerst eine Klasse unter "Klassen verwalten".</div>'; return; }
+  el.innerHTML = names.map(name => `
+    <div class="list-row" data-name="${escapeHtml(name)}">
+      <div><div class="lr-title">${escapeHtml(name)}</div><div class="lr-sub">${classesData[name].length} Schüler:in(nen)</div></div>
+      <span>›</span>
+    </div>`).join("");
+  el.querySelectorAll(".list-row").forEach(row => row.addEventListener("click", () => onPick(row.dataset.name)));
+}
+
+/* =========================================================================
+   KLASSEN VERWALTEN
+   ========================================================================= */
+let currentClass = null;
+let editingStudentId = null;
+
+function renderClassesList() {
+  const el = document.getElementById("classesList");
+  const names = Object.keys(classesData);
+  if (names.length === 0) { el.innerHTML = '<div class="empty-hint">Noch keine Klassen erstellt.</div>'; return; }
+  el.innerHTML = names.map(name => `
+    <div class="list-row" data-name="${escapeHtml(name)}">
+      <div><div class="lr-title">${escapeHtml(name)}</div><div class="lr-sub">${classesData[name].length} Schüler:in(nen)</div></div>
+      <div class="lr-actions">
+        <button class="icon-btn" data-rename="${escapeHtml(name)}">✏️</button>
+        <button class="icon-btn danger" data-delete="${escapeHtml(name)}">🗑</button>
+      </div>
+    </div>`).join("");
+  el.querySelectorAll(".list-row").forEach(row => row.addEventListener("click", (e) => {
+    if (e.target.closest("[data-rename]") || e.target.closest("[data-delete]")) return;
+    openRoster(row.dataset.name);
+  }));
+  el.querySelectorAll("[data-rename]").forEach(b => b.addEventListener("click", (e) => { e.stopPropagation(); openClassModal(b.dataset.rename); }));
+  el.querySelectorAll("[data-delete]").forEach(b => b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const name = b.dataset.delete;
+    openConfirm(`Klasse "${name}" inkl. aller Schüler:innen, Sitzordnungen und Kommentare wirklich löschen?`, () => {
+      delete classesData[name]; delete seatingsData[name]; delete behaviorData[name]; delete colorsData[name];
+      persistClasses(); persistSeatings(); persistBehavior(); persistColors();
+      renderClassesList();
+    }, "Löschen");
+  }));
+}
+
+document.getElementById("addClassBtn").addEventListener("click", () => openClassModal(null));
+let classModalEditingName = null;
+function openClassModal(existingName) {
+  classModalEditingName = existingName;
+  document.getElementById("classModalTitle").textContent = existingName ? "Klasse umbenennen" : "Neue Klasse";
+  document.getElementById("classNameInput").value = existingName || "";
+  document.getElementById("classModal").classList.remove("hidden");
+  setTimeout(() => document.getElementById("classNameInput").focus(), 50);
+}
+document.getElementById("classModalCancel").addEventListener("click", () => document.getElementById("classModal").classList.add("hidden"));
+document.getElementById("classModalSave").addEventListener("click", () => {
+  const name = document.getElementById("classNameInput").value.trim();
+  if (!name) return;
+  if (classModalEditingName) {
+    if (name !== classModalEditingName) {
+      if (classesData[name]) { alert("Diese Klasse existiert bereits."); return; }
+      classesData[name] = classesData[classModalEditingName]; delete classesData[classModalEditingName];
+      seatingsData[name] = seatingsData[classModalEditingName] || []; delete seatingsData[classModalEditingName];
+      behaviorData[name] = behaviorData[classModalEditingName] || []; delete behaviorData[classModalEditingName];
+      colorsData[name] = colorsData[classModalEditingName] || []; delete colorsData[classModalEditingName];
+      persistSeatings(); persistBehavior(); persistColors();
+    }
+  } else {
+    if (classesData[name]) { alert("Diese Klasse existiert bereits."); return; }
+    classesData[name] = [];
+  }
+  persistClasses();
+  document.getElementById("classModal").classList.add("hidden");
+  renderClassesList();
+});
+
+function openRoster(className) {
+  currentClass = className;
+  document.getElementById("roster_title").textContent = `👥 ${className}`;
+  renderRoster();
+  showView("roster");
+}
+function renderRoster() {
+  const el = document.getElementById("rosterList");
+  const list = classesData[currentClass] || [];
+  if (list.length === 0) { el.innerHTML = '<div class="empty-hint">Noch keine Schüler:innen in dieser Klasse.</div>'; return; }
+  const genderLabel = { m: "Junge", w: "Mädchen", d: "Divers" };
+  el.innerHTML = list.map(s => `
+    <div class="student-card" data-id="${s.id}">
+      <div class="photo-drop" data-id="${s.id}">${s.photo ? `<img src="${s.photo}">` : initials(s)}</div>
+      <div class="student-meta">
+        <div class="student-name">${escapeHtml(s.firstName)} ${escapeHtml(s.lastName || "")}</div>
+        <div class="student-gender-badge gender-${s.gender}">${genderLabel[s.gender] || ""}</div>
+      </div>
+      <div class="lr-actions">
+        <button class="icon-btn" data-edit="${s.id}">✏️</button>
+        <button class="icon-btn danger" data-del="${s.id}">🗑</button>
+      </div>
+    </div>`).join("");
+  el.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => openStudentModal(b.dataset.edit)));
+  el.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => {
+    const id = b.dataset.del;
+    const s = getStudent(currentClass, id);
+    openConfirm(`${s.firstName} ${s.lastName || ""} wirklich aus der Klasse entfernen?`, () => {
+      classesData[currentClass] = classesData[currentClass].filter(x => x.id !== id);
+      persistClasses();
+      renderRoster();
+    }, "Entfernen");
+  }));
+  el.querySelectorAll(".photo-drop[data-id]").forEach(pd => {
+    pd.addEventListener("click", () => openPhotoPicker(pd.dataset.id, "roster"));
+    wirePhotoDropZone(pd, (dataUrl) => {
+      const s = getStudent(currentClass, pd.dataset.id);
+      if (s) { s.photo = dataUrl; persistClasses(); renderRoster(); }
+    });
+  });
+}
+
+function openPhotoPicker(studentId, context) {
+  const input = document.createElement("input");
+  input.type = "file"; input.accept = "image/*";
+  input.addEventListener("change", () => {
+    if (input.files[0]) processImageFile(input.files[0], (dataUrl) => {
+      if (context === "roster") { const s = getStudent(currentClass, studentId); if (s) { s.photo = dataUrl; persistClasses(); renderRoster(); } }
+      else if (context === "modal") { modalPhotoDataUrl = dataUrl; document.getElementById("studentPhotoDrop").innerHTML = `<img src="${dataUrl}">`; }
+    });
+  });
+  input.click();
+}
+function wirePhotoDropZone(el, onImage) {
+  el.addEventListener("dragover", (e) => { e.preventDefault(); el.classList.add("drag-over"); });
+  el.addEventListener("dragleave", () => el.classList.remove("drag-over"));
+  el.addEventListener("drop", (e) => {
+    e.preventDefault(); el.classList.remove("drag-over");
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) processImageFile(file, onImage);
+  });
+}
+
+let modalPhotoDataUrl = null;
+let modalSelectedColors = [];
+document.getElementById("addStudentBtn").addEventListener("click", () => openStudentModal(null));
+function renderStudentColorsCheckboxes(selected) {
+  const list = colorsData[currentClass] || [];
+  const el = document.getElementById("studentColorsList");
+  if (list.length === 0) { el.innerHTML = '<div style="font-size:0.8rem; color:var(--muted);">Noch keine Farben definiert.</div>'; return; }
+  el.innerHTML = list.map(c => `
+    <label style="display:flex; align-items:center; gap:8px; padding:6px 0; font-size:0.9rem; cursor:pointer;">
+      <input type="checkbox" data-color-id="${c.id}" ${selected.includes(c.id) ? "checked" : ""}>
+      <span style="width:16px; height:16px; border-radius:4px; background:${c.hex}; display:inline-block; border:1px solid var(--border);"></span>
+      ${escapeHtml(c.name)} <span style="color:var(--muted); font-size:0.78rem;">(${c.mode === "together" ? "zusammen" : "Abstand"})</span>
+    </label>`).join("");
+  el.querySelectorAll("input[data-color-id]").forEach(cb => cb.addEventListener("change", () => {
+    const checked = [...el.querySelectorAll("input[data-color-id]:checked")];
+    if (checked.length > 2) { cb.checked = false; alert("Maximal 2 Farben pro Schüler:in."); }
+  }));
+}
+function getSelectedColorIds() { return [...document.querySelectorAll("#studentColorsList input[data-color-id]:checked")].map(cb => cb.dataset.colorId); }
+function openStudentModal(studentId) {
+  editingStudentId = studentId;
+  const s = studentId ? getStudent(currentClass, studentId) : null;
+  document.getElementById("studentModalTitle").textContent = studentId ? "Schüler:in bearbeiten" : "Neue/r Schüler:in";
+  document.getElementById("studentFirstNameInput").value = s ? s.firstName : "";
+  document.getElementById("studentLastNameInput").value = s ? s.lastName || "" : "";
+  document.getElementById("studentGenderInput").value = s ? s.gender : "m";
+  modalPhotoDataUrl = s ? s.photo : null;
+  document.getElementById("studentPhotoDrop").innerHTML = modalPhotoDataUrl ? `<img src="${modalPhotoDataUrl}">` : "📷";
+  renderStudentColorsCheckboxes(s && s.colors ? s.colors : []);
+  document.getElementById("studentPrevNextRow").style.display = studentId ? "flex" : "none";
+  document.getElementById("studentModal").classList.remove("hidden");
+}
+document.getElementById("studentModalCancel").addEventListener("click", () => document.getElementById("studentModal").classList.add("hidden"));
+document.getElementById("studentPhotoDrop").addEventListener("click", () => document.getElementById("studentPhotoInput").click());
+document.getElementById("studentPhotoInput").addEventListener("change", (e) => {
+  if (e.target.files[0]) processImageFile(e.target.files[0], (dataUrl) => { modalPhotoDataUrl = dataUrl; document.getElementById("studentPhotoDrop").innerHTML = `<img src="${dataUrl}">`; });
+});
+wirePhotoDropZone(document.getElementById("studentPhotoDrop"), (dataUrl) => { modalPhotoDataUrl = dataUrl; document.getElementById("studentPhotoDrop").innerHTML = `<img src="${dataUrl}">`; });
+function saveStudentModalFields() {
+  const firstName = document.getElementById("studentFirstNameInput").value.trim();
+  if (!firstName) { alert("Bitte Vorname eingeben."); return false; }
+  const lastName = document.getElementById("studentLastNameInput").value.trim();
+  const gender = document.getElementById("studentGenderInput").value;
+  const colors = getSelectedColorIds();
+  if (!classesData[currentClass]) classesData[currentClass] = [];
+  if (editingStudentId) {
+    const s = getStudent(currentClass, editingStudentId);
+    s.firstName = firstName; s.lastName = lastName; s.gender = gender; s.photo = modalPhotoDataUrl; s.colors = colors;
+  } else {
+    classesData[currentClass].push({ id: uid(), firstName, lastName, gender, photo: modalPhotoDataUrl, colors });
+  }
+  persistClasses();
+  return true;
+}
+document.getElementById("studentModalSave").addEventListener("click", () => {
+  if (!saveStudentModalFields()) return;
+  document.getElementById("studentModal").classList.add("hidden");
+  renderRoster();
+});
+document.getElementById("studentPrevBtn").addEventListener("click", () => {
+  if (!saveStudentModalFields()) return;
+  const list = classesData[currentClass];
+  const idx = list.findIndex(s => s.id === editingStudentId);
+  if (idx > 0) openStudentModal(list[idx - 1].id);
+  renderRoster();
+});
+document.getElementById("studentNextBtn").addEventListener("click", () => {
+  if (!saveStudentModalFields()) return;
+  const list = classesData[currentClass];
+  const idx = list.findIndex(s => s.id === editingStudentId);
+  if (idx < list.length - 1) openStudentModal(list[idx + 1].id);
+  renderRoster();
+});
+
+/* =========================================================================
+   KLASSE AUS EXCEL/CSV IMPORTIEREN
+   ========================================================================= */
+let importGrid = [];
+document.getElementById("importClassBtn").addEventListener("click", () => {
+  importGrid = [];
+  document.getElementById("importFileInput").value = "";
+  document.getElementById("importMappingArea").classList.add("hidden");
+  document.getElementById("importClassNameInput").value = "";
+  showView("importClass");
+});
+document.getElementById("importFileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const onGrid = (grid) => {
+    importGrid = grid;
+    if (importGrid.length === 0) { alert("Keine Daten in der Datei gefunden."); return; }
+    const headerRowIdx = guessHeaderRowIndex(importGrid);
+    document.getElementById("importHeaderRowInput").value = headerRowIdx + 1;
+    const guessedName = guessClassName(importGrid);
+    if (guessedName) document.getElementById("importClassNameInput").value = guessedName;
+    renderImportPreview();
+    document.getElementById("importMappingArea").classList.remove("hidden");
+  };
+  const onError = (err) => alert("Datei konnte nicht gelesen werden: " + err.message);
+  if (file.name.toLowerCase().endsWith(".csv")) parseCsvFile(file).then(onGrid, onError);
+  else parseXlsxFile(file).then(onGrid, onError);
+});
+document.getElementById("importHeaderRowInput").addEventListener("change", renderImportPreview);
+function guessHeaderRowIndex(grid) {
+  for (let i = 0; i < Math.min(grid.length, 20); i++) {
+    if ((grid[i] || []).some(c => /^name$/i.test(String(c || "").trim()) || /vorname/i.test(String(c || "")))) return i;
+  }
+  return 0;
+}
+function guessClassName(grid) {
+  for (const row of grid) {
+    for (const cell of row || []) {
+      const m = String(cell || "").match(/Klasse\s+([A-Za-z0-9]+)/);
+      if (m) return m[1];
+    }
+  }
+  return "";
+}
+function renderImportPreview() {
+  const headerRowIdx = Math.max(0, Number(document.getElementById("importHeaderRowInput").value) - 1);
+  const headerRow = importGrid[headerRowIdx] || [];
+  const maxCols = Math.max(1, ...importGrid.map(r => (r || []).length));
+  function fillSelect(selectEl, autoMatchRegex) {
+    selectEl.innerHTML = '<option value="-1">− keine −</option>' + Array.from({ length: maxCols }).map((_, i) => `<option value="${i}">${escapeHtml(headerRow[i] || ("Spalte " + (i + 1)))}</option>`).join("");
+    const idx = headerRow.findIndex(h => autoMatchRegex.test(String(h || "")));
+    if (idx >= 0) selectEl.value = String(idx);
+  }
+  fillSelect(document.getElementById("importColLastName"), /^name$/i);
+  fillSelect(document.getElementById("importColFirstName"), /vorname/i);
+  fillSelect(document.getElementById("importColGender"), /geschlecht|^sex$|gender/i);
+  const previewRows = importGrid.slice(headerRowIdx, headerRowIdx + 9);
+  document.getElementById("importPreviewTable").innerHTML = previewRows.map((row, ri) => `
+    <tr style="${ri === 0 ? "font-weight:800; background:#f8fafc;" : ""}">
+      ${Array.from({ length: maxCols }).map((_, ci) => `<td style="border:1px solid var(--border); padding:4px 8px; white-space:nowrap;">${escapeHtml((row || [])[ci] || "")}</td>`).join("")}
+    </tr>`).join("");
+}
+document.getElementById("importConfirmBtn").addEventListener("click", () => {
+  const className = document.getElementById("importClassNameInput").value.trim();
+  if (!className) { alert("Bitte einen Klassennamen eingeben."); return; }
+  if (classesData[className]) { alert("Diese Klasse existiert bereits."); return; }
+  const headerRowIdx = Math.max(0, Number(document.getElementById("importHeaderRowInput").value) - 1);
+  const lastCol = Number(document.getElementById("importColLastName").value);
+  const firstCol = Number(document.getElementById("importColFirstName").value);
+  const genderCol = Number(document.getElementById("importColGender").value);
+  if (firstCol < 0 && lastCol < 0) { alert("Bitte mindestens Vorname oder Nachname zuordnen."); return; }
+  const dataRows = importGrid.slice(headerRowIdx + 1);
+  const students = [];
+  dataRows.forEach(row => {
+    row = row || [];
+    const firstName = firstCol >= 0 ? String(row[firstCol] || "").trim() : "";
+    const lastName = lastCol >= 0 ? String(row[lastCol] || "").trim() : "";
+    if (!firstName && !lastName) return;
+    let gender = "m";
+    if (genderCol >= 0) {
+      const raw = String(row[genderCol] || "").trim().toLowerCase();
+      if (/^w|^f|mädchen|weiblich/.test(raw)) gender = "w";
+      else if (/^m|junge|männlich/.test(raw)) gender = "m";
+      else if (raw) gender = "d";
+    }
+    students.push({ id: uid(), firstName: firstName || "?", lastName, gender, photo: null, colors: [] });
+  });
+  if (students.length === 0) { alert("Keine gültigen Datensätze gefunden (Vorname/Nachname leer)."); return; }
+  classesData[className] = students;
+  persistClasses();
+  showView("classes");
+  renderClassesList();
+  alert(`${students.length} Schüler:innen wurden in die Klasse "${className}" importiert.`);
+});
+
+/* ---- CSV-Parser ---- */
+function parseCsvFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const text = String(reader.result);
+        const firstLine = text.split(/\r?\n/)[0] || "";
+        const delim = firstLine.split(";").length > firstLine.split(",").length ? ";" : ",";
+        const lines = text.split(/\r?\n/).filter(l => l.length > 0);
+        resolve(lines.map(line => parseCsvLine(line, delim)));
+      } catch (e) { reject(e); }
+    };
+    reader.onerror = () => reject(new Error("Lesefehler"));
+    reader.readAsText(file, "utf-8");
+  });
+}
+function parseCsvLine(line, delim) {
+  const result = []; let cur = ""; let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else inQuotes = false; }
+      else cur += ch;
+    } else {
+      if (ch === '"') inQuotes = true;
+      else if (ch === delim) { result.push(cur); cur = ""; }
+      else cur += ch;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+/* ---- Minimaler XLSX-Parser (ZIP + OOXML, ohne externe Bibliothek) ---- */
+function parseXlsxFile(file) {
+  return new Promise((resolve, reject) => {
+    if (typeof DecompressionStream === "undefined") { reject(new Error("Dieser Browser unterstützt keinen xlsx-Import. Bitte die Datei als CSV speichern und erneut versuchen.")); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      unzipXlsxEntries(reader.result).then(entries => {
+        const sheetName = Object.keys(entries).find(n => /^xl\/worksheets\/sheet\d*\.xml$/.test(n));
+        if (!sheetName) { reject(new Error("Kein Arbeitsblatt in der Datei gefunden.")); return; }
+        const sharedStrings = entries["xl/sharedStrings.xml"] ? parseSharedStrings(entries["xl/sharedStrings.xml"]) : [];
+        resolve(parseSheetXml(entries[sheetName], sharedStrings));
+      }, reject);
+    };
+    reader.onerror = () => reject(new Error("Lesefehler"));
+    reader.readAsArrayBuffer(file);
+  });
+}
+async function unzipXlsxEntries(arrayBuffer) {
+  const view = new DataView(arrayBuffer);
+  const bytes = new Uint8Array(arrayBuffer);
+  const results = {};
+  let offset = 0;
+  while (offset + 4 <= bytes.length) {
+    const sig = view.getUint32(offset, true);
+    if (sig !== 0x04034b50) break;
+    const compMethod = view.getUint16(offset + 8, true);
+    const compSize = view.getUint32(offset + 18, true);
+    const nameLen = view.getUint16(offset + 26, true);
+    const extraLen = view.getUint16(offset + 28, true);
+    const name = new TextDecoder().decode(bytes.slice(offset + 30, offset + 30 + nameLen));
+    const dataStart = offset + 30 + nameLen + extraLen;
+    const compData = bytes.slice(dataStart, dataStart + compSize);
+    if (name === "xl/sharedStrings.xml" || /^xl\/worksheets\/sheet\d*\.xml$/.test(name)) {
+      let outBytes;
+      if (compMethod === 0) outBytes = compData;
+      else {
+        const stream = new Blob([compData]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+        outBytes = new Uint8Array(await new Response(stream).arrayBuffer());
+      }
+      results[name] = new TextDecoder("utf-8").decode(outBytes);
+    }
+    offset = dataStart + compSize;
+  }
+  return results;
+}
+function parseSharedStrings(xml) {
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  return [...doc.getElementsByTagName("si")].map(si => si.textContent || "");
+}
+function colLettersToIndex(letters) {
+  let idx = 0;
+  for (const ch of letters) idx = idx * 26 + (ch.charCodeAt(0) - 64);
+  return idx - 1;
+}
+function parseSheetXml(xml, sharedStrings) {
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  const rows = [...doc.getElementsByTagName("row")];
+  const grid = [];
+  rows.forEach(rowEl => {
+    const rowNum = Number(rowEl.getAttribute("r")) - 1;
+    const rowArr = [];
+    [...rowEl.getElementsByTagName("c")].forEach(c => {
+      const ref = c.getAttribute("r") || "A1";
+      const letters = (ref.match(/[A-Z]+/) || ["A"])[0];
+      const colIdx = colLettersToIndex(letters);
+      const type = c.getAttribute("t");
+      const vEl = c.getElementsByTagName("v")[0];
+      const tEl = c.getElementsByTagName("t")[0];
+      let value = "";
+      if (type === "s" && vEl) value = sharedStrings[Number(vEl.textContent)] || "";
+      else if (type === "inlineStr" && tEl) value = tEl.textContent || "";
+      else if (vEl) value = vEl.textContent || "";
+      rowArr[colIdx] = value;
+    });
+    grid[rowNum] = rowArr;
+  });
+  const result = [];
+  for (let i = 0; i < grid.length; i++) result.push(grid[i] ? grid[i].map(v => (v == null ? "" : v)) : []);
+  return result;
+}
+
+/* =========================================================================
+   FARBEN VERWALTEN (Sitzordnung-Wünsche)
+   ========================================================================= */
+let editingColorId = null;
+document.getElementById("manageColorsBtn").addEventListener("click", () => { renderColorsManageList(); document.getElementById("colorsManageModal").classList.remove("hidden"); });
+document.getElementById("colorsManageCloseBtn").addEventListener("click", () => { document.getElementById("colorsManageModal").classList.add("hidden"); });
+function renderColorsManageList() {
+  const list = colorsData[currentClass] || [];
+  const el = document.getElementById("colorsManageList");
+  if (list.length === 0) { el.innerHTML = '<div class="empty-hint" style="padding:14px 4px;">Noch keine Farben definiert.</div>'; return; }
+  el.innerHTML = list.map(c => `
+    <div class="list-row" data-id="${c.id}" style="cursor:default;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="width:22px; height:22px; border-radius:6px; background:${c.hex}; display:inline-block; border:1px solid var(--border);"></span>
+        <div><div class="lr-title">${escapeHtml(c.name)}</div><div class="lr-sub">${c.mode === "together" ? "Eher zusammensitzen" : "Eher Abstand voneinander"}</div></div>
+      </div>
+      <div class="lr-actions">
+        <button class="icon-btn" data-edit-color="${c.id}">✏️</button>
+        <button class="icon-btn danger" data-del-color="${c.id}">🗑</button>
+      </div>
+    </div>`).join("");
+  el.querySelectorAll("[data-edit-color]").forEach(b => b.addEventListener("click", () => openColorEditModal(b.dataset.editColor)));
+  el.querySelectorAll("[data-del-color]").forEach(b => b.addEventListener("click", () => {
+    const id = b.dataset.delColor;
+    openConfirm("Diese Farbe wirklich löschen? Sie wird auch bei allen Schüler:innen entfernt.", () => {
+      colorsData[currentClass] = colorsData[currentClass].filter(c => c.id !== id);
+      (classesData[currentClass] || []).forEach(s => { if (s.colors) s.colors = s.colors.filter(cid => cid !== id); });
+      persistColors(); persistClasses();
+      renderColorsManageList();
+    }, "Löschen");
+  }));
+}
+document.getElementById("addColorBtn").addEventListener("click", () => openColorEditModal(null));
+function openColorEditModal(colorId) {
+  editingColorId = colorId;
+  const list = colorsData[currentClass] || [];
+  const c = colorId ? list.find(x => x.id === colorId) : null;
+  document.getElementById("colorEditTitle").textContent = colorId ? "Farbe bearbeiten" : "Neue Farbe";
+  document.getElementById("colorNameInput").value = c ? c.name : "";
+  document.getElementById("colorHexInput").value = c ? c.hex : "#2563eb";
+  document.getElementById("colorModeInput").value = c ? c.mode : "apart";
+  document.getElementById("colorEditModal").classList.remove("hidden");
+}
+document.getElementById("colorEditCancel").addEventListener("click", () => document.getElementById("colorEditModal").classList.add("hidden"));
+document.getElementById("colorEditSave").addEventListener("click", () => {
+  const name = document.getElementById("colorNameInput").value.trim();
+  if (!name) { alert("Bitte einen Namen eingeben."); return; }
+  const hex = document.getElementById("colorHexInput").value;
+  const mode = document.getElementById("colorModeInput").value;
+  if (!colorsData[currentClass]) colorsData[currentClass] = [];
+  if (editingColorId) {
+    const c = colorsData[currentClass].find(x => x.id === editingColorId);
+    c.name = name; c.hex = hex; c.mode = mode;
+  } else {
+    colorsData[currentClass].push({ id: uid(), name, hex, mode });
+  }
+  persistColors();
+  document.getElementById("colorEditModal").classList.add("hidden");
+  renderColorsManageList();
+});
+
+/* =========================================================================
+   SITZORDNUNG
+   ========================================================================= */
+let currentSeatingClass = null;
+let currentSeating = null;
+
+function openSeatingListForClass(className) {
+  currentSeatingClass = className;
+  renderSeatingList(className);
+}
+function renderSeatingList(className) {
+  currentSeatingClass = className;
+  document.getElementById("seatingList_title").textContent = `🪑 ${className}`;
+  const list = seatingsData[className] || [];
+  const el = document.getElementById("seatingListList");
+  if (list.length === 0) el.innerHTML = '<div class="empty-hint">Noch keine Sitzordnung für diese Klasse.</div>';
+  else el.innerHTML = list.map(s => `
+    <div class="list-row" data-id="${s.id}">
+      <div><div class="lr-title">${escapeHtml(s.name)}</div><div class="lr-sub">${s.tables.length} Tisch(e) · zuletzt geändert: ${formatDateTimeDE(s.updatedAt)}</div></div>
+      <div class="lr-actions">
+        <button class="icon-btn danger" data-del="${s.id}">🗑</button>
+      </div>
+    </div>`).join("");
+  el.querySelectorAll(".list-row").forEach(row => row.addEventListener("click", (e) => {
+    if (e.target.closest("[data-del]")) return;
+    openSeatingEditor(row.dataset.id);
+  }));
+  el.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openConfirm("Diese Sitzordnung wirklich löschen?", () => {
+      seatingsData[className] = seatingsData[className].filter(s => s.id !== b.dataset.del);
+      persistSeatings();
+      renderSeatingList(className);
+    }, "Löschen");
+  }));
+  showView("seatingList");
+}
+document.getElementById("addSeatingBtn").addEventListener("click", () => {
+  document.getElementById("seatingNameInput").value = "";
+  document.getElementById("seatingModal").classList.remove("hidden");
+});
+document.getElementById("seatingModalCancel").addEventListener("click", () => document.getElementById("seatingModal").classList.add("hidden"));
+document.getElementById("seatingModalSave").addEventListener("click", () => {
+  const name = document.getElementById("seatingNameInput").value.trim() || "Sitzordnung";
+  if (!seatingsData[currentSeatingClass]) seatingsData[currentSeatingClass] = [];
+  const newSeating = { id: uid(), name, tables: [], objects: [], nameStyle: "first", showPhoto: true, updatedAt: Date.now() };
+  seatingsData[currentSeatingClass].push(newSeating);
+  persistSeatings();
+  document.getElementById("seatingModal").classList.add("hidden");
+  openSeatingEditor(newSeating.id);
+});
+
+function openSeatingEditor(seatingId) {
+  currentSeating = (seatingsData[currentSeatingClass] || []).find(s => s.id === seatingId);
+  if (!currentSeating) return;
+  if (!currentSeating.objects) currentSeating.objects = [];
+  document.getElementById("seatingEditor_title").textContent = `🪑 ${currentSeating.name}`;
+  document.getElementById("seatingEditor_updated").textContent = `Zuletzt geändert: ${formatDateTimeDE(currentSeating.updatedAt)}`;
+  document.getElementById("alternateGenderCheck").checked = true;
+  renderDisplayOptButtons();
+  renderSeatingCanvas();
+  renderSeatingPool();
+  showView("seatingEditor");
+}
+function saveSeating() {
+  currentSeating.updatedAt = Date.now();
+  persistSeatings();
+  document.getElementById("seatingEditor_updated").textContent = `Zuletzt geändert: ${formatDateTimeDE(currentSeating.updatedAt)}`;
+}
+
+function renderDisplayOptButtons() {
+  document.querySelectorAll("[data-namestyle]").forEach(b => b.classList.toggle("active", b.dataset.namestyle === currentSeating.nameStyle));
+  document.querySelectorAll("[data-showphoto]").forEach(b => b.classList.toggle("active", b.dataset.showphoto === (currentSeating.showPhoto ? "1" : "0")));
+}
+document.querySelectorAll("[data-namestyle]").forEach(b => b.addEventListener("click", () => { currentSeating.nameStyle = b.dataset.namestyle; saveSeating(); renderDisplayOptButtons(); renderSeatingCanvas(); }));
+document.querySelectorAll("[data-showphoto]").forEach(b => b.addEventListener("click", () => { currentSeating.showPhoto = b.dataset.showphoto === "1"; saveSeating(); renderDisplayOptButtons(); renderSeatingCanvas(); }));
+
+function assignedStudentIds() {
+  const ids = new Set();
+  currentSeating.tables.forEach(t => t.seats.forEach(sid => { if (sid) ids.add(sid); }));
+  return ids;
+}
+function renderSeatingPool() {
+  const el = document.getElementById("seatingPool");
+  const assigned = assignedStudentIds();
+  const list = (classesData[currentSeatingClass] || []).filter(s => !assigned.has(s.id));
+  if (list.length === 0) { el.innerHTML = '<div class="empty-hint" style="padding:14px 4px; font-size:0.8rem;">Alle zugeteilt.</div>'; return; }
+  el.innerHTML = list.map(s => `
+    <div class="pool-chip" data-student-id="${s.id}">
+      <div class="photo-drop">${s.photo ? `<img src="${s.photo}">` : initials(s)}</div>
+      <div class="pc-name">${escapeHtml(s.firstName)}</div>
+    </div>`).join("");
+  el.querySelectorAll(".pool-chip").forEach(chip => wireStudentDrag(chip, chip.dataset.studentId, "pool", null, -1));
+}
+
+function tableDims(type) { return type === "2er" ? { w: 150, h: 74 } : { w: 74, h: 74 }; }
+const OBJECT_DEFS = {
+  pult: { label: "Lehrerpult", w: 120, h: 55, color: "#92400e" },
+  tafel: { label: "Wandtafel", w: 220, h: 26, color: "#14532d" },
+  tuere: { label: "Türe", w: 18, h: 72, color: "#78716c" },
+  lavabo: { label: "Lavabo", w: 55, h: 45, color: "#0369a1" }
+};
+document.querySelectorAll("[data-add-object]").forEach(b => b.addEventListener("click", () => addObject(b.dataset.addObject)));
+function addObject(kind) {
+  currentSeating.objects.push({ id: uid(), kind, x: 40 + Math.random() * 100, y: 40 + Math.random() * 100, rot: 0 });
+  saveSeating();
+  renderSeatingCanvas();
+}
+function renderSeatingCanvas() {
+  const canvas = document.getElementById("seatingCanvas");
+  canvas.innerHTML = "";
+  (currentSeating.objects || []).forEach(o => {
+    const def = OBJECT_DEFS[o.kind];
+    if (!def) return;
+    const objEl = document.createElement("div");
+    objEl.className = "object-el";
+    objEl.dataset.objectId = o.id;
+    objEl.style.width = def.w + "px"; objEl.style.height = def.h + "px";
+    objEl.innerHTML = `
+      <div class="object-shape" style="width:${def.w}px; height:${def.h}px; background:${def.color};">
+        <span>${escapeHtml(def.label)}</span>
+      </div>
+      <button class="table-remove-btn" data-remove-object="${o.id}">✕</button>
+      <div class="table-rotate-handle" data-rotate-object="${o.id}">⟳</div>`;
+    canvas.appendChild(objEl);
+    updateTableTransform(objEl, o);
+    wireTableDrag(objEl, o);
+    objEl.querySelector("[data-remove-object]").addEventListener("click", (e) => {
+      e.stopPropagation();
+      currentSeating.objects = currentSeating.objects.filter(x => x.id !== o.id);
+      saveSeating(); renderSeatingCanvas();
+    });
+    wireRotateHandle(objEl.querySelector("[data-rotate-object]"), objEl, o);
+  });
+  currentSeating.tables.forEach(t => {
+    const dims = tableDims(t.type);
+    const tableEl = document.createElement("div");
+    tableEl.className = `table-el table-${t.type}`;
+    tableEl.dataset.tableId = t.id;
+    tableEl.style.width = dims.w + "px"; tableEl.style.height = dims.h + "px";
+    tableEl.innerHTML = `
+      <div class="table-shape" style="width:${dims.w}px; height:${dims.h}px;">
+        ${t.seats.map((sid, idx) => renderSeatHTML(t, sid, idx)).join("")}
+      </div>
+      <button class="table-remove-btn" data-remove-table="${t.id}">✕</button>
+      <div class="table-rotate-handle" data-rotate-table="${t.id}">⟳</div>`;
+    canvas.appendChild(tableEl);
+    updateTableTransform(tableEl, t);
+    wireTableDrag(tableEl, t);
+    tableEl.querySelector("[data-remove-table]").addEventListener("click", (e) => {
+      e.stopPropagation();
+      openConfirm("Diesen Tisch entfernen? Zugeteilte SuS kommen zurück in den Pool.", () => {
+        currentSeating.tables = currentSeating.tables.filter(x => x.id !== t.id);
+        saveSeating(); renderSeatingCanvas(); renderSeatingPool();
+      }, "Entfernen");
+    });
+    wireRotateHandle(tableEl.querySelector("[data-rotate-table]"), tableEl, t);
+    t.seats.forEach((sid, idx) => {
+      const seatEl = tableEl.querySelectorAll(".seat")[idx];
+      if (sid) wireStudentDrag(seatEl, sid, "seat", t, idx);
+      wireSeatDropTarget(seatEl, t, idx);
+    });
+  });
+}
+function renderSeatHTML(table, studentId, seatIndex) {
+  const student = studentId ? getStudent(currentSeatingClass, studentId) : null;
+  if (!student) return `<div class="seat empty" data-table-id="${table.id}" data-seat-index="${seatIndex}">+</div>`;
+  const name = studentDisplayName(student, currentSeating.nameStyle);
+  const photoHtml = currentSeating.showPhoto ? (student.photo ? `<img class="seat-photo" src="${student.photo}">` : `<div class="seat-photo" style="display:flex;align-items:center;justify-content:center;background:#e2e8f0;font-weight:800;">${initials(student)}</div>`) : "";
+  return `<div class="seat" data-table-id="${table.id}" data-seat-index="${seatIndex}" data-student-id="${student.id}" style="transform:rotate(${-(table.rot || 0)}deg);">${photoHtml}<div class="seat-name">${escapeHtml(name)}</div></div>`;
+}
+function updateTableTransform(tableEl, table) {
+  tableEl.style.transform = `translate(${table.x}px, ${table.y}px) rotate(${table.rot || 0}deg)`;
+}
+
+document.getElementById("addTable1erBtn").addEventListener("click", () => addTable("1er"));
+document.getElementById("addTable2erBtn").addEventListener("click", () => addTable("2er"));
+function addTable(type) {
+  const count = type === "1er" ? 1 : 2;
+  currentSeating.tables.push({ id: uid(), type, x: 40 + Math.random() * 100, y: 40 + Math.random() * 100, rot: 0, seats: new Array(count).fill(null) });
+  saveSeating();
+  renderSeatingCanvas();
+}
+document.getElementById("clearSeatsBtn").addEventListener("click", () => {
+  openConfirm("Alle Plätze leeren (Tische bleiben stehen)?", () => {
+    currentSeating.tables.forEach(t => t.seats = t.seats.map(() => null));
+    saveSeating(); renderSeatingCanvas(); renderSeatingPool();
+  }, "Leeren");
+});
+
+/* ---- Tisch verschieben (Pointer-Drag) ---- */
+function wireTableDrag(tableEl, table) {
+  let dragging = false, startX = 0, startY = 0, origX = 0, origY = 0;
+  tableEl.addEventListener("pointerdown", (e) => {
+    if (e.target.closest(".table-rotate-handle") || e.target.closest(".table-remove-btn") || e.target.closest(".seat")) return;
+    dragging = true; startX = e.clientX; startY = e.clientY; origX = table.x; origY = table.y;
+    try { tableEl.setPointerCapture(e.pointerId); } catch (err) {}
+    tableEl.style.zIndex = 10;
+  });
+  tableEl.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    table.x = origX + (e.clientX - startX);
+    table.y = origY + (e.clientY - startY);
+    updateTableTransform(tableEl, table);
+  });
+  tableEl.addEventListener("pointerup", (e) => {
+    if (!dragging) return;
+    dragging = false; tableEl.style.zIndex = "";
+    saveSeating();
+  });
+}
+function wireRotateHandle(handleEl, tableEl, table) {
+  let dragging = false;
+  handleEl.addEventListener("pointerdown", (e) => {
+    e.stopPropagation();
+    dragging = true;
+    try { handleEl.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  handleEl.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const rect = tableEl.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+    const angle = Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI;
+    table.rot = Math.round(angle + 45);
+    updateTableTransform(tableEl, table);
+    tableEl.querySelectorAll(".seat[data-student-id]").forEach(seatEl => { seatEl.style.transform = `rotate(${-(table.rot || 0)}deg)`; });
+  });
+  handleEl.addEventListener("pointerup", (e) => {
+    if (!dragging) return;
+    e.stopPropagation();
+    dragging = false;
+    saveSeating();
+  });
+}
+
+/* ---- Schüler-Drag (Pool <-> Sitz <-> Sitz) ---- */
+let ghostEl = null;
+function wireStudentDrag(sourceEl, studentId, sourceType, sourceTable, sourceSeatIndex) {
+  sourceEl.addEventListener("pointerdown", (e) => {
+    e.stopPropagation();
+    const student = getStudent(currentSeatingClass, studentId);
+    if (!student) return;
+    ghostEl = document.createElement("div");
+    ghostEl.className = "drag-ghost pool-chip";
+    ghostEl.innerHTML = `<div class="photo-drop">${student.photo ? `<img src="${student.photo}">` : initials(student)}</div><div class="pc-name">${escapeHtml(student.firstName)}</div>`;
+    document.body.appendChild(ghostEl);
+    moveGhost(e.clientX, e.clientY);
+    try { sourceEl.setPointerCapture(e.pointerId); } catch (err) {}
+    sourceEl.style.opacity = "0.3";
+
+    const onMove = (ev) => moveGhost(ev.clientX, ev.clientY);
+    const onUp = (ev) => {
+      sourceEl.removeEventListener("pointermove", onMove);
+      sourceEl.removeEventListener("pointerup", onUp);
+      if (ghostEl) { ghostEl.remove(); ghostEl = null; }
+      sourceEl.style.opacity = "";
+      ghostEl && ghostEl.style.setProperty("display", "none");
+      const dropTarget = document.elementFromPoint(ev.clientX, ev.clientY);
+      handleStudentDrop(studentId, sourceType, sourceTable, sourceSeatIndex, dropTarget);
+    };
+    sourceEl.addEventListener("pointermove", onMove);
+    sourceEl.addEventListener("pointerup", onUp);
+  });
+}
+function moveGhost(x, y) { if (ghostEl) { ghostEl.style.left = x + "px"; ghostEl.style.top = y + "px"; } }
+function wireSeatDropTarget(seatEl) { /* handled via elementFromPoint on drop, no extra listener needed */ }
+
+function handleStudentDrop(studentId, sourceType, sourceTable, sourceSeatIndex, dropTarget) {
+  const seatTarget = dropTarget ? dropTarget.closest(".seat") : null;
+  const poolTarget = dropTarget ? dropTarget.closest("#seatingPool, .seating-pool") : null;
+
+  if (seatTarget) {
+    const targetTableId = seatTarget.dataset.tableId;
+    const targetSeatIndex = parseInt(seatTarget.dataset.seatIndex, 10);
+    const targetTable = currentSeating.tables.find(t => t.id === targetTableId);
+    if (!targetTable) return;
+    const displacedStudentId = targetTable.seats[targetSeatIndex];
+    if (sourceType === "seat" && sourceTable.id === targetTableId && sourceSeatIndex === targetSeatIndex) return;
+    targetTable.seats[targetSeatIndex] = studentId;
+    if (sourceType === "seat") sourceTable.seats[sourceSeatIndex] = displacedStudentId || null;
+  } else if (poolTarget || !dropTarget) {
+    if (sourceType === "seat") sourceTable.seats[sourceSeatIndex] = null;
+  } else {
+    return;
+  }
+  saveSeating();
+  renderSeatingCanvas();
+  renderSeatingPool();
+}
+
+/* ---- Zufällig verteilen ---- */
+document.getElementById("randomAssignBtn").addEventListener("click", () => {
+  openConfirm("Alle Plätze werden neu zufällig verteilt. Fortfahren?", () => randomlyAssignSeats(document.getElementById("alternateGenderCheck").checked), "Verteilen");
+});
+function shuffleArr(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function seatWorldPos(table, seatIndex) {
+  const dims = tableDims(table.type);
+  const localX = table.type === "2er" ? (seatIndex === 0 ? dims.w * 0.27 : dims.w * 0.73) : dims.w / 2;
+  const localY = dims.h / 2;
+  const rad = (table.rot || 0) * Math.PI / 180;
+  const dx = localX - dims.w / 2, dy = localY - dims.h / 2;
+  const rx = dx * Math.cos(rad) - dy * Math.sin(rad), ry = dx * Math.sin(rad) + dy * Math.cos(rad);
+  return { x: table.x + dims.w / 2 + rx, y: table.y + dims.h / 2 + ry };
+}
+function randomlyAssignSeats(alternateGender) {
+  const seatSlots = [];
+  currentSeating.tables.forEach(t => t.seats.forEach((_, idx) => {
+    const pos = seatWorldPos(t, idx);
+    seatSlots.push({ table: t, seatIndex: idx, x: pos.x, y: pos.y });
+  }));
+  if (seatSlots.length === 0) { alert("Bitte zuerst Tische hinzufügen."); return; }
+  const neighborThreshold = 130;
+  const neighborsOf = seatSlots.map((s, i) => {
+    const n = [];
+    seatSlots.forEach((s2, j) => {
+      if (i === j) return;
+      const sameTable = s.table.id === s2.table.id;
+      const dist = Math.hypot(s.x - s2.x, s.y - s2.y);
+      if (sameTable || dist < neighborThreshold) n.push(j);
+    });
+    return n;
+  });
+  const colorDefs = colorsData[currentSeatingClass] || [];
+  function colorMode(colorId) { const c = colorDefs.find(x => x.id === colorId); return c ? c.mode : null; }
+  function placementCost(student, seatIdx, placement) {
+    let cost = 0;
+    neighborsOf[seatIdx].forEach(j => {
+      const other = placement[j];
+      if (!other) return;
+      if (alternateGender && student.gender !== "d" && other.gender !== "d" && student.gender === other.gender) cost += 1;
+      (student.colors || []).forEach(cid => {
+        if ((other.colors || []).includes(cid)) {
+          const mode = colorMode(cid);
+          if (mode === "apart") cost += 3;
+          else if (mode === "together") cost -= 2;
+        }
+      });
+    });
+    return cost;
+  }
+  function attemptPlacement() {
+    let pool = shuffleArr(classesData[currentSeatingClass] || []);
+    const placement = new Array(seatSlots.length).fill(null);
+    const order = shuffleArr(seatSlots.map((_, i) => i));
+    order.forEach(i => {
+      if (pool.length === 0) return;
+      let bestIdx = 0, bestCost = Infinity;
+      pool.forEach((student, idx) => {
+        const cost = placementCost(student, i, placement);
+        if (cost < bestCost) { bestCost = cost; bestIdx = idx; }
+      });
+      placement[i] = pool.splice(bestIdx, 1)[0];
+    });
+    let totalCost = 0;
+    placement.forEach((student, i) => { if (student) totalCost += placementCost(student, i, placement.map((s, j) => (j === i ? null : s))); });
+    return { placement, totalCost };
+  }
+  let best = null;
+  for (let attempt = 0; attempt < 60; attempt++) {
+    const result = attemptPlacement();
+    if (!best || result.totalCost < best.totalCost) best = result;
+    if (best.totalCost <= 0) break;
+  }
+  const placement = best.placement;
+  seatSlots.forEach((s, i) => { s.table.seats[s.seatIndex] = placement[i] ? placement[i].id : null; });
+  saveSeating();
+  renderSeatingCanvas();
+  renderSeatingPool();
+}
+
+/* =========================================================================
+   SCHÜLERVERHALTEN
+   ========================================================================= */
+let currentBehaviorClass = null;
+let editingCommentId = null;
+let commentStudentId = null;
+let behaviorSort = { col: "date", dir: "desc" };
+
+function openBehaviorForClass(className) {
+  currentBehaviorClass = className;
+  document.getElementById("behavior_title").textContent = `📝 ${className}`;
+  renderBehaviorStudentList();
+  renderBehaviorFilterOptions();
+  renderBehaviorTable();
+  showView("behavior");
+}
+function renderBehaviorStudentList() {
+  const el = document.getElementById("behaviorStudentList");
+  const list = classesData[currentBehaviorClass] || [];
+  if (list.length === 0) { el.innerHTML = '<div class="empty-hint">Keine Schüler:innen in dieser Klasse.</div>'; return; }
+  el.innerHTML = list.map(s => `
+    <div class="student-card">
+      <div class="photo-drop" style="cursor:default;">${s.photo ? `<img src="${s.photo}">` : initials(s)}</div>
+      <div class="student-meta"><div class="student-name">${escapeHtml(s.firstName)} ${escapeHtml(s.lastName || "")}</div></div>
+      <button class="btn" style="padding:8px 12px; font-size:0.82rem;" data-add-comment="${s.id}">+ Kommentar</button>
+    </div>`).join("");
+  el.querySelectorAll("[data-add-comment]").forEach(b => b.addEventListener("click", () => openCommentModal(null, b.dataset.addComment)));
+}
+function renderBehaviorFilterOptions() {
+  const sel = document.getElementById("behaviorFilterStudent");
+  const list = classesData[currentBehaviorClass] || [];
+  sel.innerHTML = '<option value="">Alle Schüler:innen</option>' + list.map(s => `<option value="${s.id}">${escapeHtml(s.firstName)} ${escapeHtml(s.lastName || "")}</option>`).join("");
+}
+document.getElementById("behaviorFilterStudent").addEventListener("change", renderBehaviorTable);
+document.getElementById("behaviorFilterText").addEventListener("input", renderBehaviorTable);
+document.querySelectorAll("#behaviorTable th[data-sort]").forEach(th => th.addEventListener("click", () => {
+  const col = th.dataset.sort;
+  if (behaviorSort.col === col) behaviorSort.dir = behaviorSort.dir === "asc" ? "desc" : "asc";
+  else { behaviorSort.col = col; behaviorSort.dir = "asc"; }
+  renderBehaviorTable();
+}));
+function openCommentModal(commentId, studentId) {
+  editingCommentId = commentId;
+  const list = behaviorData[currentBehaviorClass] || [];
+  const c = commentId ? list.find(x => x.id === commentId) : null;
+  commentStudentId = c ? c.studentId : studentId;
+  const student = getStudent(currentBehaviorClass, commentStudentId);
+  document.getElementById("commentModalTitle").textContent = (commentId ? "Kommentar bearbeiten" : "Kommentar hinzufügen") + (student ? ` – ${student.firstName}` : "");
+  document.getElementById("commentDateInput").value = c ? c.date : todayISO();
+  document.getElementById("commentTextInput").value = c ? c.text : "";
+  document.getElementById("commentModal").classList.remove("hidden");
+}
+document.getElementById("commentModalCancel").addEventListener("click", () => document.getElementById("commentModal").classList.add("hidden"));
+document.getElementById("commentModalSave").addEventListener("click", () => {
+  const text = document.getElementById("commentTextInput").value.trim();
+  const date = document.getElementById("commentDateInput").value || todayISO();
+  if (!text) { alert("Bitte einen Kommentar eingeben."); return; }
+  if (!behaviorData[currentBehaviorClass]) behaviorData[currentBehaviorClass] = [];
+  if (editingCommentId) {
+    const c = behaviorData[currentBehaviorClass].find(x => x.id === editingCommentId);
+    c.text = text; c.date = date;
+  } else {
+    behaviorData[currentBehaviorClass].push({ id: uid(), studentId: commentStudentId, date, text });
+  }
+  persistBehavior();
+  document.getElementById("commentModal").classList.add("hidden");
+  renderBehaviorTable();
+});
+function renderBehaviorTable() {
+  const list = (behaviorData[currentBehaviorClass] || []).slice();
+  const studentFilter = document.getElementById("behaviorFilterStudent").value;
+  const textFilter = document.getElementById("behaviorFilterText").value.trim().toLowerCase();
+  let rows = list.map(c => { const s = getStudent(currentBehaviorClass, c.studentId); return { ...c, name: s ? `${s.firstName} ${s.lastName || ""}`.trim() : "(gelöscht)" }; });
+  if (studentFilter) rows = rows.filter(r => r.studentId === studentFilter);
+  if (textFilter) rows = rows.filter(r => r.text.toLowerCase().includes(textFilter) || r.name.toLowerCase().includes(textFilter));
+  rows.sort((a, b) => {
+    let av = a[behaviorSort.col], bv = b[behaviorSort.col];
+    if (av < bv) return behaviorSort.dir === "asc" ? -1 : 1;
+    if (av > bv) return behaviorSort.dir === "asc" ? 1 : -1;
+    return 0;
+  });
+  document.querySelectorAll("#behaviorTable th[data-sort] .sort-arrow").forEach(sp => sp.textContent = "");
+  const activeTh = document.querySelector(`#behaviorTable th[data-sort="${behaviorSort.col}"] .sort-arrow`);
+  if (activeTh) activeTh.textContent = behaviorSort.dir === "asc" ? "▲" : "▼";
+  const tbody = document.getElementById("behaviorTableBody");
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:20px;">Keine Einträge.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${formatDateDE(r.date)}</td>
+      <td>${escapeHtml(r.name)}</td>
+      <td>${escapeHtml(r.text)}</td>
+      <td style="white-space:nowrap;">
+        <button class="icon-btn" data-edit-comment="${r.id}">✏️</button>
+        <button class="icon-btn danger" data-del-comment="${r.id}">🗑</button>
+      </td>
+    </tr>`).join("");
+  tbody.querySelectorAll("[data-edit-comment]").forEach(b => b.addEventListener("click", () => openCommentModal(b.dataset.editComment, null)));
+  tbody.querySelectorAll("[data-del-comment]").forEach(b => b.addEventListener("click", () => {
+    const id = b.dataset.delComment;
+    openConfirm("Diesen Kommentar wirklich löschen?", () => {
+      behaviorData[currentBehaviorClass] = behaviorData[currentBehaviorClass].filter(x => x.id !== id);
+      persistBehavior();
+      renderBehaviorTable();
+    }, "Löschen");
+  }));
+}
+
+/* =========================================================================
+   LEINWAND (Infoboard)
+   ========================================================================= */
+const BOARDS_KEY = "kz_boards";
+let boardsData = JSON.parse(localStorage.getItem(BOARDS_KEY) || "[]");
+function persistBoards() { localStorage.setItem(BOARDS_KEY, JSON.stringify(boardsData)); }
+let currentBoard = null;
+let lastFocusedTextEl = null;
+let currentFmtSize = 3;
+let presentMode = false;
+
+function renderBoardsList() {
+  const el = document.getElementById("boardsList");
+  if (boardsData.length === 0) { el.innerHTML = '<div class="empty-hint">Noch keine Leinwand erstellt.</div>'; return; }
+  el.innerHTML = boardsData.map(b => `
+    <div class="list-row" data-id="${b.id}">
+      <div><div class="lr-title">${escapeHtml(b.name)}</div><div class="lr-sub">zuletzt geändert: ${formatDateTimeDE(b.updatedAt)}</div></div>
+      <div class="lr-actions"><button class="icon-btn danger" data-del-board="${b.id}">🗑</button></div>
+    </div>`).join("");
+  el.querySelectorAll(".list-row").forEach(row => row.addEventListener("click", (e) => {
+    if (e.target.closest("[data-del-board]")) return;
+    openBoardEditor(row.dataset.id);
+  }));
+  el.querySelectorAll("[data-del-board]").forEach(b => b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openConfirm("Diese Leinwand wirklich löschen?", () => {
+      boardsData = boardsData.filter(x => x.id !== b.dataset.delBoard);
+      persistBoards();
+      renderBoardsList();
+    }, "Löschen");
+  }));
+}
+document.getElementById("addBoardBtn").addEventListener("click", () => {
+  document.getElementById("boardNameInput").value = "";
+  document.getElementById("boardModal").classList.remove("hidden");
+});
+document.getElementById("boardModalCancel").addEventListener("click", () => document.getElementById("boardModal").classList.add("hidden"));
+document.getElementById("boardModalSave").addEventListener("click", () => {
+  const name = document.getElementById("boardNameInput").value.trim() || "Leinwand";
+  const newBoard = { id: uid(), name, elements: [], bg: "light", updatedAt: Date.now() };
+  boardsData.push(newBoard);
+  persistBoards();
+  document.getElementById("boardModal").classList.add("hidden");
+  openBoardEditor(newBoard.id);
+});
+function openBoardEditor(boardId) {
+  currentBoard = boardsData.find(b => b.id === boardId);
+  if (!currentBoard) return;
+  document.getElementById("boardEditor_title").textContent = currentBoard.name;
+  document.getElementById("boardCanvasWrap").className = "board-canvas-wrap" + (currentBoard.bg && currentBoard.bg !== "light" ? " bg-" + currentBoard.bg : "");
+  setPresentMode(false);
+  renderBoardCanvas();
+  showView("boardEditor");
+}
+function saveBoard() { currentBoard.updatedAt = Date.now(); persistBoards(); }
+
+/* ---- Element-Rendering ---- */
+const MATERIAL_ITEMS = [
+  { key: "stifte", label: "Farbstifte", icon: "🖍️" },
+  { key: "geodreieck", label: "Geodreieck", icon: "📐" },
+  { key: "taschenrechner", label: "Taschenrechner", icon: "🖩" },
+  { key: "zirkel", label: "Zirkel", icon: "🧭" }
+];
+function formatCountdown(sec) {
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  const pad = n => String(n).padStart(2, "0");
+  return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+}
+function formatHM(sec) { const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return `${h}h ${m}min`; }
+function renderTimerWidget(el) {
+  const currentDisplay = el.running ? Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000)) : el.remainingSec;
+  const h = Math.floor(el.durationSec / 3600), m = Math.floor((el.durationSec % 3600) / 60);
+  return `<div class="board-widget" style="width:100%; height:100%;">
+    <div class="board-timer-setup">
+      <label>Std.<input type="number" min="0" max="2" data-timer-hours="${el.id}" value="${h}" ${el.running ? "disabled" : ""}></label>
+      <label>Min.<input type="number" min="0" max="59" data-timer-minutes="${el.id}" value="${m}" ${el.running ? "disabled" : ""}></label>
+    </div>
+    <div class="board-timer-display" data-timer-display="${el.id}">${formatCountdown(currentDisplay)}</div>
+    <div class="board-timer-controls">
+      <button data-timer-start="${el.id}">${el.running ? "Pause" : "Start"}</button>
+      <button data-timer-reset="${el.id}">Reset</button>
+    </div>
+  </div>`;
+}
+function renderMaterialWidget(el) {
+  return `<div class="board-widget" style="width:100%; height:100%;">
+    <div class="material-widget-title">Material</div>
+    <div class="material-grid">
+      ${MATERIAL_ITEMS.map(m => {
+        const allowed = el.allowed[m.key];
+        return `<div class="material-icon ${allowed ? "allowed" : "forbidden"}" data-material-toggle="${el.id}" data-material-key="${m.key}">
+          ${m.icon}
+          <div class="mat-badge">${allowed ? "✓" : "✕"}</div>
+          <div class="mat-label">${m.label}</div>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>`;
+}
+function renderBoardItemContent(el) {
+  if (el.type === "text") return `<div class="board-text" contenteditable="true" data-el-id="${el.id}">${el.html || ""}</div>`;
+  if (el.type === "image") return `<div class="board-image"><img src="${el.src}"></div>`;
+  if (el.type === "timer") return renderTimerWidget(el);
+  if (el.type === "clock") return `<div class="board-clock-plain" id="clock-${el.id}">${new Date().toLocaleTimeString("de-CH")}</div>`;
+  if (el.type === "material") return renderMaterialWidget(el);
+  return "";
+}
+function renderBoardCanvas() {
+  const canvas = document.getElementById("boardCanvas");
+  canvas.innerHTML = "";
+  currentBoard.elements.forEach(el => {
+    const wrap = document.createElement("div");
+    wrap.className = "board-item";
+    wrap.style.left = el.x + "px"; wrap.style.top = el.y + "px";
+    wrap.style.width = el.w + "px"; wrap.style.height = el.h + "px";
+    const resizable = el.type === "text" || el.type === "image";
+    wrap.innerHTML = `
+      <div class="item-drag-handle" data-drag-handle>✥</div>
+      <button class="item-remove-btn" data-remove-item="${el.id}">✕</button>
+      <div class="board-item-inner">${renderBoardItemContent(el)}</div>
+      ${resizable ? `<div class="item-resize-handle" data-resize-item="${el.id}"></div>` : ""}`;
+    canvas.appendChild(wrap);
+    wireBoardItemDrag(wrap, el);
+    if (resizable) wireBoardItemResize(wrap.querySelector("[data-resize-item]"), wrap, el);
+    wrap.querySelector("[data-remove-item]").addEventListener("click", (e) => {
+      e.stopPropagation();
+      currentBoard.elements = currentBoard.elements.filter(x => x.id !== el.id);
+      saveBoard(); renderBoardCanvas();
+    });
+    if (el.type === "text") {
+      const textEl = wrap.querySelector(".board-text");
+      textEl.addEventListener("input", () => { el.html = textEl.innerHTML; saveBoard(); });
+      textEl.addEventListener("focus", () => { lastFocusedTextEl = textEl; });
+    }
+    if (el.type === "timer") wireTimerWidget(wrap, el);
+    if (el.type === "material") wireMaterialWidget(wrap, el);
+  });
+  applyPresentModeVisibility();
+}
+function wireBoardItemDrag(wrap, el) {
+  const handle = wrap.querySelector("[data-drag-handle]");
+  let dragging = false, startX = 0, startY = 0, origX = 0, origY = 0;
+  handle.addEventListener("pointerdown", (e) => {
+    dragging = true; startX = e.clientX; startY = e.clientY; origX = el.x; origY = el.y;
+    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  handle.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    el.x = origX + (e.clientX - startX); el.y = origY + (e.clientY - startY);
+    wrap.style.left = el.x + "px"; wrap.style.top = el.y + "px";
+  });
+  handle.addEventListener("pointerup", () => { if (!dragging) return; dragging = false; saveBoard(); });
+}
+function wireBoardItemResize(handleEl, wrap, el) {
+  let dragging = false, startX = 0, startY = 0, origW = 0, origH = 0;
+  handleEl.addEventListener("pointerdown", (e) => {
+    e.stopPropagation();
+    dragging = true; startX = e.clientX; startY = e.clientY; origW = el.w; origH = el.h;
+    try { handleEl.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  handleEl.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    el.w = Math.max(80, origW + (e.clientX - startX));
+    el.h = Math.max(40, origH + (e.clientY - startY));
+    wrap.style.width = el.w + "px"; wrap.style.height = el.h + "px";
+  });
+  handleEl.addEventListener("pointerup", (e) => { if (!dragging) return; e.stopPropagation(); dragging = false; saveBoard(); });
+}
+function wireTimerWidget(wrap, el) {
+  const hoursInput = wrap.querySelector(`[data-timer-hours="${el.id}"]`);
+  const minutesInput = wrap.querySelector(`[data-timer-minutes="${el.id}"]`);
+  const display = wrap.querySelector(`[data-timer-display="${el.id}"]`);
+  const startBtn = wrap.querySelector(`[data-timer-start="${el.id}"]`);
+  const resetBtn = wrap.querySelector(`[data-timer-reset="${el.id}"]`);
+  function applyDurationInputs() {
+    const h = Math.min(2, Math.max(0, Number(hoursInput.value) || 0));
+    const m = Math.min(59, Math.max(0, Number(minutesInput.value) || 0));
+    el.durationSec = h * 3600 + m * 60;
+    el.remainingSec = el.durationSec;
+    display.textContent = formatCountdown(el.remainingSec);
+    saveBoard();
+  }
+  hoursInput.addEventListener("change", applyDurationInputs);
+  minutesInput.addEventListener("change", applyDurationInputs);
+  startBtn.addEventListener("click", () => {
+    if (el.running) {
+      el.remainingSec = Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000));
+      el.running = false; el.endTimestamp = null;
+    } else {
+      if (el.remainingSec <= 0) return;
+      el.endTimestamp = Date.now() + el.remainingSec * 1000;
+      el.running = true;
+    }
+    saveBoard();
+    renderBoardCanvas();
+  });
+  resetBtn.addEventListener("click", () => {
+    el.running = false; el.endTimestamp = null; el.remainingSec = el.durationSec;
+    saveBoard();
+    renderBoardCanvas();
+  });
+}
+function wireMaterialWidget(wrap, el) {
+  wrap.querySelectorAll("[data-material-toggle]").forEach(iconEl => {
+    iconEl.addEventListener("click", () => {
+      const key = iconEl.dataset.materialKey;
+      el.allowed[key] = !el.allowed[key];
+      saveBoard();
+      renderBoardCanvas();
+    });
+  });
+}
+setInterval(() => {
+  if (!currentBoard || document.getElementById("boardEditorView").classList.contains("hidden")) return;
+  currentBoard.elements.forEach(el => {
+    if (el.type === "timer" && el.running) {
+      const remaining = Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000));
+      const displayEl = document.querySelector(`[data-timer-display="${el.id}"]`);
+      if (displayEl) displayEl.textContent = formatCountdown(remaining);
+      if (remaining <= 0) {
+        el.running = false; el.endTimestamp = null; el.remainingSec = 0;
+        saveBoard();
+        renderBoardCanvas();
+      }
+    }
+    if (el.type === "clock") {
+      const clockEl = document.getElementById("clock-" + el.id);
+      if (clockEl) clockEl.textContent = new Date().toLocaleTimeString("de-CH");
+    }
+  });
+}, 1000);
+
+/* ---- Elemente hinzufügen ---- */
+function processBoardImageFile(file, callback) {
+  if (!file || !file.type || !file.type.startsWith("image/")) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 900;
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL("image/jpeg", 0.85), w, h);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function nextBoardPos() { return { x: 40 + Math.random() * 220, y: 40 + Math.random() * 160 }; }
+document.getElementById("addTextBtn").addEventListener("click", () => {
+  const p = nextBoardPos();
+  currentBoard.elements.push({ id: uid(), type: "text", x: p.x, y: p.y, w: 240, h: 100, html: "Text eingeben..." });
+  saveBoard(); renderBoardCanvas();
+});
+document.getElementById("addImageBtn").addEventListener("click", () => document.getElementById("boardImageInput").click());
+document.getElementById("boardImageInput").addEventListener("change", (e) => {
+  if (e.target.files[0]) processBoardImageFile(e.target.files[0], (dataUrl, w, h) => {
+    const dispW = Math.min(280, w);
+    const dispH = Math.round(h * (dispW / w));
+    const p = nextBoardPos();
+    currentBoard.elements.push({ id: uid(), type: "image", x: p.x, y: p.y, w: dispW, h: dispH, src: dataUrl });
+    saveBoard(); renderBoardCanvas();
+  });
+  e.target.value = "";
+});
+document.getElementById("addTimerBtn").addEventListener("click", () => {
+  const p = nextBoardPos();
+  currentBoard.elements.push({ id: uid(), type: "timer", x: p.x, y: p.y, w: 260, h: 190, durationSec: 300, remainingSec: 300, endTimestamp: null, running: false });
+  saveBoard(); renderBoardCanvas();
+});
+document.getElementById("addClockBtn").addEventListener("click", () => {
+  const p = nextBoardPos();
+  currentBoard.elements.push({ id: uid(), type: "clock", x: p.x, y: p.y, w: 190, h: 110 });
+  saveBoard(); renderBoardCanvas();
+});
+document.getElementById("addMaterialBtn").addEventListener("click", () => {
+  const p = nextBoardPos();
+  currentBoard.elements.push({ id: uid(), type: "material", x: p.x, y: p.y, w: 220, h: 260, allowed: { stifte: true, geodreieck: true, taschenrechner: true, zirkel: true } });
+  saveBoard(); renderBoardCanvas();
+});
+
+/* ---- Textformatierung ---- */
+function applyFmt(cmd, value) {
+  if (!lastFocusedTextEl || !document.body.contains(lastFocusedTextEl)) return;
+  lastFocusedTextEl.focus();
+  document.execCommand(cmd, false, value);
+  const elId = lastFocusedTextEl.dataset.elId;
+  const el = currentBoard.elements.find(x => x.id === elId);
+  if (el) { el.html = lastFocusedTextEl.innerHTML; saveBoard(); }
+}
+function wireFmtBtn(id, cmd, value) {
+  const btn = document.getElementById(id);
+  btn.addEventListener("pointerdown", (e) => e.preventDefault());
+  btn.addEventListener("click", () => applyFmt(cmd, value));
+}
+wireFmtBtn("fmtBoldBtn", "bold");
+wireFmtBtn("fmtItalicBtn", "italic");
+wireFmtBtn("fmtUnderlineBtn", "underline");
+document.getElementById("fmtSizeMinusBtn").addEventListener("pointerdown", (e) => e.preventDefault());
+document.getElementById("fmtSizeMinusBtn").addEventListener("click", () => { currentFmtSize = Math.max(1, currentFmtSize - 1); applyFmt("fontSize", String(currentFmtSize)); });
+document.getElementById("fmtSizePlusBtn").addEventListener("pointerdown", (e) => e.preventDefault());
+document.getElementById("fmtSizePlusBtn").addEventListener("click", () => { currentFmtSize = Math.min(7, currentFmtSize + 1); applyFmt("fontSize", String(currentFmtSize)); });
+document.querySelectorAll("[data-fmt-color]").forEach(btn => {
+  btn.addEventListener("pointerdown", (e) => e.preventDefault());
+  btn.addEventListener("click", () => applyFmt("foreColor", btn.dataset.fmtColor));
+});
+document.querySelectorAll("[data-board-bg]").forEach(btn => btn.addEventListener("click", () => {
+  currentBoard.bg = btn.dataset.boardBg;
+  document.getElementById("boardCanvasWrap").className = "board-canvas-wrap" + (currentBoard.bg !== "light" ? " bg-" + currentBoard.bg : "");
+  saveBoard();
+}));
+
+/* ---- Präsentationsmodus ---- */
+function applyPresentModeVisibility() {
+  document.querySelectorAll(".item-remove-btn, .item-drag-handle, .item-resize-handle").forEach(h => h.style.display = presentMode ? "none" : "flex");
+}
+function setPresentMode(on) {
+  presentMode = on;
+  document.getElementById("boardToolbarMain").style.display = presentMode ? "none" : "flex";
+  document.getElementById("exitPresentBtn").style.display = presentMode ? "block" : "none";
+  applyPresentModeVisibility();
+  if (presentMode) { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); }
+  else if (document.fullscreenElement) { document.exitFullscreen && document.exitFullscreen().catch(() => {}); }
+}
+document.getElementById("presentModeBtn").addEventListener("click", () => setPresentMode(true));
+document.getElementById("exitPresentBtn").addEventListener("click", () => setPresentMode(false));
+
+/* =========================================================================
+   ZUFALLSSCHÜLER
+   ========================================================================= */
+let currentRandomClass = null;
+let randomRemainingIds = [];
+function openRandomStudentForClass(className) {
+  currentRandomClass = className;
+  document.getElementById("randomStudent_title").textContent = `🎯 ${className}`;
+  resetRandomPool();
+  document.getElementById("randomStudentPhoto").innerHTML = "?";
+  document.getElementById("randomStudentName").textContent = "Bereit zum Auswählen";
+  updateRandomRemainingLabel();
+  showView("randomStudent");
+}
+function resetRandomPool() { randomRemainingIds = (classesData[currentRandomClass] || []).map(s => s.id); }
+function updateRandomRemainingLabel() {
+  const total = (classesData[currentRandomClass] || []).length;
+  document.getElementById("randomStudentRemaining").textContent = `${randomRemainingIds.length} von ${total} noch nicht dran gewesen`;
+}
+document.getElementById("randomDrawBtn").addEventListener("click", () => {
+  if (!classesData[currentRandomClass] || classesData[currentRandomClass].length === 0) { alert("Diese Klasse hat noch keine Schüler:innen."); return; }
+  if (randomRemainingIds.length === 0) resetRandomPool();
+  const idx = Math.floor(Math.random() * randomRemainingIds.length);
+  const studentId = randomRemainingIds.splice(idx, 1)[0];
+  const student = getStudent(currentRandomClass, studentId);
+  document.getElementById("randomStudentPhoto").innerHTML = student.photo ? `<img src="${student.photo}">` : initials(student);
+  document.getElementById("randomStudentName").textContent = `${student.firstName} ${student.lastName || ""}`.trim();
+  updateRandomRemainingLabel();
+});
+document.getElementById("randomResetBtn").addEventListener("click", () => {
+  resetRandomPool();
+  document.getElementById("randomStudentPhoto").innerHTML = "?";
+  document.getElementById("randomStudentName").textContent = "Bereit zum Auswählen";
+  updateRandomRemainingLabel();
+});
+
+/* =========================================================================
+   GRUPPENERSTELLUNG
+   ========================================================================= */
+let currentGroupsClass = null;
+let currentGroupSize = 2;
+function openGroupsSetupForClass(className) {
+  currentGroupsClass = className;
+  document.getElementById("groupsSetup_title").textContent = `👨‍👩‍👧‍👦 ${className}`;
+  document.getElementById("groupsResult").innerHTML = "";
+  document.querySelectorAll("[data-groupsize]").forEach(b => b.classList.toggle("active", Number(b.dataset.groupsize) === currentGroupSize));
+  showView("groupsSetup");
+}
+document.querySelectorAll("[data-groupsize]").forEach(b => b.addEventListener("click", () => {
+  currentGroupSize = Number(b.dataset.groupsize);
+  document.querySelectorAll("[data-groupsize]").forEach(x => x.classList.toggle("active", x === b));
+}));
+document.getElementById("createGroupsBtn").addEventListener("click", () => {
+  const students = (classesData[currentGroupsClass] || []).slice();
+  if (students.length === 0) { alert("Diese Klasse hat noch keine Schüler:innen."); return; }
+  const proportional = document.getElementById("groupsProportionalCheck").checked;
+  const numGroups = Math.max(1, Math.round(students.length / currentGroupSize));
+  const groups = Array.from({ length: numGroups }, () => []);
+  if (proportional) {
+    const byGender = { m: [], w: [], d: [] };
+    students.forEach(s => (byGender[s.gender] || byGender.d).push(s));
+    let placeCounter = 0;
+    Object.values(byGender).forEach(list => {
+      shuffleArr(list).forEach(s => { groups[placeCounter % numGroups].push(s); placeCounter++; });
+    });
+  } else {
+    shuffleArr(students).forEach((s, i) => groups[i % numGroups].push(s));
+  }
+  const genderIcon = { m: "♂", w: "♀", d: "⚧" };
+  document.getElementById("groupsResult").innerHTML = groups.map((g, i) => `
+    <div class="group-card">
+      <h4>Gruppe ${i + 1} (${g.length} Personen)</h4>
+      ${g.map(s => `<span class="gm"><span class="photo-drop">${s.photo ? `<img src="${s.photo}">` : initials(s)}</span>${escapeHtml(s.firstName)} ${genderIcon[s.gender] || ""}</span>`).join("")}
+    </div>`).join("");
+});
+
+/* =========================================================================
+   BEWEGUNGSPAUSE
+   ========================================================================= */
+const MOVEMENT_CATEGORIES = [
+  { id: "beine", title: "Beine", icon: "🦵" },
+  { id: "arme", title: "Arme", icon: "💪" },
+  { id: "koordination", title: "Koordination", icon: "🤹" },
+  { id: "outdoor", title: "Outdoor-Aufgabe", icon: "🌳" },
+  { id: "entspannung", title: "Entspannung", icon: "🧘" }
+];
+const MOVEMENT_EXERCISES = {
+  beine: [
+    { icon: "🦵", title: "Kniehebelauf auf der Stelle", duration: "2 Min.", text: "Knie hoch zur Brust ziehen, Arme mitschwingen.", detail: "1. Alle stehen an ihrem Platz, genug Abstand zueinander.\n2. Auf der Stelle laufen und dabei die Knie so hoch wie möglich zur Brust ziehen.\n3. Die Arme aktiv im Laufrhythmus mitschwingen.\n4. Nach 30 Sekunden 10 Sekunden Pause, dann erneut – insgesamt 2 Minuten." },
+    { icon: "🐸", title: "Strecksprünge", duration: "2 Min.", text: "Aus der Hocke hochstrecken und leicht landen.", detail: "1. In die Hocke gehen, Hände berühren kurz den Boden.\n2. Kräftig hochspringen und den Körper dabei ganz strecken, Arme nach oben.\n3. Weich in den Knien landen und sofort wieder in die Hocke.\n4. 10 Sprünge, kurz schütteln, dann eine zweite Runde." },
+    { icon: "🦶", title: "Ausfallschritte", duration: "3 Min.", text: "Grosse Schritte nach vorne, Knie beugen.", detail: "1. Aufrecht stehen, Hände in die Hüften.\n2. Mit dem rechten Bein einen grossen Schritt nach vorne machen und das vordere Knie beugen (nicht über die Fussspitze hinaus).\n3. Zurück in den Stand, dann mit dem linken Bein wiederholen.\n4. Pro Seite 8 Wiederholungen, insgesamt 2 Durchgänge." },
+    { icon: "🐇", title: "Hasensprünge", duration: "2 Min.", text: "In der Hocke vor- und zurückspringen.", detail: "1. In die tiefe Hocke gehen, Hände neben die Füsse auf den Boden.\n2. Mit beiden Beinen gleichzeitig nach vorne springen (wie ein Hase).\n3. Nach 5 Sprüngen umdrehen und wieder zurückspringen.\n4. 3 Runden hin und zurück." },
+    { icon: "🦵", title: "Fersenheber", duration: "2 Min.", text: "Langsam auf die Zehenspitzen und zurück.", detail: "1. Aufrecht stehen, Füsse hüftbreit.\n2. Langsam auf die Zehenspitzen heben, 2 Sekunden halten.\n3. Langsam zurück auf die ganze Sohle senken.\n4. 20 Wiederholungen, dann 20 Sekunden Pause und eine zweite Serie." },
+    { icon: "🪑", title: "Sitz-Steh-Wechsel", duration: "2 Min.", text: "Vom Stuhl aufstehen und wieder hinsetzen, im Tempo.", detail: "1. Am eigenen Stuhl/Pult stehen bleiben.\n2. Kontrolliert hinsetzen, ohne sich mit den Händen abzustützen.\n3. Sofort wieder aufstehen.\n4. 15× wiederholen, dann kurz schütteln und eine zweite Serie." },
+    { icon: "🦩", title: "Flamingo-Balance", duration: "2 Min.", text: "Auf einem Bein stehen und kleine Bewegungen machen.", detail: "1. Auf dem rechten Bein stehen, linkes Knie angehoben.\n2. 20 Sekunden halten, dabei mit den Armen leicht das Gleichgewicht ausgleichen.\n3. Bein wechseln.\n4. Für mehr Herausforderung: Augen dabei schliessen." }
+  ],
+  arme: [
+    { icon: "🙆", title: "Armkreisen", duration: "2 Min.", text: "Grosse Kreise mit gestreckten Armen.", detail: "1. Beide Arme seitlich auf Schulterhöhe strecken.\n2. Grosse, langsame Kreise machen: 15× vorwärts.\n3. Richtung wechseln: 15× rückwärts.\n4. Danach die Arme kurz ausschütteln." },
+    { icon: "🤸", title: "Liegestütz an der Wand", duration: "3 Min.", text: "Hände an die Wand, Arme beugen und strecken.", detail: "1. Etwa eine Armlänge von der Wand entfernt hinstellen.\n2. Hände auf Schulterhöhe flach an die Wand legen.\n3. Körper gerade halten und die Arme langsam beugen, bis das Gesicht sich der Wand nähert, dann wieder strecken.\n4. 12 Wiederholungen, 20 Sekunden Pause, dann eine zweite Serie." },
+    { icon: "👏", title: "Klatsch-Rhythmus", duration: "2 Min.", text: "Im Takt vorne, oben und hinten klatschen.", detail: "1. Alle stehen mit etwas Abstand.\n2. Im Takt klatschen: 2× vor dem Körper, 2× über dem Kopf, 2× hinter dem Rücken.\n3. Die Abfolge mehrmals wiederholen und das Tempo langsam steigern.\n4. Wer möchte, zählt dabei laut mit." },
+    { icon: "🥊", title: "Boxen auf der Stelle", duration: "2 Min.", text: "Abwechselnd mit links und rechts in die Luft boxen.", detail: "1. Leichte Grundstellung einnehmen, Knie locker.\n2. Abwechselnd mit links und rechts schnell nach vorne boxen.\n3. Dabei leicht in den Knien mitfedern.\n4. 30 Sekunden, 10 Sekunden Pause, insgesamt 2 Minuten." },
+    { icon: "🔃", title: "Schulterkreisen", duration: "2 Min.", text: "Schultern gross nach vorne und hinten kreisen.", detail: "1. Aufrecht stehen, Arme locker hängen lassen.\n2. Beide Schultern gleichzeitig 10× nach vorne kreisen.\n3. Danach 10× nach hinten kreisen.\n4. Zum Abschluss die Schultern einmal ganz hochziehen und fallen lassen." },
+    { icon: "🌊", title: "Armwellen", duration: "2 Min.", text: "Wellenbewegung von einer Hand zur anderen.", detail: "1. Beide Arme nach vorne strecken.\n2. Eine Handwelle beginnen: Finger, Hand, Unterarm, Oberarm nacheinander bewegen, als würde eine Welle durch den Arm laufen.\n3. Die Welle zur anderen Hand \"weiterschicken\".\n4. Mehrmals hin und her wiederholen." },
+    { icon: "✍️", title: "Buchstaben in die Luft schreiben", duration: "2 Min.", text: "Mit dem Arm den eigenen Namen in die Luft malen.", detail: "1. Einen Arm ausstrecken.\n2. Mit dem ganzen Arm (nicht nur der Hand) den eigenen Vornamen gross in die Luft schreiben.\n3. Danach mit dem anderen Arm wiederholen.\n4. Wer fertig ist, schreibt noch das Datum von heute." }
+  ],
+  koordination: [
+    { icon: "🤹", title: "Kopf-Bauch-Übung", duration: "2 Min.", text: "Kopf tätscheln, Bauch reiben – gleichzeitig.", detail: "1. Mit einer Hand sanft über den Kopf tätscheln.\n2. Mit der anderen Hand gleichzeitig kreisend über den Bauch reiben.\n3. Nach 20 Sekunden die Hände wechseln.\n4. Wer es schafft, darf auch versuchen, dabei zu gehen." },
+    { icon: "🧍", title: "Einbeinstand mit Augen zu", duration: "2 Min.", text: "Auf einem Bein balancieren, Augen geschlossen.", detail: "1. Auf einem Bein stehen, Arme zur Seite ausbreiten.\n2. Augen schliessen und 20 Sekunden die Balance halten.\n3. Augen öffnen, Bein wechseln, wiederholen.\n4. Zur Sicherheit genug Abstand zu Möbeln/anderen Personen lassen." },
+    { icon: "👆", title: "Finger-Nasen-Wechsel", duration: "2 Min.", text: "Abwechselnd mit links/rechts die Nase berühren.", detail: "1. Beide Arme ausstrecken.\n2. Mit dem rechten Zeigefinger die Nasenspitze berühren, Arm wieder ausstrecken.\n3. Mit dem linken Zeigefinger wiederholen.\n4. Immer schneller abwechseln, ohne die Nase zu verfehlen." },
+    { icon: "🔄", title: "Gegengleiches Armschwingen", duration: "3 Min.", text: "Arme gegengleich schwingen wie beim Gehen.", detail: "1. Aufrecht stehen.\n2. Rechten Arm nach vorne, linken Arm nach hinten schwingen – wie beim Gehen, aber übertrieben und ohne zu laufen.\n3. Dann wechseln: linker Arm vor, rechter Arm zurück.\n4. Fliessend im Wechsel weitermachen, Tempo langsam steigern." },
+    { icon: "✖️", title: "Überkreuz-Tippen", duration: "2 Min.", text: "Rechte Hand zum linken Knie und umgekehrt.", detail: "1. Aufrecht stehen.\n2. Das rechte Knie anheben und mit der linken Hand darauf tippen.\n3. Zurück in den Stand, dann linkes Knie mit rechter Hand.\n4. Im Wechsel 20× wiederholen, danach Tempo steigern." },
+    { icon: "🔢", title: "Zahlen in die Luft schreiben", duration: "2 Min.", text: "Mit dem Fuss Zahlen in die Luft zeichnen.", detail: "1. Auf einem Bein stehen (Wand oder Stuhl als Halt in der Nähe).\n2. Mit dem freien Fuss die Zahlen 1 bis 10 in die Luft zeichnen.\n3. Bein wechseln und wiederholen.\n4. Für mehr Schwierigkeit: dabei den eigenen Namen buchstabieren." },
+    { icon: "🪞", title: "Spiegelbild zu zweit", duration: "3 Min.", text: "Eine Person macht Bewegungen vor, die andere spiegelt.", detail: "1. Zu zweit gegenüberstellen.\n2. Person A macht langsame Bewegungen (Arme heben, Kopf drehen, in die Hocke gehen).\n3. Person B versucht, alles wie ein Spiegelbild gleichzeitig nachzumachen.\n4. Nach 1.5 Minuten die Rollen tauschen." }
+  ],
+  outdoor: [
+    { icon: "🏃", title: "Schulhausrunde", duration: "5 Min.", text: "Einmal zügig ums Schulhaus gehen oder joggen.", detail: "1. Gemeinsam nach draussen gehen.\n2. Einmal zügig um das Schulhaus (oder einen bekannten Rundweg) gehen oder leicht joggen.\n3. Wer möchte, joggt, wer lieber geht, geht zügig.\n4. Am Ausgangspunkt wieder sammeln." },
+    { icon: "🦆", title: "Tiergangarten", duration: "3 Min.", text: "Wie ein Bär, Frosch und Flamingo eine Strecke zurücklegen.", detail: "1. Eine kurze Strecke (z.B. 15 Schritte) markieren – reicht auch \"von hier bis zu jenem Baum\".\n2. Erste Runde: wie ein Bär auf allen Vieren gehen.\n3. Zweite Runde: wie ein Frosch in Sprüngen hüpfen.\n4. Dritte Runde: wie ein Flamingo auf einem Bein hüpfen." },
+    { icon: "🌗", title: "Schattenspringen", duration: "3 Min.", text: "Zu zweit versuchen, auf den Schatten der anderen Person zu treten.", detail: "1. Zu zweit zusammenfinden (nur bei Sonnenschein möglich).\n2. Eine Person versucht, auf den Schatten der anderen zu treten, während diese ausweicht.\n3. Nach 1.5 Minuten Rollen tauschen.\n4. Bei bewölktem Himmel stattdessen \"Tiergangarten\" wählen." },
+    { icon: "🍂", title: "Blätter-Fangen", duration: "3 Min.", text: "Versuchen, herabfallende Blätter zu fangen, bevor sie den Boden berühren.", detail: "1. Nach draussen gehen, wo Bäume/Sträucher sind.\n2. Blätter oder kleine Zweige selber hochwerfen und versuchen, sie zu fangen, bevor sie landen.\n3. Wer keine Blätter findet, wirft und fängt einfach die eigene Jacke/Mütze.\n4. Nach ein paar Minuten gemeinsam zurückgehen." },
+    { icon: "🎨", title: "Farben-Suche", duration: "3 Min.", text: "So schnell wie möglich etwas in einer genannten Farbe berühren.", detail: "1. Die Lehrperson ruft eine Farbe (z.B. \"Grün!\").\n2. Alle laufen los und berühren möglichst schnell etwas in dieser Farbe (Gras, Blatt, Jacke ...).\n3. Sobald alle etwas berührt haben, folgt die nächste Farbe.\n4. 5–6 Farben durchspielen." },
+    { icon: "🌳", title: "Baum-Staffel", duration: "4 Min.", text: "Um einen Baum/Pfosten laufen und zurück.", detail: "1. Einen Baum, Pfosten oder eine Ecke als Wendepunkt bestimmen (ca. 15–20 m entfernt).\n2. Nacheinander (oder alle gleichzeitig mit Abstand) zum Wendepunkt laufen, einmal darum herum und zurück.\n3. 2–3 Wiederholungen.\n4. Variante: rückwärts gehen auf dem Rückweg." },
+    { icon: "🔙", title: "Rückwärtsgehen-Parcours", duration: "3 Min.", text: "Eine kurze Strecke rückwärts gehen.", detail: "1. Eine kurze, freie Strecke im Freien wählen.\n2. Vorsichtig rückwärts gehen, dabei über die Schulter schauen.\n3. Am Ende umdrehen und normal zurückgehen.\n4. 2–3 Wiederholungen, auf Hindernisse achten." }
+  ],
+  entspannung: [
+    { icon: "🧘", title: "Bauchatmung", duration: "2 Min.", text: "Ruhig ein- und ausatmen, Hände auf dem Bauch.", detail: "1. Bequem hinsetzen, Hände auf den Bauch legen.\n2. Langsam durch die Nase einatmen – der Bauch hebt sich unter den Händen.\n3. Langsam durch den Mund ausatmen – der Bauch senkt sich wieder.\n4. 6-mal wiederholen, dabei ganz ruhig bleiben." },
+    { icon: "💆", title: "Schulter- und Nackenlockerung", duration: "2 Min.", text: "Schultern kreisen, Kopf sanft neigen.", detail: "1. Aufrecht und bequem sitzen.\n2. Schultern 5× langsam nach vorne, dann 5× nach hinten kreisen.\n3. Kopf sanft zur rechten Schulter neigen, 5 Sekunden halten, dann zur linken Seite.\n4. Zum Schluss den Kopf einmal ganz langsam im Kreis bewegen." },
+    { icon: "🌅", title: "Fantasiereise: Der Strand", duration: "3 Min.", text: "Augen schliessen und sich einen ruhigen Strand vorstellen.", detail: "Die Lehrperson liest langsam und ruhig vor, mit kleinen Pausen (...):\n\n\"Setz dich bequem hin und schliesse die Augen ... Atme einmal tief ein und aus ...\nStell dir vor, du stehst an einem warmen, ruhigen Strand ... Der Sand ist weich und warm unter deinen Füssen ... Du hörst die Wellen, die sanft ans Ufer rollen ... hin und her, hin und her ...\nDie Sonne wärmt dein Gesicht, ein leichter Wind streicht durch deine Haare ... Du atmest die frische, salzige Luft ein ... und wieder aus ...\nDu gehst ein paar Schritte am Wasser entlang, das Wasser berührt sanft deine Füsse ... angenehm kühl ...\nGeniesse noch einen Moment diese Ruhe ... Wenn du bereit bist, bewege langsam deine Finger und Zehen ... und öffne die Augen.\"" },
+    { icon: "🤲", title: "Muskelanspannung und -entspannung", duration: "3 Min.", text: "Körperteile fest anspannen, dann loslassen.", detail: "1. Bequem sitzen, Augen dürfen geschlossen werden.\n2. Beide Hände zu Fäusten ballen und 5 Sekunden fest anspannen ... dann loslassen und spüren, wie sich die Hände warm und schwer anfühlen.\n3. Das Gleiche mit den Armen, dann mit den Schultern (hochziehen und fallen lassen).\n4. Zum Schluss das ganze Gesicht 5 Sekunden zusammenkneifen, dann komplett entspannen." },
+    { icon: "👀", title: "5-4-3-2-1 Sinnesübung", duration: "2 Min.", text: "Der Reihe nach Dinge sehen, hören, fühlen, riechen, schmecken.", detail: "Die Lehrperson liest langsam vor, mit Pausen zum Nachdenken:\n\n\"Schau dich um und finde in Gedanken 5 Dinge, die du sehen kannst ...\nHöre nun auf 4 Geräusche in oder ausserhalb des Zimmers ...\nSpüre 3 Dinge, die deine Haut gerade berührt (Kleidung, Stuhl, Luft) ...\nRieche 2 Dinge, die du gerade wahrnehmen kannst ...\nUnd finde 1 Ding, das du gerade schmecken kannst.\"\n\nZum Schluss einmal tief durchatmen." },
+    { icon: "🌌", title: "Fantasiereise: Die Wolke", duration: "3 Min.", text: "Sich vorstellen, auf einer weichen Wolke zu schweben.", detail: "Die Lehrperson liest langsam und ruhig vor:\n\n\"Schliesse die Augen und atme ruhig ein und aus ...\nStell dir vor, du liegst auf einer weichen, kuscheligen Wolke ... Sie trägt dich ganz sanft, du schwebst langsam durch den blauen Himmel ...\nUnter dir siehst du kleine Häuser, grüne Wiesen und einen Fluss, der sich durch die Landschaft schlängelt ...\nDie Wolke ist angenehm warm und weich, du fühlst dich sicher und ruhig ...\nEin sanfter Wind schaukelt dich leicht hin und her ... hin und her ...\nGeniesse noch einen Moment dieses ruhige Schweben ... Dann bewege langsam deine Hände und Füsse ... und komm langsam zurück in den Raum ... öffne die Augen.\"" },
+    { icon: "🕯️", title: "Ruhiges Zählen", duration: "2 Min.", text: "Mit geschlossenen Augen langsam von 1 bis 20 zählen.", detail: "1. Augen schliessen und bequem sitzen.\n2. In Gedanken (oder die Lehrperson laut, ganz langsam) von 1 bis 20 zählen.\n3. Bei jeder Zahl einmal ruhig ein- und ausatmen.\n4. Am Ende die Augen langsam wieder öffnen." }
+  ]
+};
+function renderMovementCats() {
+  document.getElementById("movementCatsList").innerHTML = MOVEMENT_CATEGORIES.map(c => `
+    <div class="movement-cat-tile" data-cat="${c.id}"><span class="mc-icon">${c.icon}</span>${escapeHtml(c.title)}</div>`).join("");
+  document.querySelectorAll(".movement-cat-tile").forEach(t => t.addEventListener("click", () => openMovementCategory(t.dataset.cat)));
+}
+function openMovementCategory(catId) {
+  const cat = MOVEMENT_CATEGORIES.find(c => c.id === catId);
+  document.getElementById("movementList_title").textContent = `${cat.icon} ${cat.title}`;
+  const exercises = MOVEMENT_EXERCISES[catId] || [];
+  document.getElementById("movementExerciseList").innerHTML = exercises.map((ex, i) => `
+    <div class="movement-ex-card" data-cat="${catId}" data-idx="${i}" style="cursor:pointer;">
+      <div class="movement-ex-icon">${ex.icon}</div>
+      <div>
+        <div class="movement-ex-title">${escapeHtml(ex.title)}</div>
+        <div class="movement-ex-duration">⏱ ${ex.duration}</div>
+        <div class="movement-ex-text">${escapeHtml(ex.text)}</div>
+        <div style="font-size:0.78rem; color:var(--accent); font-weight:700; margin-top:6px;">Antippen für genaue Anleitung ▸</div>
+      </div>
+    </div>`).join("");
+  document.querySelectorAll(".movement-ex-card").forEach(card => card.addEventListener("click", () => {
+    const ex = MOVEMENT_EXERCISES[card.dataset.cat][Number(card.dataset.idx)];
+    openMovementDetail(ex);
+  }));
+  showView("movementList");
+}
+function openMovementDetail(ex) {
+  document.getElementById("movementDetailIcon").textContent = ex.icon;
+  document.getElementById("movementDetailTitle").textContent = ex.title;
+  document.getElementById("movementDetailDuration").textContent = `⏱ ${ex.duration}`;
+  document.getElementById("movementDetailText").textContent = ex.detail || ex.text;
+  document.getElementById("movementDetailModal").classList.remove("hidden");
+}
+document.getElementById("movementDetailClose").addEventListener("click", () => document.getElementById("movementDetailModal").classList.add("hidden"));
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
+}
+</script>
+</body>
+</html>
