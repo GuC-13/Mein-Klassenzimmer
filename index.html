@@ -30,10 +30,12 @@
   .btn:disabled { opacity: 0.5; cursor: default; }
 
   /* HOME */
-  .home-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 24px; }
-  .home-tile { border: none; border-radius: 18px; padding: 30px 18px; cursor: pointer; color: white; font-weight: 800; font-size: 1.2rem; text-align: left; display: flex; align-items: center; gap: 16px; }
-  .home-tile .ti { font-size: 2.2rem; }
-  .home-tile .sub-text { display: block; font-size: 0.85rem; font-weight: 500; opacity: 0.9; margin-top: 4px; }
+  .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  .home-tile { border: none; border-radius: 18px; padding: 22px 14px; cursor: grab; color: white; font-weight: 800; font-size: 1.05rem; text-align: left; display: flex; align-items: center; gap: 10px; touch-action: none; user-select: none; position: relative; width: 100%; }
+  .home-tile.dragging { opacity: 0.35; }
+  .home-tile .ti { font-size: 1.8rem; flex-shrink: 0; }
+  .home-tile .sub-text { display: block; font-size: 0.72rem; font-weight: 500; opacity: 0.9; margin-top: 3px; }
+  .home-tile-ghost { position: fixed; z-index: 500; pointer-events: none; opacity: 0.9; border-radius: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.35); }
   .tile-classes { background: linear-gradient(135deg, #2563eb, #1e3a8a); }
   .tile-seating { background: linear-gradient(135deg, #16a34a, #14532d); }
   .tile-behavior { background: linear-gradient(135deg, #d97706, #92400e); }
@@ -86,15 +88,17 @@
   .pool-chip .photo-drop { width: 30px; height: 30px; font-size: 0.75rem; border: none; cursor: default; }
   .pool-chip .pc-name { font-size: 0.82rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .seating-canvas-wrap { flex: 1; overflow: auto; background: #eef2f7; border: 1px solid var(--border); border-radius: 12px; max-height: 640px; }
+  .seating-canvas-sizer { position: relative; }
   .seating-canvas { position: relative; width: 1900px; height: 1200px;
     background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
     background-size: 40px 40px; }
   .table-el, .object-el { position: absolute; top: 0; left: 0; touch-action: none; user-select: none; }
-  .table-shape { background: #d6c199; border: 2px solid #a3835a; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
-  .table-1er .table-shape { width: 74px; height: 74px; }
-  .table-2er .table-shape { width: 150px; height: 74px; }
-  .object-shape { border-radius: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); color: white; font-weight: 700; font-size: 0.68rem; text-align: center; padding: 2px; line-height: 1.1; }
+  .table-shape { background: #d6c199; border: 2px solid #a3835a; border-radius: 8px; display: flex; align-items: center; justify-content: space-evenly; gap: 6px; padding: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); box-sizing: border-box; }
+  .object-shape { border-radius: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); color: white; font-weight: 700; font-size: 0.68rem; text-align: center; padding: 2px; line-height: 1.1; box-sizing: border-box; }
   .object-shape span { transform-origin: center; }
+  .zoom-controls { display: flex; align-items: center; gap: 6px; }
+  .zoom-controls button { width: 34px; height: 34px; border-radius: 8px; border: 2px solid var(--border); background: white; font-weight: 800; font-size: 1rem; cursor: pointer; }
+  .zoom-controls .zoom-label { font-size: 0.82rem; font-weight: 700; color: var(--muted); min-width: 42px; text-align: center; }
   .seat { width: 58px; height: 58px; border-radius: 50%; background: white; border: 2px solid #94a3b8; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: grab; overflow: hidden; touch-action: none; text-align: center; flex-shrink: 0; }
   .seat.empty { border-style: dashed; color: var(--muted); font-size: 0.7rem; cursor: default; }
   .seat .seat-photo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; margin-bottom: 2px; }
@@ -102,6 +106,7 @@
   .table-remove-btn, .table-rotate-handle { position: absolute; width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
   .table-remove-btn { top: -10px; right: -10px; background: var(--danger); color: white; z-index: 3; }
   .table-rotate-handle { bottom: -10px; right: -10px; background: var(--accent); color: white; cursor: grab; z-index: 3; touch-action: none; }
+  .table-resize-handle { position: absolute; bottom: -10px; left: -10px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; background: #16a34a; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; cursor: nwse-resize; z-index: 3; touch-action: none; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
   .drag-ghost { position: fixed; z-index: 500; pointer-events: none; opacity: 0.85; transform: translate(-50%, -50%); }
   .toggle-line { display: flex; align-items: center; gap: 8px; }
   .display-opt-btn { background: white; border: 2px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
@@ -144,6 +149,9 @@
   .material-icon.allowed .mat-badge { background: var(--success); }
   .material-icon.forbidden .mat-badge { background: var(--danger); }
   .material-icon .mat-label { font-size: 0.6rem; font-weight: 700; margin-top: 4px; }
+  .material-icon .mat-icon-inner { display: inline-flex; align-items: center; justify-content: center; min-height: 26px; }
+  .material-icon .mat-remove-btn { position: absolute; top: -8px; left: -8px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); color: white; border: 2px solid white; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
+  .material-icon.add-material { border-style: dashed; border-color: var(--border); background: var(--bg); color: var(--muted); cursor: pointer; }
 
   /* GRUPPEN */
   .group-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
@@ -177,15 +185,8 @@
   <div id="homeView" class="view">
     <h1>🏫 Klassenzimmer-Manager</h1>
     <h2 class="sub">Klassen, Sitzordnung &amp; Verhalten</h2>
-    <div class="home-grid">
-      <button class="home-tile tile-classes" data-home="classes"><span class="ti">👥</span><span><span>Klassen verwalten</span><span class="sub-text">Schüler:innen, Fotos, Geschlecht</span></span></button>
-      <button class="home-tile tile-seating" data-home="seatingPick"><span class="ti">🪑</span><span><span>Sitzordnung</span><span class="sub-text">Tische anordnen, SuS zuteilen</span></span></button>
-      <button class="home-tile tile-behavior" data-home="behaviorPick"><span class="ti">📝</span><span><span>Schülerverhalten</span><span class="sub-text">Kommentare erfassen &amp; auswerten</span></span></button>
-      <button class="home-tile tile-board" data-home="boardsList"><span class="ti">🖥️</span><span><span>Leinwand</span><span class="sub-text">Infoboard, Timer, Material-Anzeige</span></span></button>
-      <button class="home-tile tile-random" data-home="randomPick"><span class="ti">🎯</span><span><span>Zufallsschüler</span><span class="sub-text">Zufällig eine Person auswählen</span></span></button>
-      <button class="home-tile tile-groups" data-home="groupsPick"><span class="ti">👨‍👩‍👧‍👦</span><span><span>Gruppenerstellung</span><span class="sub-text">Zufallsgruppen bilden</span></span></button>
-      <button class="home-tile tile-movement" data-home="movementCats"><span class="ti">🤸</span><span><span>Bewegungspause</span><span class="sub-text">Kurze Auflockerungsübungen</span></span></button>
-    </div>
+    <h2 class="sub" style="margin-top:-8px; font-size:0.78rem;">Boxen lange gedrückt halten und ziehen, um die Reihenfolge zu ändern</h2>
+    <div class="home-grid" id="homeGrid"></div>
   </div>
 
   <!-- KLASSEN: Übersicht -->
@@ -257,7 +258,7 @@
 
   <!-- SITZORDNUNG: Editor -->
   <div id="seatingEditorView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-seatinglist">← Sitzordnungen</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-seatinglist>← Sitzordnungen</button></div>
     <h1 id="seatingEditor_title"></h1>
     <h2 class="sub" id="seatingEditor_updated" style="margin-bottom:12px;"></h2>
     <div class="seating-toolbar">
@@ -266,6 +267,16 @@
       <button class="btn" id="randomAssignBtn">🎲 Zufällig verteilen</button>
       <label class="toggle-line" style="font-size:0.85rem; font-weight:600;"><input type="checkbox" id="alternateGenderCheck" checked> ♂♀ nebeneinander bevorzugen</label>
       <button class="btn btn-outline danger" id="clearSeatsBtn">Plätze leeren</button>
+      <button class="btn btn-outline" id="copySeatingBtn">📋 In andere Klasse kopieren</button>
+    </div>
+    <div class="seating-toolbar">
+      <span style="font-size:0.82rem; font-weight:700; color:var(--muted);">Ansicht:</span>
+      <div class="zoom-controls">
+        <button id="zoomOutBtn">−</button>
+        <span class="zoom-label" id="zoomLabel">100%</span>
+        <button id="zoomInBtn">+</button>
+        <button id="zoomResetBtn" style="width:auto; padding:0 10px;">Reset</button>
+      </div>
     </div>
     <div class="seating-toolbar">
       <span style="font-size:0.82rem; font-weight:700; color:var(--muted);">Raum-Objekte:</span>
@@ -288,7 +299,9 @@
         <div id="seatingPool"></div>
       </div>
       <div class="seating-canvas-wrap">
-        <div class="seating-canvas" id="seatingCanvas"></div>
+        <div class="seating-canvas-sizer" id="seatingCanvasSizer">
+          <div class="seating-canvas" id="seatingCanvas"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -487,6 +500,19 @@
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="copySeatingModal">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;">📋 Sitzordnung kopieren</p>
+    <p style="font-size:0.85rem; color:var(--muted); margin-top:-8px;">Die Tisch-/Objektanordnung wird übernommen, die Plätze bleiben leer.</p>
+    <label class="field-label">Zielklasse</label>
+    <select id="copySeatingClassSelect"></select>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="copySeatingCancel">Abbrechen</button>
+      <button class="btn" id="copySeatingConfirm">Kopieren</button>
+    </div>
+  </div>
+</div>
+
 <!-- Add Board Modal -->
 <div class="modal-overlay hidden" id="boardModal">
   <div class="modal-box">
@@ -500,6 +526,20 @@
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="addMaterialItemModal">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;">➕ Material hinzufügen</p>
+    <label class="field-label">Bezeichnung</label>
+    <input type="text" id="addMaterialItemName" placeholder="z.B. Lineal">
+    <label class="field-label">Symbol (Emoji, z.B. über die Emoji-Tastatur)</label>
+    <input type="text" id="addMaterialItemIcon" placeholder="z.B. 📏" maxlength="4">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="addMaterialItemCancel">Abbrechen</button>
+      <button class="btn" id="addMaterialItemSave">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
 <!-- Add Comment Modal -->
 <div class="modal-overlay hidden" id="commentModal">
   <div class="modal-box">
@@ -508,6 +548,8 @@
     <input type="date" id="commentDateInput">
     <label class="field-label">Kommentar</label>
     <textarea id="commentTextInput" rows="4" placeholder="Beobachtung, Vorfall, Lob ..."></textarea>
+    <button class="btn btn-outline" id="toggleParticipantsBtn" style="width:100%; margin-top:10px;">👥 Beteiligte SuS (gleicher Kommentar für mehrere)</button>
+    <div id="participantsArea" class="hidden" style="max-height:180px; overflow-y:auto; margin-top:8px; border:1px solid var(--border); border-radius:8px; padding:8px;"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="commentModalCancel">Abbrechen</button>
       <button class="btn" id="commentModalSave">Speichern</button>
@@ -658,8 +700,28 @@ document.querySelectorAll("[data-back-randompick]").forEach(b => b.addEventListe
 document.querySelectorAll("[data-back-groupspick]").forEach(b => b.addEventListener("click", () => showView("groupsPick")));
 document.querySelectorAll("[data-back-movementcats]").forEach(b => b.addEventListener("click", () => showView("movementCats")));
 
-document.querySelectorAll("[data-home]").forEach(btn => btn.addEventListener("click", () => {
-  const target = btn.dataset.home;
+/* ---- Home: Kacheln, Reihenfolge per Drag&Drop ---- */
+const HOME_TILES = [
+  { id: "classes", cls: "tile-classes", icon: "👥", title: "Klassen verwalten", sub: "Schüler:innen, Fotos, Geschlecht" },
+  { id: "seatingPick", cls: "tile-seating", icon: "🪑", title: "Sitzordnung", sub: "Tische anordnen, SuS zuteilen" },
+  { id: "behaviorPick", cls: "tile-behavior", icon: "📝", title: "Schülerverhalten", sub: "Kommentare erfassen & auswerten" },
+  { id: "boardsList", cls: "tile-board", icon: "🖥️", title: "Leinwand", sub: "Infoboard, Timer, Material-Anzeige" },
+  { id: "randomPick", cls: "tile-random", icon: "🎯", title: "Zufallsschüler", sub: "Zufällig eine Person auswählen" },
+  { id: "groupsPick", cls: "tile-groups", icon: "👨‍👩‍👧‍👦", title: "Gruppenerstellung", sub: "Zufallsgruppen bilden" },
+  { id: "movementCats", cls: "tile-movement", icon: "🤸", title: "Bewegungspause", sub: "Kurze Auflockerungsübungen" }
+];
+const HOME_ORDER_KEY = "kz_home_order";
+function getHomeOrder() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(HOME_ORDER_KEY) || "null"); } catch (e) {}
+  const ids = HOME_TILES.map(t => t.id);
+  if (!Array.isArray(saved)) return ids;
+  const filtered = saved.filter(id => ids.includes(id));
+  ids.forEach(id => { if (!filtered.includes(id)) filtered.push(id); });
+  return filtered;
+}
+function saveHomeOrder(order) { localStorage.setItem(HOME_ORDER_KEY, JSON.stringify(order)); }
+function navigateHome(target) {
   if (target === "classes") { renderClassesList(); showView("classes"); }
   else if (target === "seatingPick") { renderClassPickerList("seatingClassList", (name) => openSeatingListForClass(name)); showView("seatingPick"); }
   else if (target === "behaviorPick") { renderClassPickerList("behaviorClassList", (name) => openBehaviorForClass(name)); showView("behaviorPick"); }
@@ -667,7 +729,63 @@ document.querySelectorAll("[data-home]").forEach(btn => btn.addEventListener("cl
   else if (target === "randomPick") { renderClassPickerList("randomClassList", (name) => openRandomStudentForClass(name)); showView("randomPick"); }
   else if (target === "groupsPick") { renderClassPickerList("groupsClassList", (name) => openGroupsSetupForClass(name)); showView("groupsPick"); }
   else if (target === "movementCats") { renderMovementCats(); showView("movementCats"); }
-}));
+}
+function renderHomeTiles() {
+  const order = getHomeOrder();
+  const grid = document.getElementById("homeGrid");
+  grid.innerHTML = order.map(id => {
+    const t = HOME_TILES.find(x => x.id === id);
+    return `<button class="home-tile ${t.cls}" data-home="${t.id}"><span class="ti">${t.icon}</span><span><span>${escapeHtml(t.title)}</span><span class="sub-text">${escapeHtml(t.sub)}</span></span></button>`;
+  }).join("");
+  wireHomeTileDrag();
+}
+function wireHomeTileDrag() {
+  let homeGhost = null, draggingId = null, startX = 0, startY = 0, dragging = false, sourceEl = null;
+  document.querySelectorAll(".home-tile").forEach(tile => {
+    tile.addEventListener("pointerdown", (e) => {
+      draggingId = tile.dataset.home; sourceEl = tile;
+      startX = e.clientX; startY = e.clientY; dragging = false;
+      try { tile.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    tile.addEventListener("pointermove", (e) => {
+      if (!draggingId || sourceEl !== tile) return;
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      if (!dragging && Math.hypot(dx, dy) > 12) {
+        dragging = true;
+        tile.classList.add("dragging");
+        const rect = tile.getBoundingClientRect();
+        homeGhost = tile.cloneNode(true);
+        homeGhost.className = "home-tile home-tile-ghost " + tile.className.replace("dragging", "");
+        homeGhost.style.width = rect.width + "px";
+        homeGhost.style.height = rect.height + "px";
+        document.body.appendChild(homeGhost);
+      }
+      if (dragging && homeGhost) {
+        homeGhost.style.left = (e.clientX - homeGhost.offsetWidth / 2) + "px";
+        homeGhost.style.top = (e.clientY - homeGhost.offsetHeight / 2) + "px";
+      }
+    });
+    tile.addEventListener("pointerup", (e) => {
+      if (draggingId !== tile.dataset.home || sourceEl !== tile) return;
+      if (!dragging) { draggingId = null; sourceEl = null; navigateHome(tile.dataset.home); return; }
+      tile.classList.remove("dragging");
+      if (homeGhost) { homeGhost.remove(); homeGhost = null; }
+      const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+      const dropTile = dropTarget ? dropTarget.closest(".home-tile") : null;
+      if (dropTile && dropTile.dataset.home !== draggingId) {
+        const order = getHomeOrder();
+        const fromIdx = order.indexOf(draggingId);
+        const toIdx = order.indexOf(dropTile.dataset.home);
+        order.splice(fromIdx, 1);
+        order.splice(toIdx, 0, draggingId);
+        saveHomeOrder(order);
+        renderHomeTiles();
+      }
+      draggingId = null; sourceEl = null; dragging = false;
+    });
+  });
+}
+renderHomeTiles();
 
 function renderClassPickerList(containerId, onPick) {
   const el = document.getElementById(containerId);
@@ -1174,11 +1292,12 @@ function renderSeatingList(className) {
     <div class="list-row" data-id="${s.id}">
       <div><div class="lr-title">${escapeHtml(s.name)}</div><div class="lr-sub">${s.tables.length} Tisch(e) · zuletzt geändert: ${formatDateTimeDE(s.updatedAt)}</div></div>
       <div class="lr-actions">
+        <button class="icon-btn" data-copy="${s.id}">📋</button>
         <button class="icon-btn danger" data-del="${s.id}">🗑</button>
       </div>
     </div>`).join("");
   el.querySelectorAll(".list-row").forEach(row => row.addEventListener("click", (e) => {
-    if (e.target.closest("[data-del]")) return;
+    if (e.target.closest("[data-del]") || e.target.closest("[data-copy]")) return;
     openSeatingEditor(row.dataset.id);
   }));
   el.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", (e) => {
@@ -1189,8 +1308,36 @@ function renderSeatingList(className) {
       renderSeatingList(className);
     }, "Löschen");
   }));
+  el.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openCopySeatingModal(b.dataset.copy);
+  }));
   showView("seatingList");
 }
+let copySeatingSourceId = null;
+function openCopySeatingModal(seatingId) {
+  copySeatingSourceId = seatingId;
+  const others = Object.keys(classesData).filter(c => c !== currentSeatingClass);
+  if (others.length === 0) { openConfirm("Es gibt keine andere Klasse, in die kopiert werden könnte.", null, "OK"); return; }
+  document.getElementById("copySeatingClassSelect").innerHTML = others.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  document.getElementById("copySeatingModal").classList.remove("hidden");
+}
+document.getElementById("copySeatingCancel").addEventListener("click", () => document.getElementById("copySeatingModal").classList.add("hidden"));
+document.getElementById("copySeatingConfirm").addEventListener("click", () => {
+  const targetClass = document.getElementById("copySeatingClassSelect").value;
+  const source = (seatingsData[currentSeatingClass] || []).find(s => s.id === copySeatingSourceId);
+  if (!source || !targetClass) return;
+  const clone = JSON.parse(JSON.stringify(source));
+  clone.id = uid();
+  clone.name = source.name + " (Kopie)";
+  clone.updatedAt = Date.now();
+  clone.tables.forEach(t => { t.seats = t.seats.map(() => null); });
+  if (!seatingsData[targetClass]) seatingsData[targetClass] = [];
+  seatingsData[targetClass].push(clone);
+  persistSeatings();
+  document.getElementById("copySeatingModal").classList.add("hidden");
+  openConfirm(`Sitzordnung wurde in Klasse "${targetClass}" kopiert (ohne Schüler:innen-Zuteilung).`, null, "OK");
+});
 document.getElementById("addSeatingBtn").addEventListener("click", () => {
   document.getElementById("seatingNameInput").value = "";
   document.getElementById("seatingModal").classList.remove("hidden");
@@ -1206,6 +1353,23 @@ document.getElementById("seatingModalSave").addEventListener("click", () => {
   openSeatingEditor(newSeating.id);
 });
 
+document.getElementById("copySeatingBtn").addEventListener("click", () => openCopySeatingModal(currentSeating.id));
+
+/* ---- Zoom ---- */
+let seatingZoom = 1;
+function applyZoom() {
+  const canvas = document.getElementById("seatingCanvas");
+  canvas.style.transform = `scale(${seatingZoom})`;
+  canvas.style.transformOrigin = "0 0";
+  const sizer = document.getElementById("seatingCanvasSizer");
+  sizer.style.width = (1900 * seatingZoom) + "px";
+  sizer.style.height = (1200 * seatingZoom) + "px";
+  document.getElementById("zoomLabel").textContent = Math.round(seatingZoom * 100) + "%";
+}
+document.getElementById("zoomInBtn").addEventListener("click", () => { seatingZoom = Math.min(2, Math.round((seatingZoom + 0.1) * 10) / 10); applyZoom(); });
+document.getElementById("zoomOutBtn").addEventListener("click", () => { seatingZoom = Math.max(0.3, Math.round((seatingZoom - 0.1) * 10) / 10); applyZoom(); });
+document.getElementById("zoomResetBtn").addEventListener("click", () => { seatingZoom = 1; applyZoom(); });
+
 function openSeatingEditor(seatingId) {
   currentSeating = (seatingsData[currentSeatingClass] || []).find(s => s.id === seatingId);
   if (!currentSeating) return;
@@ -1213,6 +1377,8 @@ function openSeatingEditor(seatingId) {
   document.getElementById("seatingEditor_title").textContent = `🪑 ${currentSeating.name}`;
   document.getElementById("seatingEditor_updated").textContent = `Zuletzt geändert: ${formatDateTimeDE(currentSeating.updatedAt)}`;
   document.getElementById("alternateGenderCheck").checked = true;
+  seatingZoom = 1;
+  applyZoom();
   renderDisplayOptButtons();
   renderSeatingCanvas();
   renderSeatingPool();
@@ -1258,9 +1424,30 @@ const OBJECT_DEFS = {
 };
 document.querySelectorAll("[data-add-object]").forEach(b => b.addEventListener("click", () => addObject(b.dataset.addObject)));
 function addObject(kind) {
-  currentSeating.objects.push({ id: uid(), kind, x: 40 + Math.random() * 100, y: 40 + Math.random() * 100, rot: 0 });
+  const def = OBJECT_DEFS[kind];
+  currentSeating.objects.push({ id: uid(), kind, x: 40 + Math.random() * 100, y: 40 + Math.random() * 100, rot: 0, w: def.w, h: def.h });
   saveSeating();
   renderSeatingCanvas();
+}
+function wireResizeHandle(handleEl, obj, minW, minH, onResize) {
+  let dragging = false, startX = 0, startY = 0, origW = 0, origH = 0;
+  handleEl.addEventListener("pointerdown", (e) => {
+    e.stopPropagation();
+    dragging = true; startX = e.clientX; startY = e.clientY; origW = obj.w; origH = obj.h;
+    try { handleEl.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  handleEl.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    obj.w = Math.max(minW, Math.round(origW + (e.clientX - startX) / seatingZoom));
+    obj.h = Math.max(minH, Math.round(origH + (e.clientY - startY) / seatingZoom));
+    onResize(obj);
+  });
+  handleEl.addEventListener("pointerup", (e) => {
+    if (!dragging) return;
+    e.stopPropagation();
+    dragging = false;
+    saveSeating();
+  });
 }
 function renderSeatingCanvas() {
   const canvas = document.getElementById("seatingCanvas");
@@ -1268,16 +1455,18 @@ function renderSeatingCanvas() {
   (currentSeating.objects || []).forEach(o => {
     const def = OBJECT_DEFS[o.kind];
     if (!def) return;
+    if (!o.w) { o.w = def.w; o.h = def.h; }
     const objEl = document.createElement("div");
     objEl.className = "object-el";
     objEl.dataset.objectId = o.id;
-    objEl.style.width = def.w + "px"; objEl.style.height = def.h + "px";
+    objEl.style.width = o.w + "px"; objEl.style.height = o.h + "px";
     objEl.innerHTML = `
-      <div class="object-shape" style="width:${def.w}px; height:${def.h}px; background:${def.color};">
+      <div class="object-shape" style="width:${o.w}px; height:${o.h}px; background:${def.color};">
         <span>${escapeHtml(def.label)}</span>
       </div>
       <button class="table-remove-btn" data-remove-object="${o.id}">✕</button>
-      <div class="table-rotate-handle" data-rotate-object="${o.id}">⟳</div>`;
+      <div class="table-rotate-handle" data-rotate-object="${o.id}">⟳</div>
+      <div class="table-resize-handle" data-resize-object="${o.id}">⤡</div>`;
     canvas.appendChild(objEl);
     updateTableTransform(objEl, o);
     wireTableDrag(objEl, o);
@@ -1287,9 +1476,15 @@ function renderSeatingCanvas() {
       saveSeating(); renderSeatingCanvas();
     });
     wireRotateHandle(objEl.querySelector("[data-rotate-object]"), objEl, o);
+    wireResizeHandle(objEl.querySelector("[data-resize-object]"), o, 20, 20, (obj) => {
+      objEl.style.width = obj.w + "px"; objEl.style.height = obj.h + "px";
+      const shape = objEl.querySelector(".object-shape");
+      shape.style.width = obj.w + "px"; shape.style.height = obj.h + "px";
+    });
   });
   currentSeating.tables.forEach(t => {
-    const dims = tableDims(t.type);
+    if (!t.w) { const d = tableDims(t.type); t.w = d.w; t.h = d.h; }
+    const dims = { w: t.w, h: t.h };
     const tableEl = document.createElement("div");
     tableEl.className = `table-el table-${t.type}`;
     tableEl.dataset.tableId = t.id;
@@ -1299,7 +1494,8 @@ function renderSeatingCanvas() {
         ${t.seats.map((sid, idx) => renderSeatHTML(t, sid, idx)).join("")}
       </div>
       <button class="table-remove-btn" data-remove-table="${t.id}">✕</button>
-      <div class="table-rotate-handle" data-rotate-table="${t.id}">⟳</div>`;
+      <div class="table-rotate-handle" data-rotate-table="${t.id}">⟳</div>
+      <div class="table-resize-handle" data-resize-table="${t.id}">⤡</div>`;
     canvas.appendChild(tableEl);
     updateTableTransform(tableEl, t);
     wireTableDrag(tableEl, t);
@@ -1311,6 +1507,11 @@ function renderSeatingCanvas() {
       }, "Entfernen");
     });
     wireRotateHandle(tableEl.querySelector("[data-rotate-table]"), tableEl, t);
+    wireResizeHandle(tableEl.querySelector("[data-resize-table]"), t, t.type === "2er" ? 130 : 66, 66, (tb) => {
+      tableEl.style.width = tb.w + "px"; tableEl.style.height = tb.h + "px";
+      const shape = tableEl.querySelector(".table-shape");
+      shape.style.width = tb.w + "px"; shape.style.height = tb.h + "px";
+    });
     t.seats.forEach((sid, idx) => {
       const seatEl = tableEl.querySelectorAll(".seat")[idx];
       if (sid) wireStudentDrag(seatEl, sid, "seat", t, idx);
@@ -1333,7 +1534,8 @@ document.getElementById("addTable1erBtn").addEventListener("click", () => addTab
 document.getElementById("addTable2erBtn").addEventListener("click", () => addTable("2er"));
 function addTable(type) {
   const count = type === "1er" ? 1 : 2;
-  currentSeating.tables.push({ id: uid(), type, x: 40 + Math.random() * 100, y: 40 + Math.random() * 100, rot: 0, seats: new Array(count).fill(null) });
+  const dims = tableDims(type);
+  currentSeating.tables.push({ id: uid(), type, x: 40 + Math.random() * 100, y: 40 + Math.random() * 100, rot: 0, w: dims.w, h: dims.h, seats: new Array(count).fill(null) });
   saveSeating();
   renderSeatingCanvas();
 }
@@ -1348,15 +1550,15 @@ document.getElementById("clearSeatsBtn").addEventListener("click", () => {
 function wireTableDrag(tableEl, table) {
   let dragging = false, startX = 0, startY = 0, origX = 0, origY = 0;
   tableEl.addEventListener("pointerdown", (e) => {
-    if (e.target.closest(".table-rotate-handle") || e.target.closest(".table-remove-btn") || e.target.closest(".seat")) return;
+    if (e.target.closest(".table-rotate-handle") || e.target.closest(".table-remove-btn") || e.target.closest(".table-resize-handle") || e.target.closest(".seat")) return;
     dragging = true; startX = e.clientX; startY = e.clientY; origX = table.x; origY = table.y;
     try { tableEl.setPointerCapture(e.pointerId); } catch (err) {}
     tableEl.style.zIndex = 10;
   });
   tableEl.addEventListener("pointermove", (e) => {
     if (!dragging) return;
-    table.x = origX + (e.clientX - startX);
-    table.y = origY + (e.clientY - startY);
+    table.x = origX + (e.clientX - startX) / seatingZoom;
+    table.y = origY + (e.clientY - startY) / seatingZoom;
     updateTableTransform(tableEl, table);
   });
   tableEl.addEventListener("pointerup", (e) => {
@@ -1450,7 +1652,7 @@ document.getElementById("randomAssignBtn").addEventListener("click", () => {
 });
 function shuffleArr(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function seatWorldPos(table, seatIndex) {
-  const dims = tableDims(table.type);
+  const dims = table.w ? { w: table.w, h: table.h } : tableDims(table.type);
   const localX = table.type === "2er" ? (seatIndex === 0 ? dims.w * 0.27 : dims.w * 0.73) : dims.w / 2;
   const localY = dims.h / 2;
   const rad = (table.rot || 0) * Math.PI / 180;
@@ -1574,8 +1776,21 @@ function openCommentModal(commentId, studentId) {
   document.getElementById("commentModalTitle").textContent = (commentId ? "Kommentar bearbeiten" : "Kommentar hinzufügen") + (student ? ` – ${student.firstName}` : "");
   document.getElementById("commentDateInput").value = c ? c.date : todayISO();
   document.getElementById("commentTextInput").value = c ? c.text : "";
+  const toggleBtn = document.getElementById("toggleParticipantsBtn");
+  const area = document.getElementById("participantsArea");
+  area.classList.add("hidden");
+  if (editingCommentId) {
+    toggleBtn.classList.add("hidden");
+  } else {
+    toggleBtn.classList.remove("hidden");
+    const others = (classesData[currentBehaviorClass] || []).filter(s => s.id !== commentStudentId);
+    area.innerHTML = others.length === 0
+      ? '<div style="font-size:0.82rem; color:var(--muted);">Keine weiteren SuS in dieser Klasse.</div>'
+      : others.map(s => `<label style="display:flex; align-items:center; gap:8px; padding:5px 0; font-size:0.9rem; cursor:pointer;"><input type="checkbox" data-participant-id="${s.id}">${escapeHtml(s.firstName)} ${escapeHtml(s.lastName || "")}</label>`).join("");
+  }
   document.getElementById("commentModal").classList.remove("hidden");
 }
+document.getElementById("toggleParticipantsBtn").addEventListener("click", () => document.getElementById("participantsArea").classList.toggle("hidden"));
 document.getElementById("commentModalCancel").addEventListener("click", () => document.getElementById("commentModal").classList.add("hidden"));
 document.getElementById("commentModalSave").addEventListener("click", () => {
   const text = document.getElementById("commentTextInput").value.trim();
@@ -1587,6 +1802,8 @@ document.getElementById("commentModalSave").addEventListener("click", () => {
     c.text = text; c.date = date;
   } else {
     behaviorData[currentBehaviorClass].push({ id: uid(), studentId: commentStudentId, date, text });
+    const participantIds = [...document.querySelectorAll("#participantsArea input[data-participant-id]:checked")].map(cb => cb.dataset.participantId);
+    participantIds.forEach(pid => behaviorData[currentBehaviorClass].push({ id: uid(), studentId: pid, date, text }));
   }
   persistBehavior();
   document.getElementById("commentModal").classList.add("hidden");
@@ -1688,12 +1905,28 @@ function openBoardEditor(boardId) {
 function saveBoard() { currentBoard.updatedAt = Date.now(); persistBoards(); }
 
 /* ---- Element-Rendering ---- */
-const MATERIAL_ITEMS = [
-  { key: "stifte", label: "Farbstifte", icon: "🖍️" },
-  { key: "geodreieck", label: "Geodreieck", icon: "📐" },
-  { key: "taschenrechner", label: "Taschenrechner", icon: "🖩" },
-  { key: "zirkel", label: "Zirkel", icon: "🧭" }
-];
+const CALC_SVG = '<svg viewBox="0 0 24 24" width="26" height="26"><rect x="4" y="2" width="16" height="20" rx="2" fill="#334155"/><rect x="6.5" y="4.5" width="11" height="4.5" rx="1" fill="#a7f3d0"/><g fill="#e2e8f0"><rect x="6.5" y="11" width="3" height="3"/><rect x="10.5" y="11" width="3" height="3"/><rect x="14.5" y="11" width="3" height="3"/><rect x="6.5" y="15" width="3" height="3"/><rect x="10.5" y="15" width="3" height="3"/><rect x="14.5" y="15" width="3" height="3"/><rect x="6.5" y="19" width="3" height="1.7"/><rect x="10.5" y="19" width="3" height="1.7"/><rect x="14.5" y="19" width="3" height="1.7"/></g></svg>';
+const COMPASS_SVG = '<svg viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="4.5" r="2" fill="#475569"/><line x1="12" y1="6.2" x2="6.5" y2="20.5" stroke="#475569" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="6.2" x2="16.5" y2="17.5" stroke="#475569" stroke-width="2" stroke-linecap="round"/><line x1="16.5" y1="17.5" x2="19" y2="18.7" stroke="#475569" stroke-width="2" stroke-linecap="round"/><circle cx="6.5" cy="20.5" r="1.3" fill="#475569"/></svg>';
+function defaultMaterialItems() {
+  return [
+    { id: uid(), label: "Schreibmaterial", icon: "✏️", allowed: true },
+    { id: uid(), label: "Geodreieck", icon: "📐", allowed: true },
+    { id: uid(), label: "Taschenrechner", icon: CALC_SVG, allowed: true },
+    { id: uid(), label: "Zirkel", icon: COMPASS_SVG, allowed: true }
+  ];
+}
+function ensureMaterialItems(el) {
+  if (el.items) return;
+  const legacyMap = { stifte: "Schreibmaterial", geodreieck: "Geodreieck", taschenrechner: "Taschenrechner", zirkel: "Zirkel" };
+  el.items = defaultMaterialItems();
+  if (el.allowed) {
+    el.items.forEach(item => {
+      const legacyKey = Object.keys(legacyMap).find(k => legacyMap[k] === item.label);
+      if (legacyKey && legacyKey in el.allowed) item.allowed = !!el.allowed[legacyKey];
+    });
+  }
+  delete el.allowed;
+}
 function formatCountdown(sec) {
   sec = Math.max(0, Math.round(sec));
   const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
@@ -1717,17 +1950,18 @@ function renderTimerWidget(el) {
   </div>`;
 }
 function renderMaterialWidget(el) {
-  return `<div class="board-widget" style="width:100%; height:100%;">
+  ensureMaterialItems(el);
+  return `<div class="board-widget" style="width:100%; height:100%; overflow:auto;">
     <div class="material-widget-title">Material</div>
     <div class="material-grid">
-      ${MATERIAL_ITEMS.map(m => {
-        const allowed = el.allowed[m.key];
-        return `<div class="material-icon ${allowed ? "allowed" : "forbidden"}" data-material-toggle="${el.id}" data-material-key="${m.key}">
-          ${m.icon}
-          <div class="mat-badge">${allowed ? "✓" : "✕"}</div>
-          <div class="mat-label">${m.label}</div>
-        </div>`;
-      }).join("")}
+      ${el.items.map(m => `
+        <div class="material-icon ${m.allowed ? "allowed" : "forbidden"}" data-material-toggle="${el.id}" data-material-item="${m.id}">
+          ${!presentMode ? `<button class="mat-remove-btn" data-material-remove="${m.id}">✕</button>` : ""}
+          <span class="mat-icon-inner">${m.icon}</span>
+          <div class="mat-badge">${m.allowed ? "✓" : "✕"}</div>
+          <div class="mat-label">${escapeHtml(m.label)}</div>
+        </div>`).join("")}
+      ${!presentMode ? `<div class="material-icon add-material" data-material-add="${el.id}"><span class="mat-icon-inner">➕</span><div class="mat-label">Hinzufügen</div></div>` : ""}
     </div>
   </div>`;
 }
@@ -1735,7 +1969,7 @@ function renderBoardItemContent(el) {
   if (el.type === "text") return `<div class="board-text" contenteditable="true" data-el-id="${el.id}">${el.html || ""}</div>`;
   if (el.type === "image") return `<div class="board-image"><img src="${el.src}"></div>`;
   if (el.type === "timer") return renderTimerWidget(el);
-  if (el.type === "clock") return `<div class="board-clock-plain" id="clock-${el.id}">${new Date().toLocaleTimeString("de-CH")}</div>`;
+  if (el.type === "clock") return `<div class="board-clock-plain" id="clock-${el.id}" style="font-size:${Math.max(14, Math.round(el.h * 0.4))}px;">${new Date().toLocaleTimeString("de-CH")}</div>`;
   if (el.type === "material") return renderMaterialWidget(el);
   return "";
 }
@@ -1747,7 +1981,7 @@ function renderBoardCanvas() {
     wrap.className = "board-item";
     wrap.style.left = el.x + "px"; wrap.style.top = el.y + "px";
     wrap.style.width = el.w + "px"; wrap.style.height = el.h + "px";
-    const resizable = el.type === "text" || el.type === "image";
+    const resizable = true;
     wrap.innerHTML = `
       <div class="item-drag-handle" data-drag-handle>✥</div>
       <button class="item-remove-btn" data-remove-item="${el.id}">✕</button>
@@ -1797,6 +2031,10 @@ function wireBoardItemResize(handleEl, wrap, el) {
     el.w = Math.max(80, origW + (e.clientX - startX));
     el.h = Math.max(40, origH + (e.clientY - startY));
     wrap.style.width = el.w + "px"; wrap.style.height = el.h + "px";
+    if (el.type === "clock") {
+      const clockEl = document.getElementById("clock-" + el.id);
+      if (clockEl) clockEl.style.fontSize = Math.max(14, Math.round(el.h * 0.4)) + "px";
+    }
   });
   handleEl.addEventListener("pointerup", (e) => { if (!dragging) return; e.stopPropagation(); dragging = false; saveBoard(); });
 }
@@ -1834,16 +2072,46 @@ function wireTimerWidget(wrap, el) {
     renderBoardCanvas();
   });
 }
+let addMaterialTargetElId = null;
 function wireMaterialWidget(wrap, el) {
   wrap.querySelectorAll("[data-material-toggle]").forEach(iconEl => {
-    iconEl.addEventListener("click", () => {
-      const key = iconEl.dataset.materialKey;
-      el.allowed[key] = !el.allowed[key];
+    iconEl.addEventListener("click", (e) => {
+      if (e.target.closest("[data-material-remove]")) return;
+      const item = el.items.find(x => x.id === iconEl.dataset.materialItem);
+      if (item) item.allowed = !item.allowed;
       saveBoard();
       renderBoardCanvas();
     });
   });
+  wrap.querySelectorAll("[data-material-remove]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      el.items = el.items.filter(x => x.id !== btn.dataset.materialRemove);
+      saveBoard();
+      renderBoardCanvas();
+    });
+  });
+  const addBtn = wrap.querySelector("[data-material-add]");
+  if (addBtn) addBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    addMaterialTargetElId = el.id;
+    document.getElementById("addMaterialItemName").value = "";
+    document.getElementById("addMaterialItemIcon").value = "";
+    document.getElementById("addMaterialItemModal").classList.remove("hidden");
+  });
 }
+document.getElementById("addMaterialItemCancel").addEventListener("click", () => document.getElementById("addMaterialItemModal").classList.add("hidden"));
+document.getElementById("addMaterialItemSave").addEventListener("click", () => {
+  const label = document.getElementById("addMaterialItemName").value.trim();
+  const icon = document.getElementById("addMaterialItemIcon").value.trim() || "❓";
+  if (!label) { alert("Bitte eine Bezeichnung eingeben."); return; }
+  const el = currentBoard.elements.find(x => x.id === addMaterialTargetElId);
+  if (!el) return;
+  el.items.push({ id: uid(), label, icon, allowed: true });
+  saveBoard();
+  document.getElementById("addMaterialItemModal").classList.add("hidden");
+  renderBoardCanvas();
+});
 setInterval(() => {
   if (!currentBoard || document.getElementById("boardEditorView").classList.contains("hidden")) return;
   currentBoard.elements.forEach(el => {
@@ -1912,7 +2180,7 @@ document.getElementById("addClockBtn").addEventListener("click", () => {
 });
 document.getElementById("addMaterialBtn").addEventListener("click", () => {
   const p = nextBoardPos();
-  currentBoard.elements.push({ id: uid(), type: "material", x: p.x, y: p.y, w: 220, h: 260, allowed: { stifte: true, geodreieck: true, taschenrechner: true, zirkel: true } });
+  currentBoard.elements.push({ id: uid(), type: "material", x: p.x, y: p.y, w: 220, h: 280, items: defaultMaterialItems() });
   saveBoard(); renderBoardCanvas();
 });
 
