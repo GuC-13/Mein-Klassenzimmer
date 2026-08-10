@@ -36,6 +36,9 @@
   .home-tile .ti { font-size: 1.8rem; flex-shrink: 0; }
   .home-tile .sub-text { display: block; font-size: 0.72rem; font-weight: 500; opacity: 0.9; margin-top: 3px; }
   .home-tile-ghost { position: fixed; z-index: 500; pointer-events: none; opacity: 0.9; border-radius: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.35); }
+  .settings-fab { position: fixed; bottom: 18px; right: 18px; width: 52px; height: 52px; border-radius: 50%; background: #334155; color: white; border: none; font-size: 1.4rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 40; }
+  .settings-tile-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--border); }
+  .settings-tile-row:last-child { border-bottom: none; }
   .tile-classes { background: linear-gradient(135deg, #2563eb, #1e3a8a); }
   .tile-seating { background: linear-gradient(135deg, #16a34a, #14532d); }
   .tile-behavior { background: linear-gradient(135deg, #d97706, #92400e); }
@@ -99,10 +102,14 @@
   .zoom-controls { display: flex; align-items: center; gap: 6px; }
   .zoom-controls button { width: 34px; height: 34px; border-radius: 8px; border: 2px solid var(--border); background: white; font-weight: 800; font-size: 1rem; cursor: pointer; }
   .zoom-controls .zoom-label { font-size: 0.82rem; font-weight: 700; color: var(--muted); min-width: 42px; text-align: center; }
-  .seat { width: 58px; height: 58px; border-radius: 50%; background: white; border: 2px solid #94a3b8; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: grab; overflow: hidden; touch-action: none; text-align: center; flex-shrink: 0; }
+  .seat { width: 50px; height: 50px; border-radius: 50%; background: white; border: 2px solid #94a3b8; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: grab; overflow: hidden; touch-action: none; text-align: center; flex-shrink: 0; }
   .seat.empty { border-style: dashed; color: var(--muted); font-size: 0.7rem; cursor: default; }
-  .seat .seat-photo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; margin-bottom: 2px; }
-  .seat .seat-name { font-size: 0.62rem; font-weight: 700; line-height: 1.05; padding: 0 2px; word-break: break-word; }
+  .seat .seat-photo { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-bottom: 2px; }
+  .seat .seat-name { font-weight: 700; line-height: 1.05; padding: 0 2px; overflow-wrap: break-word; hyphens: auto; }
+  .seat .seat-name.len-s { font-size: 0.6rem; }
+  .seat .seat-name.len-m { font-size: 0.52rem; }
+  .seat .seat-name.len-l { font-size: 0.44rem; }
+  .seat .seat-name.len-xl { font-size: 0.38rem; }
   .table-remove-btn, .table-rotate-handle { position: absolute; width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
   .table-remove-btn { top: -10px; right: -10px; background: var(--danger); color: white; z-index: 3; }
   .table-rotate-handle { bottom: -10px; right: -10px; background: var(--accent); color: white; cursor: grab; z-index: 3; touch-action: none; }
@@ -111,6 +118,13 @@
   .toggle-line { display: flex; align-items: center; gap: 8px; }
   .display-opt-btn { background: white; border: 2px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
   .display-opt-btn.active { border-color: var(--accent); background: #eff6ff; color: var(--accent); }
+  #seatingEditorView.presentation-mode .hide-in-presentation { display: none !important; }
+  #seatingEditorView.presentation-mode .table-remove-btn,
+  #seatingEditorView.presentation-mode .table-rotate-handle,
+  #seatingEditorView.presentation-mode .table-resize-handle { display: none !important; }
+  #seatingEditorView.presentation-mode .table-el,
+  #seatingEditorView.presentation-mode .seat { cursor: default; }
+  #presentationModeBtn.active { background: #7c3aed; color: white; border-color: #7c3aed; }
 
   /* LEINWAND / BOARD */
   #app.board-fullwidth { max-width: none; padding: 0; }
@@ -187,6 +201,7 @@
     <h2 class="sub">Klassen, Sitzordnung &amp; Verhalten</h2>
     <h2 class="sub" style="margin-top:-8px; font-size:0.78rem;">Boxen lange gedrückt halten und ziehen, um die Reihenfolge zu ändern</h2>
     <div class="home-grid" id="homeGrid"></div>
+    <button class="settings-fab" id="homeSettingsBtn">⚙️</button>
   </div>
 
   <!-- KLASSEN: Übersicht -->
@@ -261,10 +276,11 @@
     <div class="row back-row"><button class="btn btn-secondary" data-back-seatinglist>← Sitzordnungen</button></div>
     <h1 id="seatingEditor_title"></h1>
     <h2 class="sub" id="seatingEditor_updated" style="margin-bottom:12px;"></h2>
-    <div class="seating-toolbar">
+    <div class="seating-toolbar hide-in-presentation">
       <button class="btn btn-outline" id="addTable1erBtn">+ 1er-Tisch</button>
       <button class="btn btn-outline" id="addTable2erBtn">+ 2er-Tisch</button>
       <button class="btn" id="randomAssignBtn">🎲 Zufällig verteilen</button>
+      <button class="btn btn-outline" id="swapSeatsBtn">🔀 Plätze tauschen</button>
       <label class="toggle-line" style="font-size:0.85rem; font-weight:600;"><input type="checkbox" id="alternateGenderCheck" checked> ♂♀ nebeneinander bevorzugen</label>
       <button class="btn btn-outline danger" id="clearSeatsBtn">Plätze leeren</button>
       <button class="btn btn-outline" id="copySeatingBtn">📋 In andere Klasse kopieren</button>
@@ -277,15 +293,16 @@
         <button id="zoomInBtn">+</button>
         <button id="zoomResetBtn" style="width:auto; padding:0 10px;">Reset</button>
       </div>
+      <button class="btn btn-outline" id="presentationModeBtn">🖥️ Präsentieransicht</button>
     </div>
-    <div class="seating-toolbar">
+    <div class="seating-toolbar hide-in-presentation">
       <span style="font-size:0.82rem; font-weight:700; color:var(--muted);">Raum-Objekte:</span>
       <button class="btn btn-outline" data-add-object="pult">+ Lehrerpult</button>
       <button class="btn btn-outline" data-add-object="tafel">+ Wandtafel</button>
       <button class="btn btn-outline" data-add-object="tuere">+ Türe</button>
       <button class="btn btn-outline" data-add-object="lavabo">+ Lavabo</button>
     </div>
-    <div class="seating-toolbar">
+    <div class="seating-toolbar hide-in-presentation">
       <span style="font-size:0.82rem; font-weight:700; color:var(--muted);">Name:</span>
       <button class="display-opt-btn" data-namestyle="first">Vorname</button>
       <button class="display-opt-btn" data-namestyle="full">Vor- &amp; Nachname</button>
@@ -294,7 +311,7 @@
       <button class="display-opt-btn" data-showphoto="0">Aus</button>
     </div>
     <div class="seating-layout">
-      <div class="seating-pool">
+      <div class="seating-pool hide-in-presentation">
         <h3>Nicht zugeteilt</h3>
         <div id="seatingPool"></div>
       </div>
@@ -444,6 +461,24 @@
 </div>
 
 <!-- Add/Edit Class Modal -->
+<div class="modal-overlay hidden" id="settingsOverlay">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;">⚙️ Einstellungen</p>
+    <label class="field-label">Sichtbare Boxen auf der Startseite</label>
+    <div id="settingsTilesList"></div>
+    <label class="field-label" style="margin-top:16px;">Daten sichern</label>
+    <p style="font-size:0.8rem; color:var(--muted); margin-top:-6px;">Exportiert alle Klassen, Sitzordnungen, Verhaltensdaten, Farben und Leinwände als Datei – zum Sichern oder Übertragen auf ein anderes Gerät.</p>
+    <div class="row" style="display:flex; gap:10px;">
+      <button class="btn btn-outline" id="exportBackupBtn" style="flex:1;">💾 Exportieren</button>
+      <button class="btn btn-outline" id="importBackupBtn" style="flex:1;">📥 Importieren</button>
+    </div>
+    <input type="file" id="importBackupFileInput" accept=".json" style="display:none;">
+    <div class="modal-actions">
+      <button class="btn" id="settingsCloseBtn">Fertig</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay hidden" id="classModal">
   <div class="modal-box">
     <p style="font-weight:800; margin-top:0;" id="classModalTitle">Neue Klasse</p>
@@ -711,6 +746,7 @@ const HOME_TILES = [
   { id: "movementCats", cls: "tile-movement", icon: "🤸", title: "Bewegungspause", sub: "Kurze Auflockerungsübungen" }
 ];
 const HOME_ORDER_KEY = "kz_home_order";
+const HOME_HIDDEN_KEY = "kz_home_hidden";
 function getHomeOrder() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(HOME_ORDER_KEY) || "null"); } catch (e) {}
@@ -721,6 +757,13 @@ function getHomeOrder() {
   return filtered;
 }
 function saveHomeOrder(order) { localStorage.setItem(HOME_ORDER_KEY, JSON.stringify(order)); }
+function getHomeHidden() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(HOME_HIDDEN_KEY) || "null"); } catch (e) {}
+  const ids = HOME_TILES.map(t => t.id);
+  return Array.isArray(saved) ? saved.filter(id => ids.includes(id)) : [];
+}
+function saveHomeHidden(hidden) { localStorage.setItem(HOME_HIDDEN_KEY, JSON.stringify(hidden)); }
 function navigateHome(target) {
   if (target === "classes") { renderClassesList(); showView("classes"); }
   else if (target === "seatingPick") { renderClassPickerList("seatingClassList", (name) => openSeatingListForClass(name)); showView("seatingPick"); }
@@ -732,13 +775,73 @@ function navigateHome(target) {
 }
 function renderHomeTiles() {
   const order = getHomeOrder();
+  const hidden = getHomeHidden();
   const grid = document.getElementById("homeGrid");
-  grid.innerHTML = order.map(id => {
+  grid.innerHTML = order.filter(id => !hidden.includes(id)).map(id => {
     const t = HOME_TILES.find(x => x.id === id);
     return `<button class="home-tile ${t.cls}" data-home="${t.id}"><span class="ti">${t.icon}</span><span><span>${escapeHtml(t.title)}</span><span class="sub-text">${escapeHtml(t.sub)}</span></span></button>`;
   }).join("");
   wireHomeTileDrag();
 }
+function renderSettingsTiles() {
+  const order = getHomeOrder();
+  const hidden = getHomeHidden();
+  document.getElementById("settingsTilesList").innerHTML = order.map(id => {
+    const t = HOME_TILES.find(x => x.id === id);
+    const isHidden = hidden.includes(id);
+    return `<div class="settings-tile-row"><span>${t.icon} ${escapeHtml(t.title)}</span><label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" data-tile-visible="${id}" ${isHidden ? "" : "checked"} style="width:20px; height:20px;"> sichtbar</label></div>`;
+  }).join("");
+  document.querySelectorAll("[data-tile-visible]").forEach(cb => cb.addEventListener("change", () => {
+    let h = getHomeHidden();
+    const id = cb.dataset.tileVisible;
+    if (cb.checked) h = h.filter(x => x !== id);
+    else if (!h.includes(id)) h.push(id);
+    saveHomeHidden(h);
+    renderHomeTiles();
+  }));
+}
+document.getElementById("homeSettingsBtn").addEventListener("click", () => {
+  renderSettingsTiles();
+  document.getElementById("settingsOverlay").classList.remove("hidden");
+});
+document.getElementById("settingsCloseBtn").addEventListener("click", () => document.getElementById("settingsOverlay").classList.add("hidden"));
+document.getElementById("exportBackupBtn").addEventListener("click", () => {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith("kz_")) data[key] = localStorage.getItem(key);
+  }
+  const payload = { app: "klassenzimmer-manager", exportedAt: new Date().toISOString(), data };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const dateStr = new Date().toISOString().slice(0, 10);
+  a.href = url; a.download = `klassenzimmer-backup-${dateStr}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+document.getElementById("importBackupBtn").addEventListener("click", () => document.getElementById("importBackupFileInput").click());
+document.getElementById("importBackupFileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const data = parsed.data || parsed;
+      let count = 0;
+      Object.keys(data).forEach(key => {
+        if (key.startsWith("kz_")) { localStorage.setItem(key, data[key]); count++; }
+      });
+      if (count === 0) { openConfirm("Diese Datei enthält keine passenden Klassenzimmer-Manager-Daten.", null, "OK"); return; }
+      openConfirm(`${count} Datenbereiche importiert. Die Seite wird jetzt neu geladen.`, () => location.reload(), "OK");
+    } catch (err) {
+      openConfirm("Datei konnte nicht gelesen werden: " + err.message, null, "OK");
+    }
+  };
+  reader.readAsText(file, "utf-8");
+  e.target.value = "";
+});
 function wireHomeTileDrag() {
   let homeGhost = null, draggingId = null, startX = 0, startY = 0, dragging = false, sourceEl = null;
   document.querySelectorAll(".home-tile").forEach(tile => {
@@ -1370,6 +1473,16 @@ document.getElementById("zoomInBtn").addEventListener("click", () => { seatingZo
 document.getElementById("zoomOutBtn").addEventListener("click", () => { seatingZoom = Math.max(0.3, Math.round((seatingZoom - 0.1) * 10) / 10); applyZoom(); });
 document.getElementById("zoomResetBtn").addEventListener("click", () => { seatingZoom = 1; applyZoom(); });
 
+let presentationMode = false;
+function setPresentationMode(on) {
+  presentationMode = on;
+  document.getElementById("seatingEditorView").classList.toggle("presentation-mode", presentationMode);
+  const btn = document.getElementById("presentationModeBtn");
+  btn.textContent = presentationMode ? "✕ Präsentieransicht verlassen" : "🖥️ Präsentieransicht";
+  btn.classList.toggle("active", presentationMode);
+}
+document.getElementById("presentationModeBtn").addEventListener("click", () => setPresentationMode(!presentationMode));
+
 function openSeatingEditor(seatingId) {
   currentSeating = (seatingsData[currentSeatingClass] || []).find(s => s.id === seatingId);
   if (!currentSeating) return;
@@ -1379,6 +1492,7 @@ function openSeatingEditor(seatingId) {
   document.getElementById("alternateGenderCheck").checked = true;
   seatingZoom = 1;
   applyZoom();
+  setPresentationMode(false);
   renderDisplayOptButtons();
   renderSeatingCanvas();
   renderSeatingPool();
@@ -1415,7 +1529,7 @@ function renderSeatingPool() {
   el.querySelectorAll(".pool-chip").forEach(chip => wireStudentDrag(chip, chip.dataset.studentId, "pool", null, -1));
 }
 
-function tableDims(type) { return type === "2er" ? { w: 150, h: 74 } : { w: 74, h: 74 }; }
+function tableDims(type) { return type === "2er" ? { w: 130, h: 64 } : { w: 64, h: 64 }; }
 const OBJECT_DEFS = {
   pult: { label: "Lehrerpult", w: 120, h: 55, color: "#92400e" },
   tafel: { label: "Wandtafel", w: 220, h: 26, color: "#14532d" },
@@ -1519,12 +1633,19 @@ function renderSeatingCanvas() {
     });
   });
 }
+function seatNameSizeClass(name) {
+  const len = name.length;
+  if (len <= 6) return "len-s";
+  if (len <= 9) return "len-m";
+  if (len <= 13) return "len-l";
+  return "len-xl";
+}
 function renderSeatHTML(table, studentId, seatIndex) {
   const student = studentId ? getStudent(currentSeatingClass, studentId) : null;
   if (!student) return `<div class="seat empty" data-table-id="${table.id}" data-seat-index="${seatIndex}">+</div>`;
   const name = studentDisplayName(student, currentSeating.nameStyle);
   const photoHtml = currentSeating.showPhoto ? (student.photo ? `<img class="seat-photo" src="${student.photo}">` : `<div class="seat-photo" style="display:flex;align-items:center;justify-content:center;background:#e2e8f0;font-weight:800;">${initials(student)}</div>`) : "";
-  return `<div class="seat" data-table-id="${table.id}" data-seat-index="${seatIndex}" data-student-id="${student.id}" style="transform:rotate(${-(table.rot || 0)}deg);">${photoHtml}<div class="seat-name">${escapeHtml(name)}</div></div>`;
+  return `<div class="seat" data-table-id="${table.id}" data-seat-index="${seatIndex}" data-student-id="${student.id}" style="transform:rotate(${-(table.rot || 0)}deg);">${photoHtml}<div class="seat-name ${seatNameSizeClass(name)}">${escapeHtml(name)}</div></div>`;
 }
 function updateTableTransform(tableEl, table) {
   tableEl.style.transform = `translate(${table.x}px, ${table.y}px) rotate(${table.rot || 0}deg)`;
@@ -1550,6 +1671,7 @@ document.getElementById("clearSeatsBtn").addEventListener("click", () => {
 function wireTableDrag(tableEl, table) {
   let dragging = false, startX = 0, startY = 0, origX = 0, origY = 0;
   tableEl.addEventListener("pointerdown", (e) => {
+    if (presentationMode) return;
     if (e.target.closest(".table-rotate-handle") || e.target.closest(".table-remove-btn") || e.target.closest(".table-resize-handle") || e.target.closest(".seat")) return;
     dragging = true; startX = e.clientX; startY = e.clientY; origX = table.x; origY = table.y;
     try { tableEl.setPointerCapture(e.pointerId); } catch (err) {}
@@ -1595,6 +1717,7 @@ function wireRotateHandle(handleEl, tableEl, table) {
 let ghostEl = null;
 function wireStudentDrag(sourceEl, studentId, sourceType, sourceTable, sourceSeatIndex) {
   sourceEl.addEventListener("pointerdown", (e) => {
+    if (presentationMode) return;
     e.stopPropagation();
     const student = getStudent(currentSeatingClass, studentId);
     if (!student) return;
@@ -1648,7 +1771,12 @@ function handleStudentDrop(studentId, sourceType, sourceTable, sourceSeatIndex, 
 
 /* ---- Zufällig verteilen ---- */
 document.getElementById("randomAssignBtn").addEventListener("click", () => {
-  openConfirm("Alle Plätze werden neu zufällig verteilt. Fortfahren?", () => randomlyAssignSeats(document.getElementById("alternateGenderCheck").checked), "Verteilen");
+  openConfirm("Alle Plätze werden neu zufällig verteilt. Fortfahren?", () => randomlyAssignSeats(document.getElementById("alternateGenderCheck").checked, false), "Verteilen");
+});
+document.getElementById("swapSeatsBtn").addEventListener("click", () => {
+  const occupiedCount = currentSeating.tables.reduce((n, t) => n + t.seats.filter(Boolean).length, 0);
+  if (occupiedCount < 2) { openConfirm("Es sind zu wenige Plätze belegt zum Tauschen.", null, null, "OK"); return; }
+  openConfirm("Die SuS auf den bereits belegten Plätzen werden untereinander getauscht. Nicht benutzte Tische bleiben leer. Fortfahren?", () => randomlyAssignSeats(document.getElementById("alternateGenderCheck").checked, true), "Tauschen");
 });
 function shuffleArr(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function seatWorldPos(table, seatIndex) {
@@ -1660,9 +1788,10 @@ function seatWorldPos(table, seatIndex) {
   const rx = dx * Math.cos(rad) - dy * Math.sin(rad), ry = dx * Math.sin(rad) + dy * Math.cos(rad);
   return { x: table.x + dims.w / 2 + rx, y: table.y + dims.h / 2 + ry };
 }
-function randomlyAssignSeats(alternateGender) {
+function randomlyAssignSeats(alternateGender, onlyOccupied) {
   const seatSlots = [];
-  currentSeating.tables.forEach(t => t.seats.forEach((_, idx) => {
+  currentSeating.tables.forEach(t => t.seats.forEach((sid, idx) => {
+    if (onlyOccupied && !sid) return;
     const pos = seatWorldPos(t, idx);
     seatSlots.push({ table: t, seatIndex: idx, x: pos.x, y: pos.y });
   }));
@@ -1697,7 +1826,9 @@ function randomlyAssignSeats(alternateGender) {
     return cost;
   }
   function attemptPlacement() {
-    let pool = shuffleArr(classesData[currentSeatingClass] || []);
+    let pool = onlyOccupied
+      ? shuffleArr(seatSlots.map(s => getStudent(currentSeatingClass, s.table.seats[s.seatIndex])).filter(Boolean))
+      : shuffleArr(classesData[currentSeatingClass] || []);
     const placement = new Array(seatSlots.length).fill(null);
     const order = shuffleArr(seatSlots.map((_, i) => i));
     order.forEach(i => {
