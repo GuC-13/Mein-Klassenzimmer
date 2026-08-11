@@ -1816,11 +1816,11 @@ const LAYOUT_TEMPLATES = {
   },
   gruppen: () => {
     const tables = [];
-    const tableH = 64;
+    const tableW = 130;
     const cols = [460, 650, 840], groupRowTopYs = [200, 388];
     cols.forEach(cx => groupRowTopYs.forEach(topY => {
-      tables.push(tableAtCenter("2er", cx, topY, 0));
-      tables.push(tableAtCenter("2er", cx, topY + tableH, 0));
+      tables.push(tableAtCenter("2er", cx, topY, 90));
+      tables.push(tableAtCenter("2er", cx, topY + tableW, 90));
     }));
     return { tables, objects: frontObjects() };
   }
