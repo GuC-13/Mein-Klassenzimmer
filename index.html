@@ -125,6 +125,9 @@
   #seatingEditorView.presentation-mode .table-el,
   #seatingEditorView.presentation-mode .seat { cursor: default; }
   #presentationModeBtn.active { background: #7c3aed; color: white; border-color: #7c3aed; }
+  .presentation-exit-btn { position: fixed; top: 14px; right: 14px; width: 48px; height: 48px; border-radius: 50%; background: rgba(15,23,42,0.75); color: white; border: none; font-size: 1.3rem; font-weight: 800; z-index: 200; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+  .presentation-exit-btn.hidden, #undoSeatsBtn.hidden { display: none; }
+  #layoutTemplateOverlay .btn-outline { text-align: left; padding: 12px 14px; line-height: 1.4; }
 
   /* LEINWAND / BOARD */
   #app.board-fullwidth { max-width: none; padding: 0; }
@@ -273,19 +276,25 @@
 
   <!-- SITZORDNUNG: Editor -->
   <div id="seatingEditorView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-seatinglist>← Sitzordnungen</button></div>
-    <h1 id="seatingEditor_title"></h1>
-    <h2 class="sub" id="seatingEditor_updated" style="margin-bottom:12px;"></h2>
+    <button class="presentation-exit-btn hidden" id="presentationExitBtn">✕</button>
+    <div class="row back-row hide-in-presentation"><button class="btn btn-secondary" data-back-seatinglist>← Sitzordnungen</button></div>
+    <div class="row" style="align-items:center;">
+      <h1 id="seatingEditor_title" style="margin-bottom:0;"></h1>
+      <button class="btn btn-outline hide-in-presentation" id="renameSeatingBtn" style="padding:6px 12px; font-size:0.78rem;">✏️ Umbenennen</button>
+    </div>
+    <h2 class="sub hide-in-presentation" id="seatingEditor_updated" style="margin-bottom:12px;"></h2>
     <div class="seating-toolbar hide-in-presentation">
       <button class="btn btn-outline" id="addTable1erBtn">+ 1er-Tisch</button>
       <button class="btn btn-outline" id="addTable2erBtn">+ 2er-Tisch</button>
+      <button class="btn btn-outline" id="loadTemplateBtn">📐 Vorlage laden</button>
       <button class="btn" id="randomAssignBtn">🎲 Zufällig verteilen</button>
       <button class="btn btn-outline" id="swapSeatsBtn">🔀 Plätze tauschen</button>
+      <button class="btn btn-outline hidden" id="undoSeatsBtn">↩️ Rückgängig</button>
       <label class="toggle-line" style="font-size:0.85rem; font-weight:600;"><input type="checkbox" id="alternateGenderCheck" checked> ♂♀ nebeneinander bevorzugen</label>
       <button class="btn btn-outline danger" id="clearSeatsBtn">Plätze leeren</button>
       <button class="btn btn-outline" id="copySeatingBtn">📋 In andere Klasse kopieren</button>
     </div>
-    <div class="seating-toolbar">
+    <div class="seating-toolbar hide-in-presentation">
       <span style="font-size:0.82rem; font-weight:700; color:var(--muted);">Ansicht:</span>
       <div class="zoom-controls">
         <button id="zoomOutBtn">−</button>
@@ -511,6 +520,7 @@
     </select>
     <label class="field-label">Farben (max. 2, für Sitzordnung-Wünsche)</label>
     <div id="studentColorsList"></div>
+    <button class="btn btn-outline" type="button" id="addColorFromStudentBtn" style="width:100%; margin-top:6px; padding:8px; font-size:0.82rem;">+ Neue Farbe erstellen</button>
     <div class="row" id="studentPrevNextRow" style="margin-top:14px;">
       <button class="btn btn-outline" style="flex:1;" id="studentPrevBtn">◀ Vorherige/r</button>
       <button class="btn btn-outline" style="flex:1;" id="studentNextBtn">Nächste/r ▶</button>
@@ -522,15 +532,29 @@
   </div>
 </div>
 
-<!-- Add Seating Modal -->
+<!-- Add/Rename Seating Modal -->
 <div class="modal-overlay hidden" id="seatingModal">
   <div class="modal-box">
-    <p style="font-weight:800; margin-top:0;">Neue Sitzordnung</p>
+    <p style="font-weight:800; margin-top:0;" id="seatingModalTitle">Neue Sitzordnung</p>
     <label class="field-label">Name</label>
     <input type="text" id="seatingNameInput" placeholder="z.B. Sitzordnung Oktober">
     <div class="modal-actions">
       <button class="btn btn-secondary" id="seatingModalCancel">Abbrechen</button>
       <button class="btn" id="seatingModalSave">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Layout-Vorlagen Modal -->
+<div class="modal-overlay hidden" id="layoutTemplateOverlay">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;">📐 Vorlage laden</p>
+    <p style="font-size:0.85rem; color:var(--muted); margin-top:-8px;">Ersetzt die aktuellen Tische und Raum-Objekte (zugeteilte SuS kommen zurück in den Pool). Lehrerpult und Wandtafel werden automatisch vorne platziert.</p>
+    <button class="btn btn-outline" data-apply-template="frontal" style="width:100%; margin-bottom:8px;">➡️ Frontalformation<br><span style="font-weight:400; font-size:0.78rem;">3 Reihen à 4 Tische, alle zur Wandtafel</span></button>
+    <button class="btn btn-outline" data-apply-template="u" style="width:100%; margin-bottom:8px;">🔄 U-Formation<br><span style="font-weight:400; font-size:0.78rem;">3 vertikal + 4 frontal + 3 vertikal, 2 Tische in der Mitte</span></button>
+    <button class="btn btn-outline" data-apply-template="gruppen" style="width:100%;">👥 Gruppenformation<br><span style="font-weight:400; font-size:0.78rem;">6 Vierergruppen, je 2 Tische gegenüber</span></button>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="layoutTemplateCancel">Abbrechen</button>
     </div>
   </div>
 </div>
@@ -1347,8 +1371,11 @@ function renderColorsManageList() {
   }));
 }
 document.getElementById("addColorBtn").addEventListener("click", () => openColorEditModal(null));
-function openColorEditModal(colorId) {
+document.getElementById("addColorFromStudentBtn").addEventListener("click", () => openColorEditModal(null, "student"));
+let colorEditContext = "manage";
+function openColorEditModal(colorId, context) {
   editingColorId = colorId;
+  colorEditContext = context || "manage";
   const list = colorsData[currentClass] || [];
   const c = colorId ? list.find(x => x.id === colorId) : null;
   document.getElementById("colorEditTitle").textContent = colorId ? "Farbe bearbeiten" : "Neue Farbe";
@@ -1364,15 +1391,23 @@ document.getElementById("colorEditSave").addEventListener("click", () => {
   const hex = document.getElementById("colorHexInput").value;
   const mode = document.getElementById("colorModeInput").value;
   if (!colorsData[currentClass]) colorsData[currentClass] = [];
+  let newColorId = null;
   if (editingColorId) {
     const c = colorsData[currentClass].find(x => x.id === editingColorId);
     c.name = name; c.hex = hex; c.mode = mode;
   } else {
-    colorsData[currentClass].push({ id: uid(), name, hex, mode });
+    newColorId = uid();
+    colorsData[currentClass].push({ id: newColorId, name, hex, mode });
   }
   persistColors();
   document.getElementById("colorEditModal").classList.add("hidden");
-  renderColorsManageList();
+  if (colorEditContext === "student") {
+    const selected = getSelectedColorIds();
+    if (newColorId) selected.push(newColorId);
+    renderStudentColorsCheckboxes(selected);
+  } else {
+    renderColorsManageList();
+  }
 });
 
 /* =========================================================================
@@ -1441,13 +1476,31 @@ document.getElementById("copySeatingConfirm").addEventListener("click", () => {
   document.getElementById("copySeatingModal").classList.add("hidden");
   openConfirm(`Sitzordnung wurde in Klasse "${targetClass}" kopiert (ohne Schüler:innen-Zuteilung).`, null, "OK");
 });
+let seatingModalMode = "create";
 document.getElementById("addSeatingBtn").addEventListener("click", () => {
+  seatingModalMode = "create";
+  document.getElementById("seatingModalTitle").textContent = "Neue Sitzordnung";
+  document.getElementById("seatingModalSave").textContent = "Erstellen";
   document.getElementById("seatingNameInput").value = "";
+  document.getElementById("seatingModal").classList.remove("hidden");
+});
+document.getElementById("renameSeatingBtn").addEventListener("click", () => {
+  seatingModalMode = "rename";
+  document.getElementById("seatingModalTitle").textContent = "Sitzordnung umbenennen";
+  document.getElementById("seatingModalSave").textContent = "Speichern";
+  document.getElementById("seatingNameInput").value = currentSeating.name;
   document.getElementById("seatingModal").classList.remove("hidden");
 });
 document.getElementById("seatingModalCancel").addEventListener("click", () => document.getElementById("seatingModal").classList.add("hidden"));
 document.getElementById("seatingModalSave").addEventListener("click", () => {
   const name = document.getElementById("seatingNameInput").value.trim() || "Sitzordnung";
+  if (seatingModalMode === "rename") {
+    currentSeating.name = name;
+    saveSeating();
+    document.getElementById("seatingEditor_title").textContent = `🪑 ${currentSeating.name}`;
+    document.getElementById("seatingModal").classList.add("hidden");
+    return;
+  }
   if (!seatingsData[currentSeatingClass]) seatingsData[currentSeatingClass] = [];
   const newSeating = { id: uid(), name, tables: [], objects: [], nameStyle: "first", showPhoto: true, updatedAt: Date.now() };
   seatingsData[currentSeatingClass].push(newSeating);
@@ -1458,7 +1511,7 @@ document.getElementById("seatingModalSave").addEventListener("click", () => {
 
 document.getElementById("copySeatingBtn").addEventListener("click", () => openCopySeatingModal(currentSeating.id));
 
-/* ---- Zoom ---- */
+/* ---- Zoom (Buttons + Pinch) ---- */
 let seatingZoom = 1;
 function applyZoom() {
   const canvas = document.getElementById("seatingCanvas");
@@ -1473,15 +1526,73 @@ document.getElementById("zoomInBtn").addEventListener("click", () => { seatingZo
 document.getElementById("zoomOutBtn").addEventListener("click", () => { seatingZoom = Math.max(0.3, Math.round((seatingZoom - 0.1) * 10) / 10); applyZoom(); });
 document.getElementById("zoomResetBtn").addEventListener("click", () => { seatingZoom = 1; applyZoom(); });
 
+let seatingPinchPointers = new Map(), seatingPinchStartDist = 0, seatingPinchStartZoom = 1;
+function seatingPinchDist() {
+  const pts = [...seatingPinchPointers.values()];
+  return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+}
+const seatingCanvasWrapEl = document.querySelector(".seating-canvas-wrap");
+seatingCanvasWrapEl.style.touchAction = "none";
+seatingCanvasWrapEl.addEventListener("pointerdown", (e) => {
+  seatingPinchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (seatingPinchPointers.size === 2) { seatingPinchStartDist = seatingPinchDist(); seatingPinchStartZoom = seatingZoom; }
+});
+seatingCanvasWrapEl.addEventListener("pointermove", (e) => {
+  if (!seatingPinchPointers.has(e.pointerId)) return;
+  seatingPinchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (seatingPinchPointers.size === 2 && seatingPinchStartDist > 0) {
+    const dist = seatingPinchDist();
+    seatingZoom = Math.max(0.3, Math.min(2, Math.round(seatingPinchStartZoom * (dist / seatingPinchStartDist) * 100) / 100));
+    applyZoom();
+  }
+});
+function seatingPinchEnd(e) {
+  seatingPinchPointers.delete(e.pointerId);
+  if (seatingPinchPointers.size < 2) seatingPinchStartDist = 0;
+}
+seatingCanvasWrapEl.addEventListener("pointerup", seatingPinchEnd);
+seatingCanvasWrapEl.addEventListener("pointercancel", seatingPinchEnd);
+seatingCanvasWrapEl.addEventListener("pointerleave", seatingPinchEnd);
+
+/* ---- Präsentieransicht ---- */
 let presentationMode = false;
+function computeSeatingBounds() {
+  const items = [...(currentSeating.tables || []), ...(currentSeating.objects || [])];
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  items.forEach(it => { minX = Math.min(minX, it.x); minY = Math.min(minY, it.y); maxX = Math.max(maxX, it.x + it.w); maxY = Math.max(maxY, it.y + it.h); });
+  if (!isFinite(minX)) return { minX: 0, minY: 0, maxX: 1900, maxY: 1200 };
+  return { minX, minY, maxX, maxY };
+}
+function fitSeatingToView() {
+  const wrap = seatingCanvasWrapEl;
+  const b = computeSeatingBounds();
+  const contentW = Math.max(200, b.maxX - b.minX + 80);
+  const contentH = Math.max(200, b.maxY - b.minY + 80);
+  const availW = wrap.clientWidth || 900, availH = wrap.clientHeight || 600;
+  seatingZoom = Math.round(Math.max(0.3, Math.min(2, Math.min(availW / contentW, availH / contentH))) * 100) / 100;
+  applyZoom();
+  requestAnimationFrame(() => { wrap.scrollLeft = Math.max(0, (b.minX - 40) * seatingZoom); wrap.scrollTop = Math.max(0, (b.minY - 40) * seatingZoom); });
+}
 function setPresentationMode(on) {
   presentationMode = on;
   document.getElementById("seatingEditorView").classList.toggle("presentation-mode", presentationMode);
+  document.getElementById("presentationExitBtn").classList.toggle("hidden", !presentationMode);
   const btn = document.getElementById("presentationModeBtn");
   btn.textContent = presentationMode ? "✕ Präsentieransicht verlassen" : "🖥️ Präsentieransicht";
   btn.classList.toggle("active", presentationMode);
+  if (presentationMode) {
+    if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().then(fitSeatingToView).catch(fitSeatingToView);
+    else fitSeatingToView();
+  } else {
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+  }
 }
 document.getElementById("presentationModeBtn").addEventListener("click", () => setPresentationMode(!presentationMode));
+document.getElementById("presentationExitBtn").addEventListener("click", () => setPresentationMode(false));
+document.addEventListener("fullscreenchange", () => {
+  if (document.fullscreenElement && presentationMode) fitSeatingToView();
+  else if (!document.fullscreenElement && presentationMode) setPresentationMode(false);
+});
 
 function openSeatingEditor(seatingId) {
   currentSeating = (seatingsData[currentSeatingClass] || []).find(s => s.id === seatingId);
@@ -1493,6 +1604,8 @@ function openSeatingEditor(seatingId) {
   seatingZoom = 1;
   applyZoom();
   setPresentationMode(false);
+  seatUndoSnapshot = null;
+  document.getElementById("undoSeatsBtn").classList.add("hidden");
   renderDisplayOptButtons();
   renderSeatingCanvas();
   renderSeatingPool();
@@ -1666,6 +1779,69 @@ document.getElementById("clearSeatsBtn").addEventListener("click", () => {
     saveSeating(); renderSeatingCanvas(); renderSeatingPool();
   }, "Leeren");
 });
+
+/* ---- Layout-Vorlagen ---- */
+function tableAtCenter(type, cx, cy, rot) {
+  const d = tableDims(type);
+  return { id: uid(), type, x: cx - d.w / 2, y: cy - d.h / 2, rot: rot || 0, w: d.w, h: d.h, seats: new Array(type === "2er" ? 2 : 1).fill(null) };
+}
+function objectAtCenter(kind, cx, cy) {
+  const def = OBJECT_DEFS[kind];
+  return { id: uid(), kind, x: cx - def.w / 2, y: cy - def.h / 2, rot: 0, w: def.w, h: def.h };
+}
+function frontObjects() { return [objectAtCenter("tafel", 650, 40), objectAtCenter("pult", 460, 40)]; }
+const LAYOUT_TEMPLATES = {
+  frontal: () => {
+    const tables = [];
+    const colXs = [410, 570, 730, 890], rowYs = [200, 304, 408];
+    rowYs.forEach(cy => colXs.forEach(cx => tables.push(tableAtCenter("2er", cx, cy, 0))));
+    return { tables, objects: frontObjects() };
+  },
+  u: () => {
+    const tables = [];
+    const tableW = 130, leftArmX = 400, rightArmX = 900, armTopY = 200;
+    // Vertikale Arme: je 3 Tische, aneinanderliegend, oben (Richtung Wandtafel) offen
+    const armCenters = [0, 1, 2].map(i => armTopY + tableW / 2 + i * tableW);
+    armCenters.forEach(cy => tables.push(tableAtCenter("2er", leftArmX, cy, 90)));
+    armCenters.forEach(cy => tables.push(tableAtCenter("2er", rightArmX, cy, 90)));
+    // Basis: 4 Tische frontal, aneinanderliegend, verbindet die Arme unten
+    const baseCenterX = (leftArmX + rightArmX) / 2;
+    const baseY = armCenters[armCenters.length - 1] + tableW / 2 + tableW / 2;
+    [-1.5, -0.5, 0.5, 1.5].forEach(m => tables.push(tableAtCenter("2er", baseCenterX + m * tableW, baseY, 0)));
+    // 2 Tische in der Mitte, aneinanderliegend
+    const midY = (armTopY + baseY) / 2;
+    tables.push(tableAtCenter("2er", baseCenterX - tableW / 2, midY, 0));
+    tables.push(tableAtCenter("2er", baseCenterX + tableW / 2, midY, 0));
+    return { tables, objects: frontObjects() };
+  },
+  gruppen: () => {
+    const tables = [];
+    const tableH = 64;
+    const cols = [460, 650, 840], groupRowTopYs = [200, 388];
+    cols.forEach(cx => groupRowTopYs.forEach(topY => {
+      tables.push(tableAtCenter("2er", cx, topY, 0));
+      tables.push(tableAtCenter("2er", cx, topY + tableH, 0));
+    }));
+    return { tables, objects: frontObjects() };
+  }
+};
+function applyLayoutTemplate(kind) {
+  const gen = LAYOUT_TEMPLATES[kind];
+  if (!gen) return;
+  const { tables, objects } = gen();
+  currentSeating.tables = tables;
+  currentSeating.objects = objects;
+  saveSeating();
+  renderSeatingCanvas();
+  renderSeatingPool();
+  document.getElementById("layoutTemplateOverlay").classList.add("hidden");
+}
+document.getElementById("loadTemplateBtn").addEventListener("click", () => document.getElementById("layoutTemplateOverlay").classList.remove("hidden"));
+document.getElementById("layoutTemplateCancel").addEventListener("click", () => document.getElementById("layoutTemplateOverlay").classList.add("hidden"));
+document.querySelectorAll("[data-apply-template]").forEach(btn => btn.addEventListener("click", () => {
+  const kind = btn.dataset.applyTemplate;
+  openConfirm("Aktuelle Tische und Raum-Objekte werden durch die Vorlage ersetzt (zugeteilte SuS kommen zurück in den Pool). Fortfahren?", () => applyLayoutTemplate(kind), null, "Vorlage laden");
+}));
 
 /* ---- Tisch verschieben (Pointer-Drag) ---- */
 function wireTableDrag(tableEl, table) {
@@ -1851,11 +2027,30 @@ function randomlyAssignSeats(alternateGender, onlyOccupied) {
     if (best.totalCost <= 0) break;
   }
   const placement = best.placement;
+  snapshotSeats();
   seatSlots.forEach((s, i) => { s.table.seats[s.seatIndex] = placement[i] ? placement[i].id : null; });
   saveSeating();
   renderSeatingCanvas();
   renderSeatingPool();
 }
+
+/* ---- Rückgängig (nach Zufällig verteilen / Plätze tauschen) ---- */
+let seatUndoSnapshot = null;
+function snapshotSeats() {
+  seatUndoSnapshot = currentSeating.tables.map(t => ({ id: t.id, seats: [...t.seats] }));
+  document.getElementById("undoSeatsBtn").classList.remove("hidden");
+}
+function undoSeatSwap() {
+  if (!seatUndoSnapshot) return;
+  seatUndoSnapshot.forEach(snap => {
+    const t = currentSeating.tables.find(x => x.id === snap.id);
+    if (t) t.seats = [...snap.seats];
+  });
+  seatUndoSnapshot = null;
+  document.getElementById("undoSeatsBtn").classList.add("hidden");
+  saveSeating(); renderSeatingCanvas(); renderSeatingPool();
+}
+document.getElementById("undoSeatsBtn").addEventListener("click", undoSeatSwap);
 
 /* =========================================================================
    SCHÜLERVERHALTEN
