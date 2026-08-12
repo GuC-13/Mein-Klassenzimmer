@@ -84,8 +84,16 @@
   /* SEATING EDITOR */
   .seating-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
   .seating-toolbar .btn { padding: 10px 14px; font-size: 0.85rem; margin-bottom: 0; }
-  .seating-layout { display: flex; gap: 12px; align-items: flex-start; }
+  .seating-toolbar.compact { gap: 6px; margin-bottom: 8px; }
+  .seating-toolbar.compact .btn { padding: 5px 9px; font-size: 0.72rem; }
+  .seating-toolbar.compact .toggle-line { font-size: 0.72rem !important; }
+  .seating-toolbar .toolbar-label { font-size: 0.82rem; font-weight: 700; color: var(--muted); }
+  .seating-layout { display: flex; gap: 12px; align-items: flex-start; position: relative; }
   .seating-pool { width: 150px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px; max-height: 640px; overflow-y: auto; }
+  .room-objects-mini { position: absolute; top: 8px; right: 8px; z-index: 20; background: rgba(255,255,255,0.92); border: 1px solid var(--border); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+  .room-objects-mini .toolbar-label { font-size: 0.62rem; text-align: center; margin-bottom: 2px; }
+  .room-objects-mini .btn { padding: 4px 6px; font-size: 0.62rem; margin-bottom: 0; white-space: nowrap; }
+  #seatingEditorView.presentation-mode .room-objects-mini { display: none; }
   .seating-pool h3 { font-size: 0.85rem; margin: 0 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
   .pool-chip { display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px; margin-bottom: 6px; cursor: grab; touch-action: none; user-select: none; }
   .pool-chip .photo-drop { width: 30px; height: 30px; font-size: 0.75rem; border: none; cursor: default; }
@@ -97,6 +105,7 @@
     background-size: 40px 40px; }
   .table-el, .object-el { position: absolute; top: 0; left: 0; touch-action: none; user-select: none; }
   .table-shape { background: #d6c199; border: 2px solid #a3835a; border-radius: 8px; display: flex; align-items: center; justify-content: space-evenly; gap: 6px; padding: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); box-sizing: border-box; }
+  .table-shape.bare { background: transparent; border: none; box-shadow: none; padding: 0; }
   .object-shape { border-radius: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); color: white; font-weight: 700; font-size: 0.68rem; text-align: center; padding: 2px; line-height: 1.1; box-sizing: border-box; }
   .object-shape span { transform-origin: center; }
   .zoom-controls { display: flex; align-items: center; gap: 6px; }
@@ -127,6 +136,9 @@
   #presentationModeBtn.active { background: #7c3aed; color: white; border-color: #7c3aed; }
   .presentation-exit-btn { position: fixed; top: 14px; right: 14px; width: 48px; height: 48px; border-radius: 50%; background: rgba(15,23,42,0.75); color: white; border: none; font-size: 1.3rem; font-weight: 800; z-index: 200; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
   .presentation-exit-btn.hidden, #undoSeatsBtn.hidden { display: none; }
+  #seatingEditorView.presentation-mode { padding: 0; }
+  #seatingEditorView.presentation-mode .seating-layout { display: block; }
+  #seatingEditorView.presentation-mode .seating-canvas-wrap { position: fixed; inset: 0; width: 100vw; height: 100vh; max-height: none; border: none; border-radius: 0; z-index: 100; touch-action: none; }
   #layoutTemplateOverlay .btn-outline { text-align: left; padding: 12px 14px; line-height: 1.4; }
 
   /* LEINWAND / BOARD */
@@ -278,44 +290,36 @@
   <div id="seatingEditorView" class="view hidden">
     <button class="presentation-exit-btn hidden" id="presentationExitBtn">✕</button>
     <div class="row back-row hide-in-presentation"><button class="btn btn-secondary" data-back-seatinglist>← Sitzordnungen</button></div>
-    <div class="row" style="align-items:center;">
+    <div class="row hide-in-presentation" style="align-items:center;">
       <h1 id="seatingEditor_title" style="margin-bottom:0;"></h1>
       <button class="btn btn-outline hide-in-presentation" id="renameSeatingBtn" style="padding:6px 12px; font-size:0.78rem;">✏️ Umbenennen</button>
     </div>
     <h2 class="sub hide-in-presentation" id="seatingEditor_updated" style="margin-bottom:12px;"></h2>
     <div class="seating-toolbar hide-in-presentation">
-      <button class="btn btn-outline" id="addTable1erBtn">+ 1er-Tisch</button>
-      <button class="btn btn-outline" id="addTable2erBtn">+ 2er-Tisch</button>
       <button class="btn btn-outline" id="loadTemplateBtn">📐 Vorlage laden</button>
+      <button class="btn btn-outline" id="copySeatingBtn">📋 In andere Klasse kopieren</button>
+      <button class="btn btn-outline" id="presentationModeBtn">🖥️ Präsentieransicht</button>
+    </div>
+    <div class="seating-toolbar compact hide-in-presentation">
+      <span class="toolbar-label">Sitzplätze:</span>
       <button class="btn" id="randomAssignBtn">🎲 Zufällig verteilen</button>
       <button class="btn btn-outline" id="swapSeatsBtn">🔀 Plätze tauschen</button>
       <button class="btn btn-outline hidden" id="undoSeatsBtn">↩️ Rückgängig</button>
-      <label class="toggle-line" style="font-size:0.85rem; font-weight:600;"><input type="checkbox" id="alternateGenderCheck" checked> ♂♀ nebeneinander bevorzugen</label>
+      <label class="toggle-line" style="font-weight:600;"><input type="checkbox" id="alternateGenderCheck" checked> ♂♀ nebeneinander bevorzugen</label>
       <button class="btn btn-outline danger" id="clearSeatsBtn">Plätze leeren</button>
-      <button class="btn btn-outline" id="copySeatingBtn">📋 In andere Klasse kopieren</button>
     </div>
     <div class="seating-toolbar hide-in-presentation">
-      <span style="font-size:0.82rem; font-weight:700; color:var(--muted);">Ansicht:</span>
+      <span class="toolbar-label">Ansicht:</span>
       <div class="zoom-controls">
         <button id="zoomOutBtn">−</button>
         <span class="zoom-label" id="zoomLabel">100%</span>
         <button id="zoomInBtn">+</button>
         <button id="zoomResetBtn" style="width:auto; padding:0 10px;">Reset</button>
       </div>
-      <button class="btn btn-outline" id="presentationModeBtn">🖥️ Präsentieransicht</button>
-    </div>
-    <div class="seating-toolbar hide-in-presentation">
-      <span style="font-size:0.82rem; font-weight:700; color:var(--muted);">Raum-Objekte:</span>
-      <button class="btn btn-outline" data-add-object="pult">+ Lehrerpult</button>
-      <button class="btn btn-outline" data-add-object="tafel">+ Wandtafel</button>
-      <button class="btn btn-outline" data-add-object="tuere">+ Türe</button>
-      <button class="btn btn-outline" data-add-object="lavabo">+ Lavabo</button>
-    </div>
-    <div class="seating-toolbar hide-in-presentation">
-      <span style="font-size:0.82rem; font-weight:700; color:var(--muted);">Name:</span>
+      <span class="toolbar-label" style="margin-left:10px;">Name:</span>
       <button class="display-opt-btn" data-namestyle="first">Vorname</button>
       <button class="display-opt-btn" data-namestyle="full">Vor- &amp; Nachname</button>
-      <span style="font-size:0.82rem; font-weight:700; color:var(--muted); margin-left:10px;">Foto:</span>
+      <span class="toolbar-label" style="margin-left:10px;">Foto:</span>
       <button class="display-opt-btn" data-showphoto="1">An</button>
       <button class="display-opt-btn" data-showphoto="0">Aus</button>
     </div>
@@ -328,6 +332,19 @@
         <div class="seating-canvas-sizer" id="seatingCanvasSizer">
           <div class="seating-canvas" id="seatingCanvas"></div>
         </div>
+      </div>
+      <div class="room-objects-mini hide-in-presentation">
+        <span class="toolbar-label">Tische &amp; Plätze</span>
+        <button class="btn btn-outline" id="addTable1erBtn">+ 1er-Tisch</button>
+        <button class="btn btn-outline" id="addTable2erBtn">+ 2er-Tisch</button>
+        <button class="btn btn-outline" id="addPlatzBtn">+ Platz</button>
+        <button class="btn btn-outline" id="addMehrfachplatzBtn">+ Mehrfachplatz</button>
+        <div style="height:1px; background:var(--border); margin:4px 0;"></div>
+        <span class="toolbar-label">Raum-Objekte</span>
+        <button class="btn btn-outline" data-add-object="pult">+ Pult</button>
+        <button class="btn btn-outline" data-add-object="tafel">+ Tafel</button>
+        <button class="btn btn-outline" data-add-object="tuere">+ Türe</button>
+        <button class="btn btn-outline" data-add-object="lavabo">+ Lavabo</button>
       </div>
     </div>
   </div>
@@ -552,9 +569,26 @@
     <p style="font-size:0.85rem; color:var(--muted); margin-top:-8px;">Ersetzt die aktuellen Tische und Raum-Objekte (zugeteilte SuS kommen zurück in den Pool). Lehrerpult und Wandtafel werden automatisch vorne platziert.</p>
     <button class="btn btn-outline" data-apply-template="frontal" style="width:100%; margin-bottom:8px;">➡️ Frontalformation<br><span style="font-weight:400; font-size:0.78rem;">3 Reihen à 4 Tische, alle zur Wandtafel</span></button>
     <button class="btn btn-outline" data-apply-template="u" style="width:100%; margin-bottom:8px;">🔄 U-Formation<br><span style="font-weight:400; font-size:0.78rem;">3 vertikal + 4 frontal + 3 vertikal, 2 Tische in der Mitte</span></button>
-    <button class="btn btn-outline" data-apply-template="gruppen" style="width:100%;">👥 Gruppenformation<br><span style="font-weight:400; font-size:0.78rem;">6 Vierergruppen, je 2 Tische gegenüber</span></button>
+    <button class="btn btn-outline" data-apply-template="gruppen" style="width:100%; margin-bottom:8px;">👥 Gruppenformation<br><span style="font-weight:400; font-size:0.78rem;">6 Vierergruppen, je 2 Tische gegenüber</span></button>
+    <button class="btn btn-outline" data-apply-template="zweiE" style="width:100%;">🅴 Zwei-E<br><span style="font-weight:400; font-size:0.78rem;">2 spiegelverkehrte E-Formationen aus Tischgruppen</span></button>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="layoutTemplateCancel">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mehrfachplatz Modal -->
+<div class="modal-overlay hidden" id="mehrfachplatzOverlay">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;">🪑 Mehrfachplatz</p>
+    <p style="font-size:0.85rem; color:var(--muted); margin-top:-8px;">Wie viele Plätze (z.B. für eine Sitzbank)?</p>
+    <div class="row" style="gap:8px;">
+      <button class="btn btn-outline" data-add-mehrfachplatz="2" style="flex:1;">2</button>
+      <button class="btn btn-outline" data-add-mehrfachplatz="3" style="flex:1;">3</button>
+      <button class="btn btn-outline" data-add-mehrfachplatz="4" style="flex:1;">4</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="mehrfachplatzCancel">Abbrechen</button>
     </div>
   </div>
 </div>
@@ -1527,6 +1561,7 @@ document.getElementById("zoomOutBtn").addEventListener("click", () => { seatingZ
 document.getElementById("zoomResetBtn").addEventListener("click", () => { seatingZoom = 1; applyZoom(); });
 
 let seatingPinchPointers = new Map(), seatingPinchStartDist = 0, seatingPinchStartZoom = 1;
+let seatingPanStart = null;
 function seatingPinchDist() {
   const pts = [...seatingPinchPointers.values()];
   return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -1535,7 +1570,10 @@ const seatingCanvasWrapEl = document.querySelector(".seating-canvas-wrap");
 seatingCanvasWrapEl.style.touchAction = "none";
 seatingCanvasWrapEl.addEventListener("pointerdown", (e) => {
   seatingPinchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (seatingPinchPointers.size === 2) { seatingPinchStartDist = seatingPinchDist(); seatingPinchStartZoom = seatingZoom; }
+  if (seatingPinchPointers.size === 2) { seatingPinchStartDist = seatingPinchDist(); seatingPinchStartZoom = seatingZoom; seatingPanStart = null; }
+  else if (presentationMode && seatingPinchPointers.size === 1) {
+    seatingPanStart = { x: e.clientX, y: e.clientY, scrollLeft: seatingCanvasWrapEl.scrollLeft, scrollTop: seatingCanvasWrapEl.scrollTop };
+  }
 });
 seatingCanvasWrapEl.addEventListener("pointermove", (e) => {
   if (!seatingPinchPointers.has(e.pointerId)) return;
@@ -1544,11 +1582,15 @@ seatingCanvasWrapEl.addEventListener("pointermove", (e) => {
     const dist = seatingPinchDist();
     seatingZoom = Math.max(0.3, Math.min(2, Math.round(seatingPinchStartZoom * (dist / seatingPinchStartDist) * 100) / 100));
     applyZoom();
+  } else if (presentationMode && seatingPinchPointers.size === 1 && seatingPanStart) {
+    seatingCanvasWrapEl.scrollLeft = seatingPanStart.scrollLeft - (e.clientX - seatingPanStart.x);
+    seatingCanvasWrapEl.scrollTop = seatingPanStart.scrollTop - (e.clientY - seatingPanStart.y);
   }
 });
 function seatingPinchEnd(e) {
   seatingPinchPointers.delete(e.pointerId);
   if (seatingPinchPointers.size < 2) seatingPinchStartDist = 0;
+  seatingPanStart = null;
 }
 seatingCanvasWrapEl.addEventListener("pointerup", seatingPinchEnd);
 seatingCanvasWrapEl.addEventListener("pointercancel", seatingPinchEnd);
@@ -1642,7 +1684,16 @@ function renderSeatingPool() {
   el.querySelectorAll(".pool-chip").forEach(chip => wireStudentDrag(chip, chip.dataset.studentId, "pool", null, -1));
 }
 
-function tableDims(type) { return type === "2er" ? { w: 130, h: 64 } : { w: 64, h: 64 }; }
+function tableDims(type) {
+  if (type === "2er") return { w: 130, h: 64 };
+  if (type.startsWith("platz")) return { w: (parseInt(type.slice(5)) || 1) * 64, h: 64 };
+  return { w: 64, h: 64 };
+}
+function seatCountForType(type) {
+  if (type === "2er") return 2;
+  if (type.startsWith("platz")) return parseInt(type.slice(5)) || 1;
+  return 1;
+}
 const OBJECT_DEFS = {
   pult: { label: "Lehrerpult", w: 120, h: 55, color: "#92400e" },
   tafel: { label: "Wandtafel", w: 220, h: 26, color: "#14532d" },
@@ -1712,12 +1763,13 @@ function renderSeatingCanvas() {
   currentSeating.tables.forEach(t => {
     if (!t.w) { const d = tableDims(t.type); t.w = d.w; t.h = d.h; }
     const dims = { w: t.w, h: t.h };
+    const isBare = t.type.startsWith("platz");
     const tableEl = document.createElement("div");
     tableEl.className = `table-el table-${t.type}`;
     tableEl.dataset.tableId = t.id;
     tableEl.style.width = dims.w + "px"; tableEl.style.height = dims.h + "px";
     tableEl.innerHTML = `
-      <div class="table-shape" style="width:${dims.w}px; height:${dims.h}px;">
+      <div class="table-shape${isBare ? " bare" : ""}" style="width:${dims.w}px; height:${dims.h}px;">
         ${t.seats.map((sid, idx) => renderSeatHTML(t, sid, idx)).join("")}
       </div>
       <button class="table-remove-btn" data-remove-table="${t.id}">✕</button>
@@ -1728,13 +1780,13 @@ function renderSeatingCanvas() {
     wireTableDrag(tableEl, t);
     tableEl.querySelector("[data-remove-table]").addEventListener("click", (e) => {
       e.stopPropagation();
-      openConfirm("Diesen Tisch entfernen? Zugeteilte SuS kommen zurück in den Pool.", () => {
+      openConfirm(isBare ? "Diesen Platz entfernen? Zugeteilte SuS kommen zurück in den Pool." : "Diesen Tisch entfernen? Zugeteilte SuS kommen zurück in den Pool.", () => {
         currentSeating.tables = currentSeating.tables.filter(x => x.id !== t.id);
         saveSeating(); renderSeatingCanvas(); renderSeatingPool();
       }, "Entfernen");
     });
     wireRotateHandle(tableEl.querySelector("[data-rotate-table]"), tableEl, t);
-    wireResizeHandle(tableEl.querySelector("[data-resize-table]"), t, t.type === "2er" ? 130 : 66, 66, (tb) => {
+    wireResizeHandle(tableEl.querySelector("[data-resize-table]"), t, tableDims(t.type).w, 66, (tb) => {
       tableEl.style.width = tb.w + "px"; tableEl.style.height = tb.h + "px";
       const shape = tableEl.querySelector(".table-shape");
       shape.style.width = tb.w + "px"; shape.style.height = tb.h + "px";
@@ -1766,8 +1818,15 @@ function updateTableTransform(tableEl, table) {
 
 document.getElementById("addTable1erBtn").addEventListener("click", () => addTable("1er"));
 document.getElementById("addTable2erBtn").addEventListener("click", () => addTable("2er"));
+document.getElementById("addPlatzBtn").addEventListener("click", () => addTable("platz1"));
+document.getElementById("addMehrfachplatzBtn").addEventListener("click", () => document.getElementById("mehrfachplatzOverlay").classList.remove("hidden"));
+document.getElementById("mehrfachplatzCancel").addEventListener("click", () => document.getElementById("mehrfachplatzOverlay").classList.add("hidden"));
+document.querySelectorAll("[data-add-mehrfachplatz]").forEach(b => b.addEventListener("click", () => {
+  addTable("platz" + b.dataset.addMehrfachplatz);
+  document.getElementById("mehrfachplatzOverlay").classList.add("hidden");
+}));
 function addTable(type) {
-  const count = type === "1er" ? 1 : 2;
+  const count = seatCountForType(type);
   const dims = tableDims(type);
   currentSeating.tables.push({ id: uid(), type, x: 40 + Math.random() * 100, y: 40 + Math.random() * 100, rot: 0, w: dims.w, h: dims.h, seats: new Array(count).fill(null) });
   saveSeating();
@@ -1783,7 +1842,7 @@ document.getElementById("clearSeatsBtn").addEventListener("click", () => {
 /* ---- Layout-Vorlagen ---- */
 function tableAtCenter(type, cx, cy, rot) {
   const d = tableDims(type);
-  return { id: uid(), type, x: cx - d.w / 2, y: cy - d.h / 2, rot: rot || 0, w: d.w, h: d.h, seats: new Array(type === "2er" ? 2 : 1).fill(null) };
+  return { id: uid(), type, x: cx - d.w / 2, y: cy - d.h / 2, rot: rot || 0, w: d.w, h: d.h, seats: new Array(seatCountForType(type)).fill(null) };
 }
 function objectAtCenter(kind, cx, cy) {
   const def = OBJECT_DEFS[kind];
@@ -1816,12 +1875,32 @@ const LAYOUT_TEMPLATES = {
   },
   gruppen: () => {
     const tables = [];
-    const tableW = 130;
-    const cols = [460, 650, 840], groupRowTopYs = [200, 388];
-    cols.forEach(cx => groupRowTopYs.forEach(topY => {
-      tables.push(tableAtCenter("2er", cx, topY, 90));
-      tables.push(tableAtCenter("2er", cx, topY + tableW, 90));
+    const tableH = 64;
+    const cols = [460, 650, 840], groupRowYs = [270, 500];
+    cols.forEach(cx => groupRowYs.forEach(cy => {
+      tables.push(tableAtCenter("2er", cx - tableH / 2, cy, 90));
+      tables.push(tableAtCenter("2er", cx + tableH / 2, cy, 90));
     }));
+    return { tables, objects: frontObjects() };
+  },
+  zweiE: () => {
+    const tables = [];
+    const tableW = 130, tableH = 64;
+    // dir = 1: Arm/Balken rechts von der Wirbelsäule (E), dir = -1: Arm/Balken links (spiegelverkehrtes E)
+    function buildE(spineCx, topY, dir) {
+      const seg1Y = topY + tableW / 2;
+      const seg2Y = topY + tableW * 1.5;
+      tables.push(tableAtCenter("2er", spineCx, seg1Y, 90));
+      tables.push(tableAtCenter("2er", spineCx, seg2Y, 90));
+      const armCenterX = spineCx + dir * (tableH / 2 + tableW / 2);
+      tables.push(tableAtCenter("2er", armCenterX, seg1Y, 0));
+      tables.push(tableAtCenter("2er", armCenterX, seg2Y, 0));
+      const barY = topY + tableW * 2 + tableH / 2;
+      tables.push(tableAtCenter("2er", armCenterX - tableW / 2, barY, 0));
+      tables.push(tableAtCenter("2er", armCenterX + tableW / 2, barY, 0));
+    }
+    buildE(150, 200, 1);
+    buildE(1180, 200, -1);
     return { tables, objects: frontObjects() };
   }
 };
