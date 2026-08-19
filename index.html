@@ -139,6 +139,9 @@
   #seatingEditorView.presentation-mode { padding: 0; }
   #seatingEditorView.presentation-mode .seating-layout { display: block; }
   #seatingEditorView.presentation-mode .seating-canvas-wrap { position: fixed; inset: 0; width: 100vw; height: 100vh; max-height: none; border: none; border-radius: 0; z-index: 100; touch-action: none; }
+  #app.board-fullwidth #seatingEditorView:not(.presentation-mode):not(.hidden) { display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; padding: 10px 10px 0; }
+  #app.board-fullwidth #seatingEditorView:not(.hidden) .seating-layout { flex: 1; min-height: 0; }
+  #app.board-fullwidth #seatingEditorView:not(.hidden) .seating-canvas-wrap { max-height: none; height: 100%; }
   #layoutTemplateOverlay .btn-outline { text-align: left; padding: 12px 14px; line-height: 1.4; }
 
   /* LEINWAND / BOARD */
@@ -149,14 +152,17 @@
   .fmt-btn { background: white; border: 2px solid var(--border); border-radius: 6px; width: 34px; height: 34px; font-weight: 800; cursor: pointer; font-size: 0.9rem; }
   .fmt-swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; }
   .board-canvas-wrap { position: relative; overflow: auto; background: #f8fafc; min-height: 78vh; }
+  .board-canvas-wrap.board-canvas-fullscreen { min-height: 100vh; }
   .board-canvas-wrap.bg-dark { background: #0f172a; }
   .board-canvas-wrap.bg-blue { background: #0c4a6e; }
   .board-canvas { position: relative; width: 100%; min-height: 78vh; }
   .board-item { position: absolute; touch-action: none; }
   .board-item-inner { position: relative; width: 100%; height: 100%; }
-  .board-item .item-remove-btn { position: absolute; top: -12px; right: -12px; width: 26px; height: 26px; border-radius: 50%; background: var(--danger); color: white; border: 2px solid white; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-  .board-item .item-drag-handle { position: absolute; top: -12px; left: -12px; width: 26px; height: 26px; border-radius: 50%; background: var(--muted); color: white; border: 2px solid white; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; cursor: grab; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-  .board-item .item-resize-handle { position: absolute; bottom: -8px; right: -8px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); border: 2px solid white; cursor: nwse-resize; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .board-item .item-remove-btn { position: absolute; top: -12px; right: -12px; width: 26px; height: 26px; border-radius: 50%; background: var(--danger); color: white; border: 2px solid white; font-size: 0.8rem; align-items: center; justify-content: center; cursor: pointer; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.3); display: none; }
+  .board-item .item-drag-handle { position: absolute; top: -12px; left: -12px; width: 26px; height: 26px; border-radius: 50%; background: var(--muted); color: white; border: 2px solid white; font-size: 0.8rem; align-items: center; justify-content: center; cursor: grab; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.3); display: none; }
+  .board-item .item-resize-handle { position: absolute; bottom: -8px; right: -8px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); border: 2px solid white; cursor: nwse-resize; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.3); display: none; }
+  .board-item.selected { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .board-item.selected .item-remove-btn, .board-item.selected .item-drag-handle, .board-item.selected .item-resize-handle { display: flex; }
   .board-text { width: 100%; height: 100%; min-width: 80px; min-height: 40px; padding: 8px 10px; outline: none; overflow: auto; background: rgba(255,255,255,0.0); border: 2px dashed transparent; }
   .board-text:focus { border-color: var(--accent); background: rgba(255,255,255,0.7); }
   .board-image img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
@@ -169,6 +175,11 @@
   .board-timer-setup { display: flex; gap: 6px; align-items: center; justify-content: center; margin-bottom: 8px; flex-wrap: wrap; }
   .board-timer-setup input[type="number"] { width: 52px; text-align: center; padding: 6px 4px; }
   .board-timer-setup label { font-size: 0.75rem; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .board-timer-extra-toggle { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.72rem; color: var(--muted); margin-top: 8px; cursor: pointer; }
+  .board-timer-extra { margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--border); display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .board-timer-extra label { font-size: 0.68rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+  .board-timer-extra input[type="number"] { width: 44px; text-align: center; padding: 3px; }
+  .board-timer-extra-display { font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); }
   .material-widget-title { font-weight: 800; font-size: 0.95rem; margin-bottom: 8px; }
   .material-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 6px 10px 2px; }
   .material-icon { border-radius: 12px; padding: 8px 4px; cursor: pointer; position: relative; font-size: 1.7rem; border: 3px solid; user-select: none; }
@@ -404,6 +415,7 @@
       <button class="fmt-btn" id="fmtBoldBtn" style="font-style:normal;"><b>B</b></button>
       <button class="fmt-btn" id="fmtItalicBtn"><i>I</i></button>
       <button class="fmt-btn" id="fmtUnderlineBtn"><u>U</u></button>
+      <button class="fmt-btn" id="fmtListBtn" title="Aufzählung">☰</button>
       <button class="fmt-btn" id="fmtSizeMinusBtn">A-</button>
       <button class="fmt-btn" id="fmtSizePlusBtn">A+</button>
       <button class="fmt-swatch" style="background:#0f172a;" data-fmt-color="#0f172a"></button>
@@ -782,6 +794,7 @@ function getStudent(className, studentId) {
 function showView(name) {
   document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
   document.getElementById(name + "View").classList.remove("hidden");
+  document.getElementById("app").classList.toggle("board-fullwidth", name === "seatingEditor" || name === "boardEditor");
 }
 document.querySelectorAll("[data-back-home]").forEach(b => b.addEventListener("click", () => showView("home")));
 document.querySelectorAll("[data-back-classes]").forEach(b => b.addEventListener("click", () => showView("classes")));
@@ -1571,8 +1584,9 @@ seatingCanvasWrapEl.style.touchAction = "none";
 seatingCanvasWrapEl.addEventListener("pointerdown", (e) => {
   seatingPinchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (seatingPinchPointers.size === 2) { seatingPinchStartDist = seatingPinchDist(); seatingPinchStartZoom = seatingZoom; seatingPanStart = null; }
-  else if (presentationMode && seatingPinchPointers.size === 1) {
-    seatingPanStart = { x: e.clientX, y: e.clientY, scrollLeft: seatingCanvasWrapEl.scrollLeft, scrollTop: seatingCanvasWrapEl.scrollTop };
+  else if (seatingPinchPointers.size === 1) {
+    const onInteractive = e.target.closest(".table-el, .object-el");
+    seatingPanStart = (!presentationMode && onInteractive) ? null : { x: e.clientX, y: e.clientY, scrollLeft: seatingCanvasWrapEl.scrollLeft, scrollTop: seatingCanvasWrapEl.scrollTop };
   }
 });
 seatingCanvasWrapEl.addEventListener("pointermove", (e) => {
@@ -1582,7 +1596,7 @@ seatingCanvasWrapEl.addEventListener("pointermove", (e) => {
     const dist = seatingPinchDist();
     seatingZoom = Math.max(0.3, Math.min(2, Math.round(seatingPinchStartZoom * (dist / seatingPinchStartDist) * 100) / 100));
     applyZoom();
-  } else if (presentationMode && seatingPinchPointers.size === 1 && seatingPanStart) {
+  } else if (seatingPinchPointers.size === 1 && seatingPanStart) {
     seatingCanvasWrapEl.scrollLeft = seatingPanStart.scrollLeft - (e.clientX - seatingPanStart.x);
     seatingCanvasWrapEl.scrollTop = seatingPanStart.scrollTop - (e.clientY - seatingPanStart.y);
   }
@@ -2340,18 +2354,27 @@ function formatCountdown(sec) {
 }
 function formatHM(sec) { const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return `${h}h ${m}min`; }
 function renderTimerWidget(el) {
+  if (el.extraOn === undefined) el.extraOn = false;
+  if (el.extraMin === undefined) el.extraMin = 10;
   const currentDisplay = el.running ? Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000)) : el.remainingSec;
   const h = Math.floor(el.durationSec / 3600), m = Math.floor((el.durationSec % 3600) / 60);
+  const fontSize = Math.max(26, Math.round(el.h * 0.24));
+  const extraRemaining = Math.max(0, currentDisplay + el.extraMin * 60);
   return `<div class="board-widget" style="width:100%; height:100%;">
     <div class="board-timer-setup">
       <label>Std.<input type="number" min="0" max="2" data-timer-hours="${el.id}" value="${h}" ${el.running ? "disabled" : ""}></label>
       <label>Min.<input type="number" min="0" max="59" data-timer-minutes="${el.id}" value="${m}" ${el.running ? "disabled" : ""}></label>
     </div>
-    <div class="board-timer-display" data-timer-display="${el.id}">${formatCountdown(currentDisplay)}</div>
+    <div class="board-timer-display" data-timer-display="${el.id}" style="font-size:${fontSize}px;">${formatCountdown(currentDisplay)}</div>
     <div class="board-timer-controls">
       <button data-timer-start="${el.id}">${el.running ? "Pause" : "Start"}</button>
       <button data-timer-reset="${el.id}">Reset</button>
     </div>
+    <label class="board-timer-extra-toggle"><input type="checkbox" data-timer-extra-toggle="${el.id}" ${el.extraOn ? "checked" : ""}> Nachteilsausgleich</label>
+    ${el.extraOn ? `<div class="board-timer-extra">
+      <label>+ Min. <input type="number" min="1" max="180" data-timer-extra-min="${el.id}" value="${el.extraMin}" ${el.running ? "disabled" : ""}></label>
+      <div class="board-timer-extra-display" data-timer-extra-display="${el.id}">${formatCountdown(extraRemaining)}</div>
+    </div>` : ""}
   </div>`;
 }
 function renderMaterialWidget(el) {
@@ -2378,12 +2401,21 @@ function renderBoardItemContent(el) {
   if (el.type === "material") return renderMaterialWidget(el);
   return "";
 }
+let selectedBoardItemId = null;
+function selectBoardItem(id) {
+  selectedBoardItemId = id;
+  document.querySelectorAll(".board-item").forEach(w => w.classList.toggle("selected", w.dataset.itemId === id));
+}
+document.getElementById("boardCanvas").addEventListener("pointerdown", (e) => {
+  if (e.target.id === "boardCanvas") selectBoardItem(null);
+});
 function renderBoardCanvas() {
   const canvas = document.getElementById("boardCanvas");
   canvas.innerHTML = "";
   currentBoard.elements.forEach(el => {
     const wrap = document.createElement("div");
-    wrap.className = "board-item";
+    wrap.className = "board-item" + (el.id === selectedBoardItemId ? " selected" : "");
+    wrap.dataset.itemId = el.id;
     wrap.style.left = el.x + "px"; wrap.style.top = el.y + "px";
     wrap.style.width = el.w + "px"; wrap.style.height = el.h + "px";
     const resizable = true;
@@ -2411,18 +2443,23 @@ function renderBoardCanvas() {
   applyPresentModeVisibility();
 }
 function wireBoardItemDrag(wrap, el) {
-  const handle = wrap.querySelector("[data-drag-handle]");
-  let dragging = false, startX = 0, startY = 0, origX = 0, origY = 0;
-  handle.addEventListener("pointerdown", (e) => {
-    dragging = true; startX = e.clientX; startY = e.clientY; origX = el.x; origY = el.y;
-    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+  let dragging = false, moved = false, startX = 0, startY = 0, origX = 0, origY = 0;
+  wrap.addEventListener("pointerdown", (e) => {
+    if (presentMode) return;
+    if (e.target.closest(".item-remove-btn, .item-resize-handle, .board-text, input, button, [data-material-toggle], [data-material-remove], [data-material-add]")) return;
+    selectBoardItem(el.id);
+    dragging = true; moved = false; startX = e.clientX; startY = e.clientY; origX = el.x; origY = el.y;
+    try { wrap.setPointerCapture(e.pointerId); } catch (err) {}
   });
-  handle.addEventListener("pointermove", (e) => {
+  wrap.addEventListener("pointermove", (e) => {
     if (!dragging) return;
-    el.x = origX + (e.clientX - startX); el.y = origY + (e.clientY - startY);
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    if (!moved && Math.hypot(dx, dy) < 4) return;
+    moved = true;
+    el.x = origX + dx; el.y = origY + dy;
     wrap.style.left = el.x + "px"; wrap.style.top = el.y + "px";
   });
-  handle.addEventListener("pointerup", () => { if (!dragging) return; dragging = false; saveBoard(); });
+  wrap.addEventListener("pointerup", () => { if (!dragging) return; dragging = false; if (moved) saveBoard(); });
 }
 function wireBoardItemResize(handleEl, wrap, el) {
   let dragging = false, startX = 0, startY = 0, origW = 0, origH = 0;
@@ -2439,6 +2476,10 @@ function wireBoardItemResize(handleEl, wrap, el) {
     if (el.type === "clock") {
       const clockEl = document.getElementById("clock-" + el.id);
       if (clockEl) clockEl.style.fontSize = Math.max(14, Math.round(el.h * 0.4)) + "px";
+    }
+    if (el.type === "timer") {
+      const timerDisplayEl = wrap.querySelector(`[data-timer-display="${el.id}"]`);
+      if (timerDisplayEl) timerDisplayEl.style.fontSize = Math.max(26, Math.round(el.h * 0.24)) + "px";
     }
   });
   handleEl.addEventListener("pointerup", (e) => { if (!dragging) return; e.stopPropagation(); dragging = false; saveBoard(); });
@@ -2475,6 +2516,16 @@ function wireTimerWidget(wrap, el) {
     el.running = false; el.endTimestamp = null; el.remainingSec = el.durationSec;
     saveBoard();
     renderBoardCanvas();
+  });
+  const extraToggle = wrap.querySelector(`[data-timer-extra-toggle="${el.id}"]`);
+  if (extraToggle) extraToggle.addEventListener("change", () => { el.extraOn = extraToggle.checked; saveBoard(); renderBoardCanvas(); });
+  const extraMinInput = wrap.querySelector(`[data-timer-extra-min="${el.id}"]`);
+  if (extraMinInput) extraMinInput.addEventListener("change", () => {
+    el.extraMin = Math.min(180, Math.max(1, Number(extraMinInput.value) || 10));
+    saveBoard();
+    const extraDisplayEl = wrap.querySelector(`[data-timer-extra-display="${el.id}"]`);
+    const currentDisplay = el.running ? Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000)) : el.remainingSec;
+    if (extraDisplayEl) extraDisplayEl.textContent = formatCountdown(Math.max(0, currentDisplay + el.extraMin * 60));
   });
 }
 let addMaterialTargetElId = null;
@@ -2524,6 +2575,10 @@ setInterval(() => {
       const remaining = Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000));
       const displayEl = document.querySelector(`[data-timer-display="${el.id}"]`);
       if (displayEl) displayEl.textContent = formatCountdown(remaining);
+      if (el.extraOn) {
+        const extraDisplayEl = document.querySelector(`[data-timer-extra-display="${el.id}"]`);
+        if (extraDisplayEl) extraDisplayEl.textContent = formatCountdown(Math.max(0, remaining + (el.extraMin || 10) * 60));
+      }
       if (remaining <= 0) {
         el.running = false; el.endTimestamp = null; el.remainingSec = 0;
         saveBoard();
@@ -2606,6 +2661,7 @@ function wireFmtBtn(id, cmd, value) {
 wireFmtBtn("fmtBoldBtn", "bold");
 wireFmtBtn("fmtItalicBtn", "italic");
 wireFmtBtn("fmtUnderlineBtn", "underline");
+wireFmtBtn("fmtListBtn", "insertUnorderedList");
 document.getElementById("fmtSizeMinusBtn").addEventListener("pointerdown", (e) => e.preventDefault());
 document.getElementById("fmtSizeMinusBtn").addEventListener("click", () => { currentFmtSize = Math.max(1, currentFmtSize - 1); applyFmt("fontSize", String(currentFmtSize)); });
 document.getElementById("fmtSizePlusBtn").addEventListener("pointerdown", (e) => e.preventDefault());
@@ -2622,12 +2678,13 @@ document.querySelectorAll("[data-board-bg]").forEach(btn => btn.addEventListener
 
 /* ---- Präsentationsmodus ---- */
 function applyPresentModeVisibility() {
-  document.querySelectorAll(".item-remove-btn, .item-drag-handle, .item-resize-handle").forEach(h => h.style.display = presentMode ? "none" : "flex");
+  if (presentMode) selectBoardItem(null);
 }
 function setPresentMode(on) {
   presentMode = on;
   document.getElementById("boardToolbarMain").style.display = presentMode ? "none" : "flex";
   document.getElementById("exitPresentBtn").style.display = presentMode ? "block" : "none";
+  document.getElementById("boardCanvasWrap").classList.toggle("board-canvas-fullscreen", presentMode);
   applyPresentModeVisibility();
   if (presentMode) { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); }
   else if (document.fullscreenElement) { document.exitFullscreen && document.exitFullscreen().catch(() => {}); }
