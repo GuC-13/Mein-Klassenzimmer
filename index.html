@@ -114,7 +114,8 @@
   .zoom-controls .zoom-label { font-size: 0.82rem; font-weight: 700; color: var(--muted); min-width: 42px; text-align: center; }
   .seat { width: 50px; height: 50px; border-radius: 50%; background: white; border: 2px solid #94a3b8; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: grab; overflow: hidden; touch-action: none; text-align: center; flex-shrink: 0; }
   .seat.empty { border-style: dashed; color: var(--muted); font-size: 0.7rem; cursor: default; }
-  .seat .seat-photo { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-bottom: 2px; }
+  .seat .seat-photo { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-bottom: 2px; -webkit-user-drag: none; user-drag: none; user-select: none; }
+  .seat, .pool-chip, .pool-chip .photo-drop img { -webkit-user-drag: none; user-drag: none; }
   .seat .seat-name { font-weight: 700; line-height: 1.05; padding: 0 2px; overflow-wrap: break-word; hyphens: auto; }
   .seat .seat-name.len-s { font-size: 0.6rem; }
   .seat .seat-name.len-m { font-size: 0.52rem; }
@@ -211,9 +212,12 @@
   .volume-light.red.on { box-shadow: 0 0 16px 2px #dc2626; }
   .volume-start-btn, .volume-stop-btn { border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; font-size: 0.82rem; cursor: pointer; color: white; background: var(--accent); }
   .volume-stop-btn { background: var(--danger); }
-  .volume-thresholds { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); display: flex; flex-direction: column; gap: 4px; align-items: center; }
-  .volume-thresholds label { font-size: 0.7rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
-  .volume-thresholds input[type="number"] { width: 46px; text-align: center; padding: 3px; }
+  .volume-db-readout { font-size: 1.3rem; font-weight: 800; font-variant-numeric: tabular-nums; margin: 4px 0 8px; color: var(--text); }
+  .volume-modes { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); display: flex; flex-direction: column; gap: 6px; }
+  .volume-mode-btn { font-size: 0.74rem; line-height: 1.35; padding: 6px 10px; }
+  .volume-mode-btn .vm-db { display: block; font-weight: 600; color: var(--muted); font-size: 0.68rem; }
+  .volume-mode-btn.active .vm-db { color: var(--accent); }
+  .volume-mode-label { margin-top: 8px; font-size: 0.72rem; color: var(--muted); font-weight: 700; }
   .qr-widget-title { font-weight: 800; font-size: 0.95rem; margin-bottom: 8px; }
   .qr-canvas-wrap { display: flex; justify-content: center; margin-bottom: 8px; }
   .qr-canvas-wrap canvas { image-rendering: pixelated; max-width: 100%; height: auto; }
@@ -511,6 +515,9 @@
       <button class="btn btn-outline" id="boardBgImageBtn" style="padding:6px 10px; font-size:0.78rem;">🖼️ Bild</button>
       <input type="file" accept="image/*" id="boardBgImageInput" style="display:none;">
       <button class="btn btn-outline" id="boardBgImageRemoveBtn" style="padding:6px 10px; font-size:0.78rem; display:none;">✕ Bild entfernen</button>
+      <label id="boardBgOpacityLabel" style="display:none; align-items:center; gap:6px; font-size:0.75rem; color:var(--muted); font-weight:700;">
+        Deckkraft <input type="range" id="boardBgOpacityInput" min="10" max="100" value="100" style="width:90px;">
+      </label>
       <div class="board-toolbar-sep"></div>
       <button class="btn" id="presentModeBtn">🖥️ Präsentieren</button>
     </div>
@@ -1809,7 +1816,7 @@ function renderSeatingPool() {
   if (list.length === 0) { el.innerHTML = '<div class="empty-hint" style="padding:14px 4px; font-size:0.8rem;">Alle zugeteilt.</div>'; return; }
   el.innerHTML = list.map(s => `
     <div class="pool-chip" data-student-id="${s.id}">
-      <div class="photo-drop">${s.photo ? `<img src="${s.photo}">` : initials(s)}</div>
+      <div class="photo-drop">${s.photo ? `<img src="${s.photo}" draggable="false">` : initials(s)}</div>
       <div class="pc-name">${escapeHtml(s.firstName)}</div>
     </div>`).join("");
   el.querySelectorAll(".pool-chip").forEach(chip => wireStudentDrag(chip, chip.dataset.studentId, "pool", null, -1));
@@ -1905,8 +1912,7 @@ function renderSeatingCanvas() {
         ${t.seats.map((sid, idx) => renderSeatHTML(t, sid, idx)).join("")}
       </div>
       <button class="table-remove-btn" data-remove-table="${t.id}">✕</button>
-      <div class="table-rotate-handle" data-rotate-table="${t.id}">⟳</div>
-      <div class="table-resize-handle" data-resize-table="${t.id}">⤡</div>`;
+      <div class="table-rotate-handle" data-rotate-table="${t.id}">⟳</div>`;
     canvas.appendChild(tableEl);
     updateTableTransform(tableEl, t);
     wireTableDrag(tableEl, t);
@@ -1918,11 +1924,6 @@ function renderSeatingCanvas() {
       }, "Entfernen");
     });
     wireRotateHandle(tableEl.querySelector("[data-rotate-table]"), tableEl, t);
-    wireResizeHandle(tableEl.querySelector("[data-resize-table]"), t, tableDims(t.type).w, 66, (tb) => {
-      tableEl.style.width = tb.w + "px"; tableEl.style.height = tb.h + "px";
-      const shape = tableEl.querySelector(".table-shape");
-      shape.style.width = tb.w + "px"; shape.style.height = tb.h + "px";
-    });
     t.seats.forEach((sid, idx) => {
       const seatEl = tableEl.querySelectorAll(".seat")[idx];
       if (sid) wireStudentDrag(seatEl, sid, "seat", t, idx);
@@ -1941,7 +1942,7 @@ function renderSeatHTML(table, studentId, seatIndex) {
   const student = studentId ? getStudent(currentSeatingClass, studentId) : null;
   if (!student) return `<div class="seat empty" data-table-id="${table.id}" data-seat-index="${seatIndex}">+</div>`;
   const name = studentDisplayName(student, currentSeating.nameStyle);
-  const photoHtml = currentSeating.showPhoto ? (student.photo ? `<img class="seat-photo" src="${student.photo}">` : `<div class="seat-photo" style="display:flex;align-items:center;justify-content:center;background:#e2e8f0;font-weight:800;">${initials(student)}</div>`) : "";
+  const photoHtml = currentSeating.showPhoto ? (student.photo ? `<img class="seat-photo" src="${student.photo}" draggable="false">` : `<div class="seat-photo" style="display:flex;align-items:center;justify-content:center;background:#e2e8f0;font-weight:800;">${initials(student)}</div>`) : "";
   const totalRot = (table.rot || 0) + (isPresentationRotated() ? 90 : 0);
   return `<div class="seat" data-table-id="${table.id}" data-seat-index="${seatIndex}" data-student-id="${student.id}" style="transform:rotate(${-totalRot}deg);">${photoHtml}<div class="seat-name ${seatNameSizeClass(name)}">${escapeHtml(name)}</div></div>`;
 }
@@ -2105,6 +2106,7 @@ function wireRotateHandle(handleEl, tableEl, table) {
 /* ---- Schüler-Drag (Pool <-> Sitz <-> Sitz) ---- */
 let ghostEl = null;
 function wireStudentDrag(sourceEl, studentId, sourceType, sourceTable, sourceSeatIndex) {
+  sourceEl.addEventListener("dragstart", (e) => e.preventDefault());
   sourceEl.addEventListener("pointerdown", (e) => {
     if (presentationMode) return;
     e.stopPropagation();
@@ -2112,7 +2114,7 @@ function wireStudentDrag(sourceEl, studentId, sourceType, sourceTable, sourceSea
     if (!student) return;
     ghostEl = document.createElement("div");
     ghostEl.className = "drag-ghost pool-chip";
-    ghostEl.innerHTML = `<div class="photo-drop">${student.photo ? `<img src="${student.photo}">` : initials(student)}</div><div class="pc-name">${escapeHtml(student.firstName)}</div>`;
+    ghostEl.innerHTML = `<div class="photo-drop">${student.photo ? `<img src="${student.photo}" draggable="false">` : initials(student)}</div><div class="pc-name">${escapeHtml(student.firstName)}</div>`;
     document.body.appendChild(ghostEl);
     moveGhost(e.clientX, e.clientY);
     try { sourceEl.setPointerCapture(e.pointerId); } catch (err) {}
@@ -2539,7 +2541,7 @@ function boardTemplateElements(template) {
     return [
       { id: uid(), type: "text", x: 40, y: 40, w: 320, h: 110, html: "Gruppenarbeit – sprecht in Zimmerlautstärke." },
       { id: uid(), type: "timer", x: 400, y: 40, w: 260, h: 190, durationSec: 900, remainingSec: 900, endTimestamp: null, running: false },
-      { id: uid(), type: "volume", x: 700, y: 40, w: 200, h: 260, yellowThreshold: 30, redThreshold: 60 },
+      { id: uid(), type: "volume", x: 700, y: 40, w: 200, h: 260, mode: "gruppe" },
       { id: uid(), type: "material", x: 940, y: 40, w: 220, h: 280, items: defaultMaterialItems() }
     ];
   }
@@ -2567,15 +2569,28 @@ document.getElementById("boardModalSave").addEventListener("click", () => {
 function applyBoardBg() {
   const wrap = document.getElementById("boardCanvasWrap");
   wrap.className = "board-canvas-wrap" + (currentBoard.bg && currentBoard.bg !== "light" ? " bg-" + currentBoard.bg : "");
+  const opacityLabel = document.getElementById("boardBgOpacityLabel");
+  const opacityInput = document.getElementById("boardBgOpacityInput");
   if (currentBoard.bgImage) {
-    wrap.style.backgroundImage = `url(${currentBoard.bgImage})`;
+    const opacity = currentBoard.bgImageOpacity != null ? currentBoard.bgImageOpacity : 100;
+    const tintAlpha = Math.max(0, (100 - opacity) / 100);
+    const tintColor = currentBoard.bg === "dark" ? "15,23,42" : currentBoard.bg === "blue" ? "12,74,110" : "255,255,255";
+    wrap.style.backgroundImage = `linear-gradient(rgba(${tintColor},${tintAlpha}), rgba(${tintColor},${tintAlpha})), url(${currentBoard.bgImage})`;
     wrap.style.backgroundSize = "cover";
     wrap.style.backgroundPosition = "center";
+    opacityLabel.style.display = "flex";
+    opacityInput.value = opacity;
   } else {
     wrap.style.backgroundImage = "";
+    opacityLabel.style.display = "none";
   }
   document.getElementById("boardBgImageRemoveBtn").style.display = currentBoard.bgImage ? "" : "none";
 }
+document.getElementById("boardBgOpacityInput").addEventListener("input", () => {
+  currentBoard.bgImageOpacity = Number(document.getElementById("boardBgOpacityInput").value);
+  applyBoardBg();
+  saveBoard();
+});
 function openBoardEditor(boardId) {
   stopAllVolumeWidgets();
   currentBoard = boardsData.find(b => b.id === boardId);
@@ -2623,10 +2638,20 @@ function formatHM(sec) { const h = Math.floor(sec / 3600), m = Math.floor((sec %
    LAUTSTÄRKE-AMPEL (Leinwand-Widget)
    ========================================================================= */
 const volumeActiveStreams = new Map();
+const VOLUME_MODES = {
+  ruhig: { label: "Ruhiges Arbeiten", yellow: 30, red: 40 },
+  normal: { label: "Normales Arbeiten", yellow: 40, red: 50 },
+  gruppe: { label: "Gruppenarbeit", yellow: 50, red: 75 }
+};
+function computeApproxDb(rms) {
+  if (rms <= 0.00001) return 0;
+  const db = 20 * Math.log10(rms) + 100;
+  return Math.max(0, Math.min(120, db));
+}
 function renderVolumeWidget(el) {
-  if (el.yellowThreshold === undefined) el.yellowThreshold = 30;
-  if (el.redThreshold === undefined) el.redThreshold = 60;
+  if (!el.mode || !VOLUME_MODES[el.mode]) el.mode = "normal";
   const active = volumeActiveStreams.has(el.id);
+  const modeInfo = VOLUME_MODES[el.mode];
   return `<div class="board-widget" style="width:100%; height:100%; overflow:auto;">
     <div class="volume-widget-title">🔊 Lautstärke</div>
     <div class="volume-lights" data-volume-lights="${el.id}">
@@ -2634,22 +2659,23 @@ function renderVolumeWidget(el) {
       <div class="volume-light yellow" data-volume-light="yellow"></div>
       <div class="volume-light green" data-volume-light="green"></div>
     </div>
+    <div class="volume-db-readout" data-volume-db="${el.id}">– dB</div>
     ${active
       ? `<button class="volume-stop-btn" data-volume-stop="${el.id}">Stop</button>`
       : `<button class="volume-start-btn" data-volume-start="${el.id}">🎤 Start</button>`}
-    ${!presentMode ? `<div class="volume-thresholds">
-      <label>Gelb ab <input type="number" min="5" max="95" data-volume-yellow="${el.id}" value="${el.yellowThreshold}">%</label>
-      <label>Rot ab <input type="number" min="5" max="95" data-volume-red="${el.id}" value="${el.redThreshold}">%</label>
-    </div>` : ""}
+    ${!presentMode ? `<div class="volume-modes">
+      ${Object.keys(VOLUME_MODES).map(key => `<button class="display-opt-btn volume-mode-btn${el.mode === key ? " active" : ""}" data-volume-mode="${el.id}" data-mode-value="${key}">${escapeHtml(VOLUME_MODES[key].label)}<span class="vm-db">${VOLUME_MODES[key].yellow}–${VOLUME_MODES[key].red} dB</span></button>`).join("")}
+    </div>` : `<div class="volume-mode-label">${escapeHtml(modeInfo.label)} (${modeInfo.yellow}–${modeInfo.red} dB)</div>`}
   </div>`;
 }
 function wireVolumeWidget(wrap, el) {
   const startBtn = wrap.querySelector(`[data-volume-start="${el.id}"]`);
   const stopBtn = wrap.querySelector(`[data-volume-stop="${el.id}"]`);
-  const yellowInput = wrap.querySelector(`[data-volume-yellow="${el.id}"]`);
-  const redInput = wrap.querySelector(`[data-volume-red="${el.id}"]`);
-  if (yellowInput) yellowInput.addEventListener("change", () => { el.yellowThreshold = Math.min(95, Math.max(5, Number(yellowInput.value) || 30)); saveBoard(); });
-  if (redInput) redInput.addEventListener("change", () => { el.redThreshold = Math.min(95, Math.max(5, Number(redInput.value) || 60)); saveBoard(); });
+  wrap.querySelectorAll(`[data-volume-mode="${el.id}"]`).forEach(btn => btn.addEventListener("click", () => {
+    el.mode = btn.dataset.modeValue;
+    saveBoard();
+    renderBoardCanvas();
+  }));
   if (startBtn) startBtn.addEventListener("click", async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       alert("Mikrofonzugriff wird auf diesem Gerät/Browser nicht unterstützt.");
@@ -2680,15 +2706,17 @@ function runVolumeLoop(id) {
   let sumSquares = 0;
   for (let i = 0; i < st.data.length; i++) { const v = (st.data[i] - 128) / 128; sumSquares += v * v; }
   const rms = Math.sqrt(sumSquares / st.data.length);
-  const level = Math.min(100, rms * 100 * 4);
-  st.smooth = st.smooth * 0.85 + level * 0.15;
+  const dbNow = computeApproxDb(rms);
+  st.smooth = st.smooth * 0.85 + dbNow * 0.15;
   const el = currentBoard && currentBoard.elements.find(x => x.id === id);
   const lightsWrap = document.querySelector(`[data-volume-lights="${id}"]`);
+  const dbEl = document.querySelector(`[data-volume-db="${id}"]`);
+  if (dbEl) dbEl.textContent = Math.round(st.smooth) + " dB";
   if (lightsWrap && el) {
-    const yellowT = el.yellowThreshold ?? 30, redT = el.redThreshold ?? 60;
+    const modeInfo = VOLUME_MODES[el.mode] || VOLUME_MODES.normal;
     let activeColor = "green";
-    if (st.smooth >= redT) activeColor = "red";
-    else if (st.smooth >= yellowT) activeColor = "yellow";
+    if (st.smooth >= modeInfo.red) activeColor = "red";
+    else if (st.smooth >= modeInfo.yellow) activeColor = "yellow";
     lightsWrap.querySelectorAll(".volume-light").forEach(l => l.classList.toggle("on", l.dataset.volumeLight === activeColor));
   }
   st.raf = requestAnimationFrame(() => runVolumeLoop(id));
@@ -3218,7 +3246,7 @@ document.getElementById("addMaterialBtn").addEventListener("click", () => {
 });
 document.getElementById("addVolumeBtn").addEventListener("click", () => {
   const p = nextBoardPos();
-  const newEl = { id: uid(), type: "volume", x: p.x, y: p.y, w: 200, h: 260, yellowThreshold: 30, redThreshold: 60 };
+  const newEl = { id: uid(), type: "volume", x: p.x, y: p.y, w: 200, h: 260, mode: "normal" };
   currentBoard.elements.push(newEl);
   saveBoard(); renderBoardCanvas(); selectBoardItem(newEl.id);
 });
