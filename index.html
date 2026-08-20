@@ -28,6 +28,8 @@
   .btn-outline { background: white; color: var(--accent); border: 2px solid var(--accent); }
   .btn-outline.danger { color: var(--danger); border-color: var(--danger); }
   .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn-subtle { background: none; border: none; color: var(--muted); font-size: 0.76rem; font-weight: 600; padding: 6px 2px; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+  .btn-subtle:hover { color: var(--accent); }
 
   /* HOME */
   .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
@@ -344,6 +346,10 @@
     <h1 id="seatingList_title"></h1>
     <div class="list-card" id="seatingListList"></div>
     <button class="btn btn-big" id="addSeatingBtn">+ Neue Sitzordnung</button>
+    <div class="row" style="justify-content:flex-end;">
+      <button class="btn-subtle" id="importSeatingBtn">📥 Vorlage importieren</button>
+    </div>
+    <input type="file" accept=".json" id="importSeatingFileInput" style="display:none;">
   </div>
 
   <!-- SITZORDNUNG: Editor -->
@@ -360,6 +366,7 @@
       <button class="btn btn-outline" id="loadTemplateBtn">📐 Vorlage laden</button>
       <button class="btn btn-outline" id="copySeatingBtn">📋 In andere Klasse kopieren</button>
       <button class="btn btn-outline" id="presentationModeBtn">🖥️ Präsentieransicht</button>
+      <button class="btn-subtle" id="exportSeatingBtn" style="margin-left:auto;">📤 Als Vorlage exportieren</button>
     </div>
     <div class="seating-toolbar compact hide-in-presentation">
       <span class="toolbar-label">Sitzplätze:</span>
@@ -479,6 +486,10 @@
     <h1>🖥️ Leinwand</h1>
     <div class="list-card" id="boardsList"></div>
     <button class="btn btn-big" id="addBoardBtn">+ Neue Leinwand</button>
+    <div class="row" style="justify-content:flex-end;">
+      <button class="btn-subtle" id="importBoardBtn">📥 Vorlage importieren</button>
+    </div>
+    <input type="file" accept=".json" id="importBoardFileInput" style="display:none;">
   </div>
 
   <!-- LEINWAND: Editor / Präsentation -->
@@ -518,6 +529,7 @@
       <label id="boardBgOpacityLabel" style="display:none; align-items:center; gap:6px; font-size:0.75rem; color:var(--muted); font-weight:700;">
         Deckkraft <input type="range" id="boardBgOpacityInput" min="10" max="100" value="100" style="width:90px;">
       </label>
+      <button class="btn-subtle" id="exportBoardBtn">📤 Als Vorlage exportieren</button>
       <div class="board-toolbar-sep"></div>
       <button class="btn" id="presentModeBtn">🖥️ Präsentieren</button>
     </div>
@@ -1580,12 +1592,13 @@ function renderSeatingList(className) {
     <div class="list-row" data-id="${s.id}">
       <div><div class="lr-title">${escapeHtml(s.name)}</div><div class="lr-sub">${s.tables.length} Tisch(e) · zuletzt geändert: ${formatDateTimeDE(s.updatedAt)}</div></div>
       <div class="lr-actions">
+        <button class="icon-btn" data-export="${s.id}" title="Als Vorlage exportieren">📤</button>
         <button class="icon-btn" data-copy="${s.id}">📋</button>
         <button class="icon-btn danger" data-del="${s.id}">🗑</button>
       </div>
     </div>`).join("");
   el.querySelectorAll(".list-row").forEach(row => row.addEventListener("click", (e) => {
-    if (e.target.closest("[data-del]") || e.target.closest("[data-copy]")) return;
+    if (e.target.closest("[data-del]") || e.target.closest("[data-copy]") || e.target.closest("[data-export]")) return;
     openSeatingEditor(row.dataset.id);
   }));
   el.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", (e) => {
@@ -1600,8 +1613,77 @@ function renderSeatingList(className) {
     e.stopPropagation();
     openCopySeatingModal(b.dataset.copy);
   }));
+  el.querySelectorAll("[data-export]").forEach(b => b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const seating = (seatingsData[className] || []).find(s => s.id === b.dataset.export);
+    if (seating) exportSeatingAsTemplate(seating);
+  }));
   showView("seatingList");
 }
+function exportSeatingAsTemplate(seating) {
+  const payload = {
+    app: "klassenzimmer-manager-seating",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    seating: {
+      name: seating.name,
+      nameStyle: seating.nameStyle || "first",
+      showPhoto: seating.showPhoto !== false,
+      bg: seating.bg || "light",
+      tables: (seating.tables || []).map(t => ({ ...t, seats: t.seats.map(() => null) })),
+      objects: seating.objects || []
+    }
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const safeName = (seating.name || "sitzordnung").toLowerCase().replace(/[^a-z0-9äöüß]+/gi, "-").replace(/^-+|-+$/g, "");
+  a.href = url; a.download = `sitzordnung-vorlage-${safeName || "layout"}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function importSeatingTemplateFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed;
+    try {
+      parsed = JSON.parse(reader.result);
+    } catch (err) {
+      openConfirm("Datei konnte nicht gelesen werden: " + err.message, null, "OK");
+      return;
+    }
+    const src = parsed && parsed.seating ? parsed.seating : parsed;
+    if (!src || !Array.isArray(src.tables)) {
+      openConfirm("Diese Datei enthält keine gültige Sitzordnungs-Vorlage.", null, "OK");
+      return;
+    }
+    const tables = src.tables.map(t => ({ ...t, id: uid(), seats: (t.seats || []).map(() => null) }));
+    const objects = (src.objects || []).map(o => ({ ...o, id: uid() }));
+    const newSeating = {
+      id: uid(),
+      name: (src.name || "Importierte Sitzordnung") + " (importiert)",
+      nameStyle: src.nameStyle || "first",
+      showPhoto: src.showPhoto !== false,
+      bg: src.bg || "light",
+      tables,
+      objects,
+      updatedAt: Date.now()
+    };
+    if (!seatingsData[currentSeatingClass]) seatingsData[currentSeatingClass] = [];
+    seatingsData[currentSeatingClass].push(newSeating);
+    persistSeatings();
+    renderSeatingList(currentSeatingClass);
+    openConfirm(`Sitzordnung "${newSeating.name}" wurde importiert.`, null, "OK");
+  };
+  reader.readAsText(file, "utf-8");
+}
+document.getElementById("importSeatingBtn").addEventListener("click", () => document.getElementById("importSeatingFileInput").click());
+document.getElementById("importSeatingFileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) importSeatingTemplateFile(file);
+  e.target.value = "";
+});
+document.getElementById("exportSeatingBtn").addEventListener("click", () => { if (currentSeating) exportSeatingAsTemplate(currentSeating); });
 let copySeatingSourceId = null;
 function openCopySeatingModal(seatingId) {
   copySeatingSourceId = seatingId;
@@ -2506,11 +2588,19 @@ function renderBoardsList() {
   el.innerHTML = boardsData.map(b => `
     <div class="list-row" data-id="${b.id}">
       <div><div class="lr-title">${escapeHtml(b.name)}</div><div class="lr-sub">zuletzt geändert: ${formatDateTimeDE(b.updatedAt)}</div></div>
-      <div class="lr-actions"><button class="icon-btn danger" data-del-board="${b.id}">🗑</button></div>
+      <div class="lr-actions">
+        <button class="icon-btn" data-export-board="${b.id}" title="Als Vorlage exportieren">📤</button>
+        <button class="icon-btn danger" data-del-board="${b.id}">🗑</button>
+      </div>
     </div>`).join("");
   el.querySelectorAll(".list-row").forEach(row => row.addEventListener("click", (e) => {
-    if (e.target.closest("[data-del-board]")) return;
+    if (e.target.closest("[data-del-board], [data-export-board]")) return;
     openBoardEditor(row.dataset.id);
+  }));
+  el.querySelectorAll("[data-export-board]").forEach(b => b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const board = boardsData.find(x => x.id === b.dataset.exportBoard);
+    if (board) exportBoardAsTemplate(board);
   }));
   el.querySelectorAll("[data-del-board]").forEach(b => b.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -2521,6 +2611,65 @@ function renderBoardsList() {
     }, "Löschen");
   }));
 }
+function exportBoardAsTemplate(board) {
+  const payload = {
+    app: "klassenzimmer-manager-board",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    board: {
+      name: board.name,
+      bg: board.bg || "light",
+      bgImage: board.bgImage || null,
+      bgImageOpacity: board.bgImageOpacity != null ? board.bgImageOpacity : 100,
+      elements: board.elements || []
+    }
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const safeName = (board.name || "leinwand").toLowerCase().replace(/[^a-z0-9äöüß]+/gi, "-").replace(/^-+|-+$/g, "");
+  a.href = url; a.download = `leinwand-vorlage-${safeName || "board"}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function importBoardTemplateFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed;
+    try {
+      parsed = JSON.parse(reader.result);
+    } catch (err) {
+      openConfirm("Datei konnte nicht gelesen werden: " + err.message, null, "OK");
+      return;
+    }
+    const boardSrc = parsed && parsed.board ? parsed.board : parsed;
+    if (!boardSrc || !Array.isArray(boardSrc.elements)) {
+      openConfirm("Diese Datei enthält keine gültige Leinwand-Vorlage.", null, "OK");
+      return;
+    }
+    const elements = boardSrc.elements.map(el => ({ ...el, id: uid() }));
+    const newBoard = {
+      id: uid(),
+      name: (boardSrc.name || "Importierte Leinwand") + " (importiert)",
+      bg: boardSrc.bg || "light",
+      bgImage: boardSrc.bgImage || null,
+      bgImageOpacity: boardSrc.bgImageOpacity != null ? boardSrc.bgImageOpacity : 100,
+      elements,
+      updatedAt: Date.now()
+    };
+    boardsData.push(newBoard);
+    persistBoards();
+    renderBoardsList();
+    openConfirm(`Leinwand "${newBoard.name}" wurde importiert.`, null, "OK");
+  };
+  reader.readAsText(file, "utf-8");
+}
+document.getElementById("importBoardBtn").addEventListener("click", () => document.getElementById("importBoardFileInput").click());
+document.getElementById("importBoardFileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) importBoardTemplateFile(file);
+  e.target.value = "";
+});
 let selectedBoardTemplate = "";
 function boardTemplateElements(template) {
   if (template === "einzel") {
@@ -3317,6 +3466,7 @@ function setPresentMode(on) {
   if (presentMode) { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); }
   else if (document.fullscreenElement) { document.exitFullscreen && document.exitFullscreen().catch(() => {}); }
 }
+document.getElementById("exportBoardBtn").addEventListener("click", () => { if (currentBoard) exportBoardAsTemplate(currentBoard); });
 document.getElementById("presentModeBtn").addEventListener("click", () => setPresentMode(true));
 document.getElementById("exitPresentBtn").addEventListener("click", () => setPresentMode(false));
 
