@@ -46,6 +46,7 @@
   .tile-random { background: linear-gradient(135deg, #db2777, #831843); }
   .tile-groups { background: linear-gradient(135deg, #0d9488, #134e4a); }
   .tile-movement { background: linear-gradient(135deg, #ea580c, #7c2d12); }
+  .tile-checklist { background: linear-gradient(135deg, #059669, #064e3b); }
 
   /* LISTS / CARDS */
   .list-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
@@ -136,6 +137,9 @@
   #presentationModeBtn.active { background: #7c3aed; color: white; border-color: #7c3aed; }
   .presentation-exit-btn { position: fixed; top: 14px; right: 14px; width: 48px; height: 48px; border-radius: 50%; background: rgba(15,23,42,0.75); color: white; border: none; font-size: 1.3rem; font-weight: 800; z-index: 200; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
   .presentation-exit-btn.hidden, #undoSeatsBtn.hidden { display: none; }
+  .presentation-rotate-btn { position: fixed; top: 14px; right: 74px; height: 48px; padding: 0 18px; border-radius: 24px; background: rgba(15,23,42,0.75); color: white; border: none; font-size: 0.95rem; font-weight: 800; z-index: 200; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+  .presentation-rotate-btn.active { background: #7c3aed; }
+  .presentation-rotate-btn.hidden { display: none; }
   #seatingEditorView.presentation-mode { padding: 0; }
   #seatingEditorView.presentation-mode .seating-layout { display: block; }
   #seatingEditorView.presentation-mode .seating-canvas-wrap { position: fixed; inset: 0; width: 100vw; height: 100vh; max-height: none; border: none; border-radius: 0; z-index: 100; touch-action: none; }
@@ -193,6 +197,29 @@
   .material-icon .mat-icon-inner { display: inline-flex; align-items: center; justify-content: center; min-height: 26px; }
   .material-icon .mat-remove-btn { position: absolute; top: -8px; left: -8px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); color: white; border: 2px solid white; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
   .material-icon.add-material { border-style: dashed; border-color: var(--border); background: var(--bg); color: var(--muted); cursor: pointer; }
+  .template-choice { border: 2px solid var(--border); background: var(--card); border-radius: 10px; padding: 8px 14px; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: var(--text); }
+  .template-choice.active { border-color: var(--accent); background: #eff6ff; color: var(--accent); }
+  .volume-widget-title { font-weight: 800; font-size: 0.95rem; margin-bottom: 10px; }
+  .volume-lights { display: flex; flex-direction: column; gap: 8px; align-items: center; margin: 0 auto 10px; width: 64px; }
+  .volume-light { width: 44px; height: 44px; border-radius: 50%; opacity: 0.22; transition: opacity 0.15s, box-shadow 0.15s; }
+  .volume-light.green { background: #16a34a; }
+  .volume-light.yellow { background: #eab308; }
+  .volume-light.red { background: #dc2626; }
+  .volume-light.on { opacity: 1; box-shadow: 0 0 16px 2px currentColor; }
+  .volume-light.green.on { box-shadow: 0 0 16px 2px #16a34a; }
+  .volume-light.yellow.on { box-shadow: 0 0 16px 2px #eab308; }
+  .volume-light.red.on { box-shadow: 0 0 16px 2px #dc2626; }
+  .volume-start-btn, .volume-stop-btn { border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; font-size: 0.82rem; cursor: pointer; color: white; background: var(--accent); }
+  .volume-stop-btn { background: var(--danger); }
+  .volume-thresholds { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .volume-thresholds label { font-size: 0.7rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+  .volume-thresholds input[type="number"] { width: 46px; text-align: center; padding: 3px; }
+  .qr-widget-title { font-weight: 800; font-size: 0.95rem; margin-bottom: 8px; }
+  .qr-canvas-wrap { display: flex; justify-content: center; margin-bottom: 8px; }
+  .qr-canvas-wrap canvas { image-rendering: pixelated; max-width: 100%; height: auto; }
+  .qr-input-row { display: flex; gap: 6px; }
+  .qr-input-row input { flex: 1; min-width: 0; padding: 6px 8px; font-size: 0.8rem; }
+  .qr-error { color: var(--danger); font-size: 0.72rem; margin-top: 6px; }
 
   /* GRUPPEN */
   .group-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
@@ -216,6 +243,23 @@
   .behavior-table th .sort-arrow { font-size: 0.7rem; color: var(--muted); }
   .behavior-table-wrap { overflow-x: auto; margin-top: 18px; }
   .filter-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+
+  /* KLASSENLISTE (Checkliste) */
+  .checklist-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+  .checklist-table { border-collapse: collapse; width: 100%; }
+  .checklist-table th, .checklist-table td { border-bottom: 1px solid var(--border); padding: 8px 10px; text-align: center; white-space: nowrap; }
+  .checklist-table thead th { background: #f8fafc; font-size: 0.8rem; vertical-align: bottom; }
+  .checklist-table th.checklist-name-col, .checklist-table td.checklist-name-col { text-align: left; position: sticky; left: 0; background: var(--card); z-index: 1; min-width: 180px; }
+  .checklist-table thead th.checklist-name-col { background: #f8fafc; z-index: 2; }
+  .checklist-table td.checklist-name-col { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .checklist-table td.checklist-name-col .photo-drop { width: 30px; height: 30px; font-size: 0.75rem; border: none; cursor: default; }
+  .checklist-col-header { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 110px; }
+  .checklist-col-name { font-weight: 700; white-space: normal; max-width: 130px; }
+  .checklist-col-actions { display: flex; gap: 4px; }
+  .checklist-col-actions button { border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; padding: 2px 4px; }
+  .checklist-col-actions button:hover { color: var(--accent); }
+  .checklist-check { width: 30px; height: 30px; cursor: pointer; accent-color: var(--success); }
+  .checklist-empty-cols { padding: 30px 16px; text-align: center; color: var(--muted); }
   .filter-row select, .filter-row input { width: auto; flex: 1; min-width: 140px; }
 </style>
 </head>
@@ -301,6 +345,7 @@
   <!-- SITZORDNUNG: Editor -->
   <div id="seatingEditorView" class="view hidden">
     <button class="presentation-exit-btn hidden" id="presentationExitBtn">✕</button>
+    <button class="presentation-rotate-btn hidden" id="presentationRotateBtn">⟳ 90°</button>
     <div class="row back-row hide-in-presentation"><button class="btn btn-secondary" data-back-seatinglist>← Sitzordnungen</button></div>
     <div class="row hide-in-presentation" style="align-items:center;">
       <h1 id="seatingEditor_title" style="margin-bottom:0;"></h1>
@@ -392,6 +437,38 @@
     </div>
   </div>
 
+  <!-- KLASSENLISTE: Klasse wählen -->
+  <div id="checklistPickView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>✅ Klassenliste – Klasse wählen</h1>
+    <div class="list-card" id="checklistClassList"></div>
+  </div>
+
+  <!-- KLASSENLISTE: Hauptansicht -->
+  <div id="checklistView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-checklistpick>← Klassenwahl</button></div>
+    <h1 id="checklist_title"></h1>
+    <div class="row" style="margin-bottom:14px;">
+      <button class="btn btn-outline" id="checklistAddColBtn">+ Spalte hinzufügen</button>
+    </div>
+    <div class="checklist-table-wrap">
+      <table class="checklist-table" id="checklistTable"></table>
+    </div>
+  </div>
+
+  <!-- KLASSENLISTE: Spalte benennen -->
+  <div class="modal-overlay hidden" id="checklistColModal">
+    <div class="modal-box">
+      <p style="font-weight:800; margin-top:0;" id="checklistColModalTitle">Spalte hinzufügen</p>
+      <label class="field-label">Bezeichnung</label>
+      <input type="text" id="checklistColNameInput" placeholder="z.B. Rückgabe Elternblatt">
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="checklistColModalCancel">Abbrechen</button>
+        <button class="btn" id="checklistColModalSave">Speichern</button>
+      </div>
+    </div>
+  </div>
+
   <!-- LEINWAND: Liste -->
   <div id="boardsListView" class="view hidden">
     <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
@@ -411,6 +488,8 @@
       <button class="btn btn-outline" id="addTimerBtn">+ Timer</button>
       <button class="btn btn-outline" id="addClockBtn">+ Uhr</button>
       <button class="btn btn-outline" id="addMaterialBtn">+ Material</button>
+      <button class="btn btn-outline" id="addVolumeBtn">+ Lautstärke</button>
+      <button class="btn btn-outline" id="addQrBtn">+ QR-Code</button>
       <input type="file" accept="image/*" id="boardImageInput" style="display:none;">
       <div class="board-toolbar-sep"></div>
       <button class="fmt-btn" id="fmtBoldBtn" style="font-style:normal;"><b>B</b></button>
@@ -429,6 +508,9 @@
       <button class="fmt-swatch" style="background:#f8fafc; border-color:#94a3b8;" data-board-bg="light"></button>
       <button class="fmt-swatch" style="background:#0f172a;" data-board-bg="dark"></button>
       <button class="fmt-swatch" style="background:#0c4a6e;" data-board-bg="blue"></button>
+      <button class="btn btn-outline" id="boardBgImageBtn" style="padding:6px 10px; font-size:0.78rem;">🖼️ Bild</button>
+      <input type="file" accept="image/*" id="boardBgImageInput" style="display:none;">
+      <button class="btn btn-outline" id="boardBgImageRemoveBtn" style="padding:6px 10px; font-size:0.78rem; display:none;">✕ Bild entfernen</button>
       <div class="board-toolbar-sep"></div>
       <button class="btn" id="presentModeBtn">🖥️ Präsentieren</button>
     </div>
@@ -625,6 +707,13 @@
     <p style="font-weight:800; margin-top:0;">Neue Leinwand</p>
     <label class="field-label">Name</label>
     <input type="text" id="boardNameInput" placeholder="z.B. Prüfung Mathe 2b">
+    <label class="field-label">Vorlage</label>
+    <div class="row" id="boardTemplateRow" style="gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+      <button class="template-choice active" data-board-template="">Leer</button>
+      <button class="template-choice" data-board-template="einzel">Einzelarbeit</button>
+      <button class="template-choice" data-board-template="pruefung">Prüfung</button>
+      <button class="template-choice" data-board-template="gruppe">Gruppenarbeit</button>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="boardModalCancel">Abbrechen</button>
       <button class="btn" id="boardModalSave">Erstellen</button>
@@ -772,16 +861,19 @@ const CLASSES_KEY = "kz_classes";
 const SEATINGS_KEY = "kz_seatings";
 const BEHAVIOR_KEY = "kz_behavior";
 const COLORS_KEY = "kz_colors";
+const CHECKLIST_KEY = "kz_checklist";
 
 let classesData = JSON.parse(localStorage.getItem(CLASSES_KEY) || "{}");
 let seatingsData = JSON.parse(localStorage.getItem(SEATINGS_KEY) || "{}");
 let behaviorData = JSON.parse(localStorage.getItem(BEHAVIOR_KEY) || "{}");
 let colorsData = JSON.parse(localStorage.getItem(COLORS_KEY) || "{}");
+let checklistData = JSON.parse(localStorage.getItem(CHECKLIST_KEY) || "{}");
 
 function persistClasses() { localStorage.setItem(CLASSES_KEY, JSON.stringify(classesData)); }
 function persistSeatings() { localStorage.setItem(SEATINGS_KEY, JSON.stringify(seatingsData)); }
 function persistBehavior() { localStorage.setItem(BEHAVIOR_KEY, JSON.stringify(behaviorData)); }
 function persistColors() { localStorage.setItem(COLORS_KEY, JSON.stringify(colorsData)); }
+function persistChecklist() { localStorage.setItem(CHECKLIST_KEY, JSON.stringify(checklistData)); }
 function formatDateTimeDE(ts) { if (!ts) return ""; const d = new Date(ts); const pad = n => String(n).padStart(2, "0"); return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 
 function getStudent(className, studentId) {
@@ -802,10 +894,11 @@ document.querySelectorAll("[data-back-classes]").forEach(b => b.addEventListener
 document.querySelectorAll("[data-back-seatingpick]").forEach(b => b.addEventListener("click", () => showView("seatingPick")));
 document.querySelectorAll("[data-back-seatinglist]").forEach(b => b.addEventListener("click", () => renderSeatingList(currentSeatingClass)));
 document.querySelectorAll("[data-back-behaviorpick]").forEach(b => b.addEventListener("click", () => showView("behaviorPick")));
-document.querySelectorAll("[data-back-boardslist]").forEach(b => b.addEventListener("click", () => { setPresentMode(false); renderBoardsList(); showView("boardsList"); }));
+document.querySelectorAll("[data-back-boardslist]").forEach(b => b.addEventListener("click", () => { setPresentMode(false); stopAllVolumeWidgets(); renderBoardsList(); showView("boardsList"); }));
 document.querySelectorAll("[data-back-randompick]").forEach(b => b.addEventListener("click", () => showView("randomPick")));
 document.querySelectorAll("[data-back-groupspick]").forEach(b => b.addEventListener("click", () => showView("groupsPick")));
 document.querySelectorAll("[data-back-movementcats]").forEach(b => b.addEventListener("click", () => showView("movementCats")));
+document.querySelectorAll("[data-back-checklistpick]").forEach(b => b.addEventListener("click", () => showView("checklistPick")));
 
 /* ---- Home: Kacheln, Reihenfolge per Drag&Drop ---- */
 const HOME_TILES = [
@@ -815,7 +908,8 @@ const HOME_TILES = [
   { id: "boardsList", cls: "tile-board", icon: "🖥️", title: "Leinwand", sub: "Infoboard, Timer, Material-Anzeige" },
   { id: "randomPick", cls: "tile-random", icon: "🎯", title: "Zufallsschüler", sub: "Zufällig eine Person auswählen" },
   { id: "groupsPick", cls: "tile-groups", icon: "👨‍👩‍👧‍👦", title: "Gruppenerstellung", sub: "Zufallsgruppen bilden" },
-  { id: "movementCats", cls: "tile-movement", icon: "🤸", title: "Bewegungspause", sub: "Kurze Auflockerungsübungen" }
+  { id: "movementCats", cls: "tile-movement", icon: "🤸", title: "Bewegungspause", sub: "Kurze Auflockerungsübungen" },
+  { id: "checklistPick", cls: "tile-checklist", icon: "✅", title: "Klassenliste", sub: "Aufgaben pro Schüler:in ankreuzen" }
 ];
 const HOME_ORDER_KEY = "kz_home_order";
 const HOME_HIDDEN_KEY = "kz_home_hidden";
@@ -844,6 +938,7 @@ function navigateHome(target) {
   else if (target === "randomPick") { renderClassPickerList("randomClassList", (name) => openRandomStudentForClass(name)); showView("randomPick"); }
   else if (target === "groupsPick") { renderClassPickerList("groupsClassList", (name) => openGroupsSetupForClass(name)); showView("groupsPick"); }
   else if (target === "movementCats") { renderMovementCats(); showView("movementCats"); }
+  else if (target === "checklistPick") { renderClassPickerList("checklistClassList", (name) => openChecklistForClass(name)); showView("checklistPick"); }
 }
 function renderHomeTiles() {
   const order = getHomeOrder();
@@ -1561,13 +1656,15 @@ document.getElementById("copySeatingBtn").addEventListener("click", () => openCo
 
 /* ---- Zoom (Buttons + Pinch) ---- */
 let seatingZoom = 1;
+function isPresentationRotated() { return presentationMode && !!currentSeating && currentSeating.presentationRotate === 90; }
 function applyZoom() {
   const canvas = document.getElementById("seatingCanvas");
   canvas.style.transform = `scale(${seatingZoom})`;
   canvas.style.transformOrigin = "0 0";
   const sizer = document.getElementById("seatingCanvasSizer");
-  sizer.style.width = (1900 * seatingZoom) + "px";
-  sizer.style.height = (1200 * seatingZoom) + "px";
+  const rotated = isPresentationRotated();
+  sizer.style.width = ((rotated ? 1200 : 1900) * seatingZoom) + "px";
+  sizer.style.height = ((rotated ? 1900 : 1200) * seatingZoom) + "px";
   document.getElementById("zoomLabel").textContent = Math.round(seatingZoom * 100) + "%";
 }
 document.getElementById("zoomInBtn").addEventListener("click", () => { seatingZoom = Math.min(2, Math.round((seatingZoom + 0.1) * 10) / 10); applyZoom(); });
@@ -1613,11 +1710,19 @@ seatingCanvasWrapEl.addEventListener("pointerleave", seatingPinchEnd);
 
 /* ---- Präsentieransicht ---- */
 let presentationMode = false;
+function displayRect(item) {
+  if (!isPresentationRotated()) return { x: item.x, y: item.y, w: item.w, h: item.h, rot: item.rot || 0 };
+  const H = 1200;
+  return { x: H - item.y - item.h, y: item.x, w: item.h, h: item.w, rot: (item.rot || 0) + 90 };
+}
 function computeSeatingBounds() {
   const items = [...(currentSeating.tables || []), ...(currentSeating.objects || [])];
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  items.forEach(it => { minX = Math.min(minX, it.x); minY = Math.min(minY, it.y); maxX = Math.max(maxX, it.x + it.w); maxY = Math.max(maxY, it.y + it.h); });
-  if (!isFinite(minX)) return { minX: 0, minY: 0, maxX: 1900, maxY: 1200 };
+  items.forEach(it => {
+    const d = displayRect(it);
+    minX = Math.min(minX, d.x); minY = Math.min(minY, d.y); maxX = Math.max(maxX, d.x + d.w); maxY = Math.max(maxY, d.y + d.h);
+  });
+  if (!isFinite(minX)) return isPresentationRotated() ? { minX: 0, minY: 0, maxX: 1200, maxY: 1900 } : { minX: 0, minY: 0, maxX: 1900, maxY: 1200 };
   return { minX, minY, maxX, maxY };
 }
 function fitSeatingToView() {
@@ -1634,9 +1739,12 @@ function setPresentationMode(on) {
   presentationMode = on;
   document.getElementById("seatingEditorView").classList.toggle("presentation-mode", presentationMode);
   document.getElementById("presentationExitBtn").classList.toggle("hidden", !presentationMode);
+  document.getElementById("presentationRotateBtn").classList.toggle("hidden", !presentationMode);
+  document.getElementById("presentationRotateBtn").classList.toggle("active", isPresentationRotated());
   const btn = document.getElementById("presentationModeBtn");
   btn.textContent = presentationMode ? "✕ Präsentieransicht verlassen" : "🖥️ Präsentieransicht";
   btn.classList.toggle("active", presentationMode);
+  renderSeatingCanvas();
   if (presentationMode) {
     if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().then(fitSeatingToView).catch(fitSeatingToView);
     else fitSeatingToView();
@@ -1646,6 +1754,14 @@ function setPresentationMode(on) {
 }
 document.getElementById("presentationModeBtn").addEventListener("click", () => setPresentationMode(!presentationMode));
 document.getElementById("presentationExitBtn").addEventListener("click", () => setPresentationMode(false));
+document.getElementById("presentationRotateBtn").addEventListener("click", () => {
+  currentSeating.presentationRotate = currentSeating.presentationRotate === 90 ? 0 : 90;
+  saveSeating();
+  document.getElementById("presentationRotateBtn").classList.toggle("active", isPresentationRotated());
+  renderSeatingCanvas();
+  applyZoom();
+  fitSeatingToView();
+});
 document.addEventListener("fullscreenchange", () => {
   if (document.fullscreenElement && presentationMode) fitSeatingToView();
   else if (!document.fullscreenElement && presentationMode) setPresentationMode(false);
@@ -1753,9 +1869,10 @@ function renderSeatingCanvas() {
     objEl.className = "object-el";
     objEl.dataset.objectId = o.id;
     objEl.style.width = o.w + "px"; objEl.style.height = o.h + "px";
+    const objTotalRot = (o.rot || 0) + (isPresentationRotated() ? 90 : 0);
     objEl.innerHTML = `
       <div class="object-shape" style="width:${o.w}px; height:${o.h}px; background:${def.color};">
-        <span>${escapeHtml(def.label)}</span>
+        <span style="display:inline-block; transform:rotate(${-objTotalRot}deg);">${escapeHtml(def.label)}</span>
       </div>
       <button class="table-remove-btn" data-remove-object="${o.id}">✕</button>
       <div class="table-rotate-handle" data-rotate-object="${o.id}">⟳</div>
@@ -1825,10 +1942,12 @@ function renderSeatHTML(table, studentId, seatIndex) {
   if (!student) return `<div class="seat empty" data-table-id="${table.id}" data-seat-index="${seatIndex}">+</div>`;
   const name = studentDisplayName(student, currentSeating.nameStyle);
   const photoHtml = currentSeating.showPhoto ? (student.photo ? `<img class="seat-photo" src="${student.photo}">` : `<div class="seat-photo" style="display:flex;align-items:center;justify-content:center;background:#e2e8f0;font-weight:800;">${initials(student)}</div>`) : "";
-  return `<div class="seat" data-table-id="${table.id}" data-seat-index="${seatIndex}" data-student-id="${student.id}" style="transform:rotate(${-(table.rot || 0)}deg);">${photoHtml}<div class="seat-name ${seatNameSizeClass(name)}">${escapeHtml(name)}</div></div>`;
+  const totalRot = (table.rot || 0) + (isPresentationRotated() ? 90 : 0);
+  return `<div class="seat" data-table-id="${table.id}" data-seat-index="${seatIndex}" data-student-id="${student.id}" style="transform:rotate(${-totalRot}deg);">${photoHtml}<div class="seat-name ${seatNameSizeClass(name)}">${escapeHtml(name)}</div></div>`;
 }
 function updateTableTransform(tableEl, table) {
-  tableEl.style.transform = `translate(${table.x}px, ${table.y}px) rotate(${table.rot || 0}deg)`;
+  const d = displayRect(table);
+  tableEl.style.transform = `translate(${d.x}px, ${d.y}px) rotate(${d.rot}deg)`;
 }
 
 document.getElementById("addTable1erBtn").addEventListener("click", () => addTable("1er"));
@@ -2269,6 +2388,106 @@ function renderBehaviorTable() {
 }
 
 /* =========================================================================
+   KLASSENLISTE (Checkliste)
+   ========================================================================= */
+let currentChecklistClass = null;
+let checklistEditingColId = null;
+function ensureChecklist(className) {
+  if (!checklistData[className]) checklistData[className] = { columns: [], checks: {} };
+  if (!checklistData[className].columns) checklistData[className].columns = [];
+  if (!checklistData[className].checks) checklistData[className].checks = {};
+  return checklistData[className];
+}
+function openChecklistForClass(className) {
+  currentChecklistClass = className;
+  ensureChecklist(className);
+  document.getElementById("checklist_title").textContent = `✅ ${className}`;
+  renderChecklistTable();
+  showView("checklist");
+}
+function renderChecklistTable() {
+  const table = document.getElementById("checklistTable");
+  const students = classesData[currentChecklistClass] || [];
+  const cl = ensureChecklist(currentChecklistClass);
+  if (cl.columns.length === 0) {
+    table.innerHTML = `<tr><td class="checklist-empty-cols">Noch keine Spalte vorhanden. Mit "+ Spalte hinzufügen" eine Aufgabe anlegen (z.B. "Rückgabe Elternblatt").</td></tr>`;
+    return;
+  }
+  if (students.length === 0) {
+    table.innerHTML = `<tr><td class="checklist-empty-cols">Diese Klasse hat noch keine Schüler:innen.</td></tr>`;
+    return;
+  }
+  let html = "<thead><tr><th class=\"checklist-name-col\">Name</th>";
+  cl.columns.forEach(col => {
+    html += `<th>
+      <div class="checklist-col-header">
+        <span class="checklist-col-name">${escapeHtml(col.name)}</span>
+        <div class="checklist-col-actions">
+          <button data-edit-col="${col.id}" title="Umbenennen">✏️</button>
+          <button data-del-col="${col.id}" title="Löschen">🗑</button>
+        </div>
+      </div>
+    </th>`;
+  });
+  html += "</tr></thead><tbody>";
+  students.forEach(s => {
+    const name = `${s.firstName} ${s.lastName || ""}`.trim();
+    html += `<tr><td class="checklist-name-col">
+      <div class="photo-drop">${s.photo ? `<img src="${s.photo}">` : initials(s)}</div>
+      <span>${escapeHtml(name)}</span>
+    </td>`;
+    cl.columns.forEach(col => {
+      const checked = !!(cl.checks[s.id] && cl.checks[s.id][col.id]);
+      html += `<td><input type="checkbox" class="checklist-check" data-student="${s.id}" data-col="${col.id}" ${checked ? "checked" : ""}></td>`;
+    });
+    html += "</tr>";
+  });
+  html += "</tbody>";
+  table.innerHTML = html;
+  table.querySelectorAll(".checklist-check").forEach(cb => cb.addEventListener("change", () => {
+    const sid = cb.dataset.student, cid = cb.dataset.col;
+    if (!cl.checks[sid]) cl.checks[sid] = {};
+    cl.checks[sid][cid] = cb.checked;
+    persistChecklist();
+  }));
+  table.querySelectorAll("[data-edit-col]").forEach(b => b.addEventListener("click", () => openChecklistColModal(b.dataset.editCol)));
+  table.querySelectorAll("[data-del-col]").forEach(b => b.addEventListener("click", () => {
+    const colId = b.dataset.delCol;
+    const col = cl.columns.find(c => c.id === colId);
+    openConfirm(`Spalte "${col ? col.name : ""}" wirklich löschen? Alle Häkchen dieser Spalte gehen verloren.`, () => {
+      cl.columns = cl.columns.filter(c => c.id !== colId);
+      Object.values(cl.checks).forEach(row => { delete row[colId]; });
+      persistChecklist();
+      renderChecklistTable();
+    }, "Löschen");
+  }));
+}
+function openChecklistColModal(colId) {
+  checklistEditingColId = colId || null;
+  const cl = ensureChecklist(currentChecklistClass);
+  const col = colId ? cl.columns.find(c => c.id === colId) : null;
+  document.getElementById("checklistColModalTitle").textContent = colId ? "Spalte umbenennen" : "Spalte hinzufügen";
+  document.getElementById("checklistColNameInput").value = col ? col.name : "";
+  document.getElementById("checklistColModal").classList.remove("hidden");
+}
+document.getElementById("checklistAddColBtn").addEventListener("click", () => openChecklistColModal(null));
+document.getElementById("checklistColModalCancel").addEventListener("click", () => document.getElementById("checklistColModal").classList.add("hidden"));
+document.getElementById("checklistColModalSave").addEventListener("click", () => {
+  const name = document.getElementById("checklistColNameInput").value.trim();
+  if (!name) { alert("Bitte eine Bezeichnung eingeben."); return; }
+  const cl = ensureChecklist(currentChecklistClass);
+  if (checklistEditingColId) {
+    const col = cl.columns.find(c => c.id === checklistEditingColId);
+    if (col) col.name = name;
+  } else {
+    cl.columns.push({ id: uid(), name });
+  }
+  persistChecklist();
+  document.getElementById("checklistColModal").classList.add("hidden");
+  renderChecklistTable();
+});
+
+/* =========================================================================
    LEINWAND (Infoboard)
    ========================================================================= */
 const BOARDS_KEY = "kz_boards";
@@ -2300,24 +2519,69 @@ function renderBoardsList() {
     }, "Löschen");
   }));
 }
+let selectedBoardTemplate = "";
+function boardTemplateElements(template) {
+  if (template === "einzel") {
+    return [
+      { id: uid(), type: "text", x: 40, y: 40, w: 320, h: 110, html: "Bitte leise und selbstständig arbeiten." },
+      { id: uid(), type: "timer", x: 400, y: 40, w: 260, h: 190, durationSec: 1200, remainingSec: 1200, endTimestamp: null, running: false },
+      { id: uid(), type: "material", x: 700, y: 40, w: 220, h: 280, items: defaultMaterialItems() }
+    ];
+  }
+  if (template === "pruefung") {
+    return [
+      { id: uid(), type: "text", x: 40, y: 40, w: 320, h: 110, html: "Viel Erfolg! Kein Austausch, kein Handy." },
+      { id: uid(), type: "timer", x: 400, y: 40, w: 260, h: 190, durationSec: 2700, remainingSec: 2700, endTimestamp: null, running: false },
+      { id: uid(), type: "material", x: 700, y: 40, w: 220, h: 280, items: defaultMaterialItems() }
+    ];
+  }
+  if (template === "gruppe") {
+    return [
+      { id: uid(), type: "text", x: 40, y: 40, w: 320, h: 110, html: "Gruppenarbeit – sprecht in Zimmerlautstärke." },
+      { id: uid(), type: "timer", x: 400, y: 40, w: 260, h: 190, durationSec: 900, remainingSec: 900, endTimestamp: null, running: false },
+      { id: uid(), type: "volume", x: 700, y: 40, w: 200, h: 260, yellowThreshold: 30, redThreshold: 60 },
+      { id: uid(), type: "material", x: 940, y: 40, w: 220, h: 280, items: defaultMaterialItems() }
+    ];
+  }
+  return [];
+}
 document.getElementById("addBoardBtn").addEventListener("click", () => {
   document.getElementById("boardNameInput").value = "";
+  selectedBoardTemplate = "";
+  document.querySelectorAll("[data-board-template]").forEach(b => b.classList.toggle("active", b.dataset.boardTemplate === ""));
   document.getElementById("boardModal").classList.remove("hidden");
 });
+document.querySelectorAll("[data-board-template]").forEach(btn => btn.addEventListener("click", () => {
+  selectedBoardTemplate = btn.dataset.boardTemplate;
+  document.querySelectorAll("[data-board-template]").forEach(b => b.classList.toggle("active", b === btn));
+}));
 document.getElementById("boardModalCancel").addEventListener("click", () => document.getElementById("boardModal").classList.add("hidden"));
 document.getElementById("boardModalSave").addEventListener("click", () => {
   const name = document.getElementById("boardNameInput").value.trim() || "Leinwand";
-  const newBoard = { id: uid(), name, elements: [], bg: "light", updatedAt: Date.now() };
+  const newBoard = { id: uid(), name, elements: boardTemplateElements(selectedBoardTemplate), bg: "light", updatedAt: Date.now() };
   boardsData.push(newBoard);
   persistBoards();
   document.getElementById("boardModal").classList.add("hidden");
   openBoardEditor(newBoard.id);
 });
+function applyBoardBg() {
+  const wrap = document.getElementById("boardCanvasWrap");
+  wrap.className = "board-canvas-wrap" + (currentBoard.bg && currentBoard.bg !== "light" ? " bg-" + currentBoard.bg : "");
+  if (currentBoard.bgImage) {
+    wrap.style.backgroundImage = `url(${currentBoard.bgImage})`;
+    wrap.style.backgroundSize = "cover";
+    wrap.style.backgroundPosition = "center";
+  } else {
+    wrap.style.backgroundImage = "";
+  }
+  document.getElementById("boardBgImageRemoveBtn").style.display = currentBoard.bgImage ? "" : "none";
+}
 function openBoardEditor(boardId) {
+  stopAllVolumeWidgets();
   currentBoard = boardsData.find(b => b.id === boardId);
   if (!currentBoard) return;
   document.getElementById("boardEditor_title").textContent = currentBoard.name;
-  document.getElementById("boardCanvasWrap").className = "board-canvas-wrap" + (currentBoard.bg && currentBoard.bg !== "light" ? " bg-" + currentBoard.bg : "");
+  applyBoardBg();
   setPresentMode(false);
   renderBoardCanvas();
   showView("boardEditor");
@@ -2354,6 +2618,301 @@ function formatCountdown(sec) {
   return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
 }
 function formatHM(sec) { const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return `${h}h ${m}min`; }
+
+/* =========================================================================
+   LAUTSTÄRKE-AMPEL (Leinwand-Widget)
+   ========================================================================= */
+const volumeActiveStreams = new Map();
+function renderVolumeWidget(el) {
+  if (el.yellowThreshold === undefined) el.yellowThreshold = 30;
+  if (el.redThreshold === undefined) el.redThreshold = 60;
+  const active = volumeActiveStreams.has(el.id);
+  return `<div class="board-widget" style="width:100%; height:100%; overflow:auto;">
+    <div class="volume-widget-title">🔊 Lautstärke</div>
+    <div class="volume-lights" data-volume-lights="${el.id}">
+      <div class="volume-light red" data-volume-light="red"></div>
+      <div class="volume-light yellow" data-volume-light="yellow"></div>
+      <div class="volume-light green" data-volume-light="green"></div>
+    </div>
+    ${active
+      ? `<button class="volume-stop-btn" data-volume-stop="${el.id}">Stop</button>`
+      : `<button class="volume-start-btn" data-volume-start="${el.id}">🎤 Start</button>`}
+    ${!presentMode ? `<div class="volume-thresholds">
+      <label>Gelb ab <input type="number" min="5" max="95" data-volume-yellow="${el.id}" value="${el.yellowThreshold}">%</label>
+      <label>Rot ab <input type="number" min="5" max="95" data-volume-red="${el.id}" value="${el.redThreshold}">%</label>
+    </div>` : ""}
+  </div>`;
+}
+function wireVolumeWidget(wrap, el) {
+  const startBtn = wrap.querySelector(`[data-volume-start="${el.id}"]`);
+  const stopBtn = wrap.querySelector(`[data-volume-stop="${el.id}"]`);
+  const yellowInput = wrap.querySelector(`[data-volume-yellow="${el.id}"]`);
+  const redInput = wrap.querySelector(`[data-volume-red="${el.id}"]`);
+  if (yellowInput) yellowInput.addEventListener("change", () => { el.yellowThreshold = Math.min(95, Math.max(5, Number(yellowInput.value) || 30)); saveBoard(); });
+  if (redInput) redInput.addEventListener("change", () => { el.redThreshold = Math.min(95, Math.max(5, Number(redInput.value) || 60)); saveBoard(); });
+  if (startBtn) startBtn.addEventListener("click", async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Mikrofonzugriff wird auf diesem Gerät/Browser nicht unterstützt.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+      const data = new Uint8Array(analyser.fftSize);
+      volumeActiveStreams.set(el.id, { stream, ctx, analyser, data, smooth: 0, raf: null });
+      renderBoardCanvas();
+      runVolumeLoop(el.id);
+    } catch (err) {
+      alert("Mikrofonzugriff nicht möglich. Bitte in den Browser-/Geräteeinstellungen erlauben.");
+    }
+  });
+  if (stopBtn) stopBtn.addEventListener("click", () => { stopVolumeWidget(el.id); renderBoardCanvas(); });
+}
+function runVolumeLoop(id) {
+  const st = volumeActiveStreams.get(id);
+  if (!st) return;
+  st.analyser.getByteTimeDomainData(st.data);
+  let sumSquares = 0;
+  for (let i = 0; i < st.data.length; i++) { const v = (st.data[i] - 128) / 128; sumSquares += v * v; }
+  const rms = Math.sqrt(sumSquares / st.data.length);
+  const level = Math.min(100, rms * 100 * 4);
+  st.smooth = st.smooth * 0.85 + level * 0.15;
+  const el = currentBoard && currentBoard.elements.find(x => x.id === id);
+  const lightsWrap = document.querySelector(`[data-volume-lights="${id}"]`);
+  if (lightsWrap && el) {
+    const yellowT = el.yellowThreshold ?? 30, redT = el.redThreshold ?? 60;
+    let activeColor = "green";
+    if (st.smooth >= redT) activeColor = "red";
+    else if (st.smooth >= yellowT) activeColor = "yellow";
+    lightsWrap.querySelectorAll(".volume-light").forEach(l => l.classList.toggle("on", l.dataset.volumeLight === activeColor));
+  }
+  st.raf = requestAnimationFrame(() => runVolumeLoop(id));
+}
+function stopVolumeWidget(id) {
+  const st = volumeActiveStreams.get(id);
+  if (!st) return;
+  if (st.raf) cancelAnimationFrame(st.raf);
+  st.stream.getTracks().forEach(t => t.stop());
+  st.ctx.close().catch(() => {});
+  volumeActiveStreams.delete(id);
+}
+function stopAllVolumeWidgets() { [...volumeActiveStreams.keys()].forEach(stopVolumeWidget); }
+
+/* =========================================================================
+   QR-CODE-GENERATOR (offline, ohne externe Bibliothek)
+   Unterstützt Byte-Modus, Version 1-5, Fehlerkorrektur-Level L (ausreichend
+   für kurze Links/Texte bis ca. 106 Zeichen), fixe Maske 0 (spart die
+   Penalty-Bewertung, ohne die Gültigkeit des Codes zu beeinträchtigen).
+   ========================================================================= */
+const QR_GF_EXP = new Array(256);
+const QR_GF_LOG = new Array(256);
+(function qrInitGaloisField() {
+  let x = 1;
+  for (let i = 0; i < 255; i++) {
+    QR_GF_EXP[i] = x;
+    QR_GF_LOG[x] = i;
+    x <<= 1;
+    if (x & 0x100) x ^= 0x11D;
+  }
+})();
+function qrGfMul(a, b) {
+  if (a === 0 || b === 0) return 0;
+  return QR_GF_EXP[(QR_GF_LOG[a] + QR_GF_LOG[b]) % 255];
+}
+function qrPolyMultiply(a, b) {
+  const result = new Array(a.length + b.length - 1).fill(0);
+  for (let i = 0; i < a.length; i++) for (let j = 0; j < b.length; j++) result[i + j] ^= qrGfMul(a[i], b[j]);
+  return result;
+}
+function qrGeneratorPoly(degree) {
+  let g = [1];
+  for (let i = 0; i < degree; i++) g = qrPolyMultiply(g, [1, QR_GF_EXP[i]]);
+  return g;
+}
+function qrRsEncode(dataCodewords, ecCount) {
+  const generator = qrGeneratorPoly(ecCount);
+  const result = dataCodewords.concat(new Array(ecCount).fill(0));
+  for (let i = 0; i < dataCodewords.length; i++) {
+    const coef = result[i];
+    if (coef !== 0) for (let j = 0; j < generator.length; j++) result[i + j] ^= qrGfMul(generator[j], coef);
+  }
+  return result.slice(dataCodewords.length);
+}
+const QR_L_DATA_CW = [19, 34, 55, 80, 108];
+const QR_L_EC_CW = [7, 10, 15, 20, 26];
+const QR_MODULES = [21, 25, 29, 33, 37];
+const QR_ALIGN_CENTER = [null, 18, 22, 26, 30];
+const QR_G15 = 0b10100110111;
+const QR_G15_MASK = 0b101010000010010;
+function qrBchDigitCount(data) { let d = 0; while (data !== 0) { d++; data >>>= 1; } return d; }
+function qrFormatBits(maskPattern) {
+  const data = (1 << 3) | maskPattern; // ECC level L = 1
+  let d = data << 10;
+  while (qrBchDigitCount(d) - qrBchDigitCount(QR_G15) >= 0) {
+    d ^= (QR_G15 << (qrBchDigitCount(d) - qrBchDigitCount(QR_G15)));
+  }
+  return ((data << 10) | d) ^ QR_G15_MASK;
+}
+function qrGetMask(pattern, i, j) {
+  switch (pattern) {
+    case 0: return (i + j) % 2 === 0;
+    case 1: return i % 2 === 0;
+    case 2: return j % 3 === 0;
+    case 3: return (i + j) % 3 === 0;
+    case 4: return (Math.floor(i / 2) + Math.floor(j / 3)) % 2 === 0;
+    case 5: return (i * j) % 2 + (i * j) % 3 === 0;
+    case 6: return ((i * j) % 2 + (i * j) % 3) % 2 === 0;
+    default: return ((i * j) % 3 + (i + j) % 2) % 2 === 0;
+  }
+}
+function qrEncodeByteMode(bytes, dataCwCount) {
+  let bits = [];
+  const put = (num, len) => { for (let i = len - 1; i >= 0; i--) bits.push((num >>> i) & 1); };
+  put(0b0100, 4);
+  put(bytes.length, 8);
+  for (const b of bytes) put(b, 8);
+  const totalDataBits = dataCwCount * 8;
+  for (let i = 0; i < 4 && bits.length < totalDataBits; i++) bits.push(0);
+  while (bits.length % 8 !== 0) bits.push(0);
+  const codewords = [];
+  for (let i = 0; i < bits.length; i += 8) {
+    let byte = 0;
+    for (let j = 0; j < 8; j++) byte = (byte << 1) | bits[i + j];
+    codewords.push(byte);
+  }
+  const padBytes = [0xEC, 0x11];
+  let pi = 0;
+  while (codewords.length < dataCwCount) { codewords.push(padBytes[pi % 2]); pi++; }
+  return codewords;
+}
+function qrPickVersion(byteLen) {
+  for (let v = 1; v <= 5; v++) if (byteLen <= QR_L_DATA_CW[v - 1] - 2) return v;
+  return null;
+}
+function qrBuildMatrix(text) {
+  const bytes = Array.from(new TextEncoder().encode(text));
+  const version = qrPickVersion(bytes.length);
+  if (!version) return null;
+  const moduleCount = QR_MODULES[version - 1];
+  const dataCw = qrEncodeByteMode(bytes, QR_L_DATA_CW[version - 1]);
+  const ecCw = qrRsEncode(dataCw, QR_L_EC_CW[version - 1]);
+  const allCw = dataCw.concat(ecCw);
+  const matrix = Array.from({ length: moduleCount }, () => new Array(moduleCount).fill(null));
+  const setupFinder = (row, col) => {
+    for (let r = -1; r <= 7; r++) {
+      if (row + r <= -1 || moduleCount <= row + r) continue;
+      for (let c = -1; c <= 7; c++) {
+        if (col + c <= -1 || moduleCount <= col + c) continue;
+        if ((0 <= r && r <= 6 && (c === 0 || c === 6)) || (0 <= c && c <= 6 && (r === 0 || r === 6)) || (2 <= r && r <= 4 && 2 <= c && c <= 4)) {
+          matrix[row + r][col + c] = true;
+        } else {
+          matrix[row + r][col + c] = false;
+        }
+      }
+    }
+  };
+  setupFinder(0, 0);
+  setupFinder(0, moduleCount - 7);
+  setupFinder(moduleCount - 7, 0);
+  for (let r = 8; r < moduleCount - 8; r++) if (matrix[r][6] === null) matrix[r][6] = (r % 2 === 0);
+  for (let c = 8; c < moduleCount - 8; c++) if (matrix[6][c] === null) matrix[6][c] = (c % 2 === 0);
+  const alignCenter = QR_ALIGN_CENTER[version - 1];
+  if (alignCenter !== null) {
+    for (let r = -2; r <= 2; r++) for (let c = -2; c <= 2; c++) {
+      const rr = alignCenter + r, cc = alignCenter + c;
+      if (matrix[rr][cc] !== null && !(r === -2 || r === 2 || c === -2 || c === 2 || (r === 0 && c === 0))) continue;
+      matrix[rr][cc] = (r === -2 || r === 2 || c === -2 || c === 2 || (r === 0 && c === 0));
+    }
+  }
+  const maskPattern = 0;
+  const bits = qrFormatBits(maskPattern);
+  for (let i = 0; i < 15; i++) {
+    const mod = ((bits >> i) & 1) === 1;
+    if (i < 6) matrix[i][8] = mod;
+    else if (i < 8) matrix[i + 1][8] = mod;
+    else matrix[moduleCount - 15 + i][8] = mod;
+  }
+  for (let i = 0; i < 15; i++) {
+    const mod = ((bits >> i) & 1) === 1;
+    if (i < 8) matrix[8][moduleCount - i - 1] = mod;
+    else if (i < 9) matrix[8][15 - i - 1 + 1] = mod;
+    else matrix[8][15 - i - 1] = mod;
+  }
+  matrix[moduleCount - 8][8] = true;
+  let inc = -1, row = moduleCount - 1, bitIndex = 7, byteIndex = 0;
+  for (let col = moduleCount - 1; col > 0; col -= 2) {
+    if (col === 6) col--;
+    while (true) {
+      for (let c = 0; c < 2; c++) {
+        if (matrix[row][col - c] === null) {
+          let dark = false;
+          if (byteIndex < allCw.length) dark = ((allCw[byteIndex] >>> bitIndex) & 1) === 1;
+          if (qrGetMask(maskPattern, row, col - c)) dark = !dark;
+          matrix[row][col - c] = dark;
+          bitIndex--;
+          if (bitIndex === -1) { byteIndex++; bitIndex = 7; }
+        }
+      }
+      row += inc;
+      if (row < 0 || moduleCount <= row) { row -= inc; inc = -inc; break; }
+    }
+  }
+  return { matrix, moduleCount };
+}
+function qrDrawToCanvas(canvas, text, pixelSize) {
+  const ctx = canvas.getContext("2d");
+  const result = qrBuildMatrix(text);
+  if (!result) return false;
+  const { matrix, moduleCount } = result;
+  const quiet = 4;
+  const size = (moduleCount + quiet * 2) * pixelSize;
+  canvas.width = size; canvas.height = size;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = "#0f172a";
+  for (let r = 0; r < moduleCount; r++) {
+    for (let c = 0; c < moduleCount; c++) {
+      if (matrix[r][c]) ctx.fillRect((c + quiet) * pixelSize, (r + quiet) * pixelSize, pixelSize, pixelSize);
+    }
+  }
+  return true;
+}
+function renderQrWidget(el) {
+  if (el.text === undefined) el.text = "https://";
+  return `<div class="board-widget" style="width:100%; height:100%; overflow:auto;">
+    <div class="qr-widget-title">📱 QR-Code</div>
+    <div class="qr-canvas-wrap"><canvas data-qr-canvas="${el.id}"></canvas></div>
+    ${!presentMode ? `<div class="qr-input-row">
+      <input type="text" data-qr-input="${el.id}" value="${escapeHtml(el.text)}" placeholder="Link oder Text...">
+    </div>
+    <div class="qr-error hidden" data-qr-error="${el.id}"></div>` : ""}
+  </div>`;
+}
+function refreshQrCanvas(wrap, el) {
+  const canvas = wrap.querySelector(`[data-qr-canvas="${el.id}"]`);
+  const errorEl = wrap.querySelector(`[data-qr-error="${el.id}"]`);
+  if (!canvas) return;
+  const pixelSize = Math.max(2, Math.round(Math.min(el.w, el.h) / 45));
+  const ok = qrDrawToCanvas(canvas, el.text || "", pixelSize);
+  if (errorEl) errorEl.classList.toggle("hidden", ok);
+  if (errorEl && !ok) errorEl.textContent = "Text zu lang für QR-Code (max. ca. 100 Zeichen). Bitte kürzeren Link verwenden.";
+  canvas.style.display = ok ? "" : "none";
+}
+function wireQrWidget(wrap, el) {
+  refreshQrCanvas(wrap, el);
+  const input = wrap.querySelector(`[data-qr-input="${el.id}"]`);
+  if (input) input.addEventListener("input", () => {
+    el.text = input.value;
+    saveBoard();
+    refreshQrCanvas(wrap, el);
+  });
+}
+
 function renderTimerWidget(el) {
   if (el.extraOn === undefined) el.extraOn = false;
   if (el.extraMin === undefined) el.extraMin = 10;
@@ -2400,6 +2959,8 @@ function renderBoardItemContent(el) {
   if (el.type === "timer") return renderTimerWidget(el);
   if (el.type === "clock") return `<div class="board-clock-plain" id="clock-${el.id}" style="font-size:${Math.max(14, Math.round(el.h * 0.4))}px;">${new Date().toLocaleTimeString("de-CH")}</div>`;
   if (el.type === "material") return renderMaterialWidget(el);
+  if (el.type === "volume") return renderVolumeWidget(el);
+  if (el.type === "qrcode") return renderQrWidget(el);
   return "";
 }
 let selectedBoardItemId = null;
@@ -2430,6 +2991,7 @@ function renderBoardCanvas() {
     if (resizable) wireBoardItemResize(wrap.querySelector("[data-resize-item]"), wrap, el);
     wrap.querySelector("[data-remove-item]").addEventListener("click", (e) => {
       e.stopPropagation();
+      if (el.type === "volume") stopVolumeWidget(el.id);
       currentBoard.elements = currentBoard.elements.filter(x => x.id !== el.id);
       saveBoard(); renderBoardCanvas();
     });
@@ -2440,6 +3002,8 @@ function renderBoardCanvas() {
     }
     if (el.type === "timer") wireTimerWidget(wrap, el);
     if (el.type === "material") wireMaterialWidget(wrap, el);
+    if (el.type === "volume") wireVolumeWidget(wrap, el);
+    if (el.type === "qrcode") wireQrWidget(wrap, el);
   });
   applyPresentModeVisibility();
 }
@@ -2652,6 +3216,18 @@ document.getElementById("addMaterialBtn").addEventListener("click", () => {
   currentBoard.elements.push(newEl);
   saveBoard(); renderBoardCanvas(); selectBoardItem(newEl.id);
 });
+document.getElementById("addVolumeBtn").addEventListener("click", () => {
+  const p = nextBoardPos();
+  const newEl = { id: uid(), type: "volume", x: p.x, y: p.y, w: 200, h: 260, yellowThreshold: 30, redThreshold: 60 };
+  currentBoard.elements.push(newEl);
+  saveBoard(); renderBoardCanvas(); selectBoardItem(newEl.id);
+});
+document.getElementById("addQrBtn").addEventListener("click", () => {
+  const p = nextBoardPos();
+  const newEl = { id: uid(), type: "qrcode", x: p.x, y: p.y, w: 220, h: 260, text: "https://" };
+  currentBoard.elements.push(newEl);
+  saveBoard(); renderBoardCanvas(); selectBoardItem(newEl.id);
+});
 
 /* ---- Textformatierung ---- */
 function applyFmt(cmd, value) {
@@ -2681,9 +3257,23 @@ document.querySelectorAll("[data-fmt-color]").forEach(btn => {
 });
 document.querySelectorAll("[data-board-bg]").forEach(btn => btn.addEventListener("click", () => {
   currentBoard.bg = btn.dataset.boardBg;
-  document.getElementById("boardCanvasWrap").className = "board-canvas-wrap" + (currentBoard.bg !== "light" ? " bg-" + currentBoard.bg : "");
+  applyBoardBg();
   saveBoard();
 }));
+document.getElementById("boardBgImageBtn").addEventListener("click", () => document.getElementById("boardBgImageInput").click());
+document.getElementById("boardBgImageInput").addEventListener("change", (e) => {
+  if (e.target.files[0]) processBoardImageFile(e.target.files[0], (dataUrl) => {
+    currentBoard.bgImage = dataUrl;
+    applyBoardBg();
+    saveBoard();
+  });
+  e.target.value = "";
+});
+document.getElementById("boardBgImageRemoveBtn").addEventListener("click", () => {
+  currentBoard.bgImage = null;
+  applyBoardBg();
+  saveBoard();
+});
 
 /* ---- Präsentationsmodus ---- */
 function applyPresentModeVisibility() {
@@ -2695,6 +3285,7 @@ function setPresentMode(on) {
   document.getElementById("exitPresentBtn").style.display = presentMode ? "block" : "none";
   document.getElementById("boardCanvasWrap").classList.toggle("board-canvas-fullscreen", presentMode);
   applyPresentModeVisibility();
+  if (currentBoard) renderBoardCanvas();
   if (presentMode) { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); }
   else if (document.fullscreenElement) { document.exitFullscreen && document.exitFullscreen().catch(() => {}); }
 }
