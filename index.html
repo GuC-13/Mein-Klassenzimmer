@@ -146,16 +146,17 @@
 
   /* LEINWAND / BOARD */
   #app.board-fullwidth { max-width: none; padding: 0; }
-  .board-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--border); }
+  #app.board-fullwidth #boardEditorView:not(.hidden) { display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
+  #app.board-fullwidth #boardEditorView:not(.hidden) .board-canvas-wrap { flex: 1; min-height: 0; }
+  .board-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .board-toolbar .btn { padding: 9px 13px; font-size: 0.82rem; margin-bottom: 0; }
   .board-toolbar-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
   .fmt-btn { background: white; border: 2px solid var(--border); border-radius: 6px; width: 34px; height: 34px; font-weight: 800; cursor: pointer; font-size: 0.9rem; }
   .fmt-swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; }
-  .board-canvas-wrap { position: relative; overflow: auto; background: #f8fafc; min-height: 78vh; }
-  .board-canvas-wrap.board-canvas-fullscreen { min-height: 100vh; }
+  .board-canvas-wrap { position: relative; overflow: auto; background: #f8fafc; }
   .board-canvas-wrap.bg-dark { background: #0f172a; }
   .board-canvas-wrap.bg-blue { background: #0c4a6e; }
-  .board-canvas { position: relative; width: 100%; min-height: 78vh; }
+  .board-canvas { position: relative; width: 100%; min-height: 100%; }
   .board-item { position: absolute; touch-action: none; }
   .board-item-inner { position: relative; width: 100%; height: 100%; }
   .board-item .item-remove-btn { position: absolute; top: -12px; right: -12px; width: 26px; height: 26px; border-radius: 50%; background: var(--danger); color: white; border: 2px solid white; font-size: 0.8rem; align-items: center; justify-content: center; cursor: pointer; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.3); display: none; }
@@ -2446,7 +2447,10 @@ function wireBoardItemDrag(wrap, el) {
   let dragging = false, moved = false, startX = 0, startY = 0, origX = 0, origY = 0;
   wrap.addEventListener("pointerdown", (e) => {
     if (presentMode) return;
-    if (e.target.closest(".item-remove-btn, .item-resize-handle, .board-text, input, button, [data-material-toggle], [data-material-remove], [data-material-add]")) return;
+    if (e.target.closest(".item-remove-btn, .item-resize-handle, input, button, [data-material-toggle], [data-material-remove], [data-material-add]")) return;
+    const isTextBody = !!e.target.closest(".board-text");
+    if (isTextBody && el.id === selectedBoardItemId) return;
+    if (isTextBody) e.preventDefault();
     selectBoardItem(el.id);
     dragging = true; moved = false; startX = e.clientX; startY = e.clientY; origX = el.x; origY = el.y;
     try { wrap.setPointerCapture(e.pointerId); } catch (err) {}
@@ -2614,8 +2618,9 @@ function processBoardImageFile(file, callback) {
 function nextBoardPos() { return { x: 40 + Math.random() * 220, y: 40 + Math.random() * 160 }; }
 document.getElementById("addTextBtn").addEventListener("click", () => {
   const p = nextBoardPos();
-  currentBoard.elements.push({ id: uid(), type: "text", x: p.x, y: p.y, w: 240, h: 100, html: "Text eingeben..." });
-  saveBoard(); renderBoardCanvas();
+  const newEl = { id: uid(), type: "text", x: p.x, y: p.y, w: 240, h: 100, html: "Text eingeben..." };
+  currentBoard.elements.push(newEl);
+  saveBoard(); renderBoardCanvas(); selectBoardItem(newEl.id);
 });
 document.getElementById("addImageBtn").addEventListener("click", () => document.getElementById("boardImageInput").click());
 document.getElementById("boardImageInput").addEventListener("change", (e) => {
@@ -2623,25 +2628,29 @@ document.getElementById("boardImageInput").addEventListener("change", (e) => {
     const dispW = Math.min(280, w);
     const dispH = Math.round(h * (dispW / w));
     const p = nextBoardPos();
-    currentBoard.elements.push({ id: uid(), type: "image", x: p.x, y: p.y, w: dispW, h: dispH, src: dataUrl });
-    saveBoard(); renderBoardCanvas();
+    const newEl = { id: uid(), type: "image", x: p.x, y: p.y, w: dispW, h: dispH, src: dataUrl };
+    currentBoard.elements.push(newEl);
+    saveBoard(); renderBoardCanvas(); selectBoardItem(newEl.id);
   });
   e.target.value = "";
 });
 document.getElementById("addTimerBtn").addEventListener("click", () => {
   const p = nextBoardPos();
-  currentBoard.elements.push({ id: uid(), type: "timer", x: p.x, y: p.y, w: 260, h: 190, durationSec: 300, remainingSec: 300, endTimestamp: null, running: false });
-  saveBoard(); renderBoardCanvas();
+  const newEl = { id: uid(), type: "timer", x: p.x, y: p.y, w: 260, h: 190, durationSec: 300, remainingSec: 300, endTimestamp: null, running: false };
+  currentBoard.elements.push(newEl);
+  saveBoard(); renderBoardCanvas(); selectBoardItem(newEl.id);
 });
 document.getElementById("addClockBtn").addEventListener("click", () => {
   const p = nextBoardPos();
-  currentBoard.elements.push({ id: uid(), type: "clock", x: p.x, y: p.y, w: 190, h: 110 });
-  saveBoard(); renderBoardCanvas();
+  const newEl = { id: uid(), type: "clock", x: p.x, y: p.y, w: 190, h: 110 };
+  currentBoard.elements.push(newEl);
+  saveBoard(); renderBoardCanvas(); selectBoardItem(newEl.id);
 });
 document.getElementById("addMaterialBtn").addEventListener("click", () => {
   const p = nextBoardPos();
-  currentBoard.elements.push({ id: uid(), type: "material", x: p.x, y: p.y, w: 220, h: 280, items: defaultMaterialItems() });
-  saveBoard(); renderBoardCanvas();
+  const newEl = { id: uid(), type: "material", x: p.x, y: p.y, w: 220, h: 280, items: defaultMaterialItems() };
+  currentBoard.elements.push(newEl);
+  saveBoard(); renderBoardCanvas(); selectBoardItem(newEl.id);
 });
 
 /* ---- Textformatierung ---- */
