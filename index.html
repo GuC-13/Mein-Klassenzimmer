@@ -3090,13 +3090,19 @@ function wireQrWidget(wrap, el) {
   });
 }
 
+function getExtraDisplaySec(el) {
+  if (el.extraEndTimestamp) return Math.max(0, Math.round((el.extraEndTimestamp - Date.now()) / 1000));
+  if (el.extraRemainingSec != null) return el.extraRemainingSec;
+  return el.remainingSec + el.extraMin * 60;
+}
 function renderTimerWidget(el) {
   if (el.extraOn === undefined) el.extraOn = false;
   if (el.extraMin === undefined) el.extraMin = 10;
   const currentDisplay = el.running ? Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000)) : el.remainingSec;
   const h = Math.floor(el.durationSec / 3600), m = Math.floor((el.durationSec % 3600) / 60);
   const fontSize = Math.max(26, Math.round(el.h * 0.24));
-  const extraRemaining = Math.max(0, currentDisplay + el.extraMin * 60);
+  const extraDisplaySec = getExtraDisplaySec(el);
+  const extraLocked = el.running || !!el.extraEndTimestamp;
   return `<div class="board-widget" style="width:100%; height:100%;">
     <div class="board-timer-setup">
       <label>Std.<input type="number" min="0" max="2" data-timer-hours="${el.id}" value="${h}" ${el.running ? "disabled" : ""}></label>
@@ -3109,8 +3115,8 @@ function renderTimerWidget(el) {
     </div>
     <label class="board-timer-extra-toggle"><input type="checkbox" data-timer-extra-toggle="${el.id}" ${el.extraOn ? "checked" : ""}> Nachteilsausgleich</label>
     ${el.extraOn ? `<div class="board-timer-extra">
-      <label>+ Min. <input type="number" min="1" max="180" data-timer-extra-min="${el.id}" value="${el.extraMin}" ${el.running ? "disabled" : ""}></label>
-      <div class="board-timer-extra-display" data-timer-extra-display="${el.id}">${formatCountdown(extraRemaining)}</div>
+      <label>+ Min. <input type="number" min="1" max="180" data-timer-extra-min="${el.id}" value="${el.extraMin}" ${extraLocked ? "disabled" : ""}></label>
+      <div class="board-timer-extra-display" data-timer-extra-display="${el.id}">${formatCountdown(extraDisplaySec)}</div>
     </div>` : ""}
   </div>`;
 }
@@ -3249,28 +3255,57 @@ function wireTimerWidget(wrap, el) {
     if (el.running) {
       el.remainingSec = Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000));
       el.running = false; el.endTimestamp = null;
+      if (el.extraEndTimestamp) {
+        el.extraRemainingSec = Math.max(0, Math.round((el.extraEndTimestamp - Date.now()) / 1000));
+        el.extraEndTimestamp = null;
+      }
     } else {
       if (el.remainingSec <= 0) return;
       el.endTimestamp = Date.now() + el.remainingSec * 1000;
       el.running = true;
+      if (el.extraOn) {
+        const extraRemaining = el.extraRemainingSec != null ? el.extraRemainingSec : (el.remainingSec + el.extraMin * 60);
+        el.extraEndTimestamp = Date.now() + Math.max(0, extraRemaining) * 1000;
+        el.extraRemainingSec = null;
+      }
     }
     saveBoard();
     renderBoardCanvas();
+    updateBoardWakeLock(true);
   });
   resetBtn.addEventListener("click", () => {
     el.running = false; el.endTimestamp = null; el.remainingSec = el.durationSec;
+    el.extraEndTimestamp = null; el.extraRemainingSec = null;
     saveBoard();
     renderBoardCanvas();
+    updateBoardWakeLock(true);
   });
   const extraToggle = wrap.querySelector(`[data-timer-extra-toggle="${el.id}"]`);
-  if (extraToggle) extraToggle.addEventListener("change", () => { el.extraOn = extraToggle.checked; saveBoard(); renderBoardCanvas(); });
+  if (extraToggle) extraToggle.addEventListener("change", () => {
+    el.extraOn = extraToggle.checked;
+    if (el.extraOn) {
+      if (el.running) {
+        const mainRemainingNow = Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000));
+        el.extraEndTimestamp = Date.now() + (mainRemainingNow + el.extraMin * 60) * 1000;
+        el.extraRemainingSec = null;
+      } else {
+        el.extraEndTimestamp = null;
+        el.extraRemainingSec = el.remainingSec + el.extraMin * 60;
+      }
+    } else {
+      el.extraEndTimestamp = null;
+      el.extraRemainingSec = null;
+    }
+    saveBoard();
+    renderBoardCanvas();
+    updateBoardWakeLock(true);
+  });
   const extraMinInput = wrap.querySelector(`[data-timer-extra-min="${el.id}"]`);
   if (extraMinInput) extraMinInput.addEventListener("change", () => {
     el.extraMin = Math.min(180, Math.max(1, Number(extraMinInput.value) || 10));
+    el.extraRemainingSec = null;
     saveBoard();
-    const extraDisplayEl = wrap.querySelector(`[data-timer-extra-display="${el.id}"]`);
-    const currentDisplay = el.running ? Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000)) : el.remainingSec;
-    if (extraDisplayEl) extraDisplayEl.textContent = formatCountdown(Math.max(0, currentDisplay + el.extraMin * 60));
+    renderBoardCanvas();
   });
 }
 let addMaterialTargetElId = null;
@@ -3313,28 +3348,61 @@ document.getElementById("addMaterialItemSave").addEventListener("click", () => {
   document.getElementById("addMaterialItemModal").classList.add("hidden");
   renderBoardCanvas();
 });
+/* ---- Bildschirm wach halten, solange ein Timer läuft ---- */
+let boardWakeLock = null;
+async function updateBoardWakeLock(inEditor) {
+  const anyTimerActive = inEditor && currentBoard && currentBoard.elements.some(el => el.type === "timer" && (el.running || el.extraEndTimestamp));
+  if (anyTimerActive) {
+    if (!boardWakeLock && navigator.wakeLock) {
+      try {
+        boardWakeLock = await navigator.wakeLock.request("screen");
+        boardWakeLock.addEventListener("release", () => { boardWakeLock = null; });
+      } catch (err) {}
+    }
+  } else if (boardWakeLock) {
+    try { await boardWakeLock.release(); } catch (err) {}
+    boardWakeLock = null;
+  }
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    const inEditor = !!currentBoard && !document.getElementById("boardEditorView").classList.contains("hidden");
+    updateBoardWakeLock(inEditor);
+  }
+});
 setInterval(() => {
-  if (!currentBoard || document.getElementById("boardEditorView").classList.contains("hidden")) return;
-  currentBoard.elements.forEach(el => {
-    if (el.type === "timer" && el.running) {
-      const remaining = Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000));
-      const displayEl = document.querySelector(`[data-timer-display="${el.id}"]`);
-      if (displayEl) displayEl.textContent = formatCountdown(remaining);
-      if (el.extraOn) {
-        const extraDisplayEl = document.querySelector(`[data-timer-extra-display="${el.id}"]`);
-        if (extraDisplayEl) extraDisplayEl.textContent = formatCountdown(Math.max(0, remaining + (el.extraMin || 10) * 60));
+  const inEditor = !!currentBoard && !document.getElementById("boardEditorView").classList.contains("hidden");
+  if (inEditor) {
+    currentBoard.elements.forEach(el => {
+      if (el.type === "timer") {
+        let needsRerender = false;
+        if (el.running) {
+          const remaining = Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000));
+          const displayEl = document.querySelector(`[data-timer-display="${el.id}"]`);
+          if (displayEl) displayEl.textContent = formatCountdown(remaining);
+          if (remaining <= 0) {
+            el.running = false; el.endTimestamp = null; el.remainingSec = 0;
+            needsRerender = true;
+          }
+        }
+        if (el.extraOn && el.extraEndTimestamp) {
+          const extraRemaining = Math.max(0, Math.round((el.extraEndTimestamp - Date.now()) / 1000));
+          const extraDisplayEl = document.querySelector(`[data-timer-extra-display="${el.id}"]`);
+          if (extraDisplayEl) extraDisplayEl.textContent = formatCountdown(extraRemaining);
+          if (extraRemaining <= 0) {
+            el.extraEndTimestamp = null; el.extraRemainingSec = 0;
+            needsRerender = true;
+          }
+        }
+        if (needsRerender) { saveBoard(); renderBoardCanvas(); }
       }
-      if (remaining <= 0) {
-        el.running = false; el.endTimestamp = null; el.remainingSec = 0;
-        saveBoard();
-        renderBoardCanvas();
+      if (el.type === "clock") {
+        const clockEl = document.getElementById("clock-" + el.id);
+        if (clockEl) clockEl.textContent = new Date().toLocaleTimeString("de-CH");
       }
-    }
-    if (el.type === "clock") {
-      const clockEl = document.getElementById("clock-" + el.id);
-      if (clockEl) clockEl.textContent = new Date().toLocaleTimeString("de-CH");
-    }
-  });
+    });
+  }
+  updateBoardWakeLock(inEditor);
 }, 1000);
 
 /* ---- Elemente hinzufügen ---- */
