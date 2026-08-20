@@ -682,7 +682,7 @@
     <p style="font-weight:800; margin-top:0;">📐 Vorlage laden</p>
     <p style="font-size:0.85rem; color:var(--muted); margin-top:-8px;">Ersetzt die aktuellen Tische und Raum-Objekte (zugeteilte SuS kommen zurück in den Pool). Lehrerpult und Wandtafel werden automatisch vorne platziert.</p>
     <button class="btn btn-outline" data-apply-template="frontal" style="width:100%; margin-bottom:8px;">➡️ Frontalformation<br><span style="font-weight:400; font-size:0.78rem;">3 Reihen à 4 Tische, alle zur Wandtafel</span></button>
-    <button class="btn btn-outline" data-apply-template="u" style="width:100%; margin-bottom:8px;">🔄 U-Formation<br><span style="font-weight:400; font-size:0.78rem;">3 vertikal + 4 frontal + 3 vertikal, 2 Tische in der Mitte</span></button>
+    <button class="btn btn-outline" data-apply-template="u" style="width:100%; margin-bottom:8px;">🔄 U-Formation<br><span style="font-weight:400; font-size:0.78rem;">3 vertikal links + 4 vertikal rechts + 3 frontal unten + 2 Tische in der Mitte</span></button>
     <button class="btn btn-outline" data-apply-template="gruppen" style="width:100%; margin-bottom:8px;">👥 Gruppenformation<br><span style="font-weight:400; font-size:0.78rem;">6 Vierergruppen, je 2 Tische gegenüber</span></button>
     <button class="btn btn-outline" data-apply-template="zweiE" style="width:100%;">🅴 Zwei-E<br><span style="font-weight:400; font-size:0.78rem;">2 spiegelverkehrte E-Formationen aus Tischgruppen</span></button>
     <div class="modal-actions">
@@ -2074,20 +2074,24 @@ const LAYOUT_TEMPLATES = {
     return { tables, objects: frontObjects() };
   },
   u: () => {
-    const tables = [];
-    const tableW = 130, leftArmX = 400, rightArmX = 900, armTopY = 200;
-    // Vertikale Arme: je 3 Tische, aneinanderliegend, oben (Richtung Wandtafel) offen
-    const armCenters = [0, 1, 2].map(i => armTopY + tableW / 2 + i * tableW);
-    armCenters.forEach(cy => tables.push(tableAtCenter("2er", leftArmX, cy, 90)));
-    armCenters.forEach(cy => tables.push(tableAtCenter("2er", rightArmX, cy, 90)));
-    // Basis: 4 Tische frontal, aneinanderliegend, verbindet die Arme unten
-    const baseCenterX = (leftArmX + rightArmX) / 2;
-    const baseY = armCenters[armCenters.length - 1] + tableW / 2 + tableW / 2;
-    [-1.5, -0.5, 0.5, 1.5].forEach(m => tables.push(tableAtCenter("2er", baseCenterX + m * tableW, baseY, 0)));
-    // 2 Tische in der Mitte, aneinanderliegend
-    const midY = (armTopY + baseY) / 2;
-    tables.push(tableAtCenter("2er", baseCenterX - tableW / 2, midY, 0));
-    tables.push(tableAtCenter("2er", baseCenterX + tableW / 2, midY, 0));
+    // Exakt vom Nutzer im Editor gebaute Aufstellung übernommen:
+    // linker Arm 3 Tische vertikal, rechter Arm 4 Tische vertikal,
+    // unten 3 Tische horizontal, 2 Tische horizontal in der Mitte.
+    const spec = [
+      { cx: 876, cy: 257, rot: 90 },
+      { cx: 875, cy: 389, rot: 90 },
+      { cx: 874, cy: 522, rot: 90 },
+      { cx: 872, cy: 654, rot: 90 },
+      { cx: 400, cy: 395, rot: 90 },
+      { cx: 400, cy: 525, rot: 90 },
+      { cx: 401, cy: 655, rot: 90 },
+      { cx: 562, cy: 470, rot: 0 },
+      { cx: 697, cy: 470, rot: 0 },
+      { cx: 498, cy: 687, rot: 0 },
+      { cx: 631, cy: 686, rot: 0 },
+      { cx: 763, cy: 685, rot: 0 }
+    ];
+    const tables = spec.map(s => tableAtCenter("2er", s.cx, s.cy, s.rot));
     return { tables, objects: frontObjects() };
   },
   gruppen: () => {
@@ -2186,7 +2190,6 @@ function wireRotateHandle(handleEl, tableEl, table) {
 }
 
 /* ---- Schüler-Drag (Pool <-> Sitz <-> Sitz) ---- */
-let ghostEl = null;
 function wireStudentDrag(sourceEl, studentId, sourceType, sourceTable, sourceSeatIndex) {
   sourceEl.addEventListener("dragstart", (e) => e.preventDefault());
   sourceEl.addEventListener("pointerdown", (e) => {
@@ -2194,29 +2197,36 @@ function wireStudentDrag(sourceEl, studentId, sourceType, sourceTable, sourceSea
     e.stopPropagation();
     const student = getStudent(currentSeatingClass, studentId);
     if (!student) return;
-    ghostEl = document.createElement("div");
-    ghostEl.className = "drag-ghost pool-chip";
-    ghostEl.innerHTML = `<div class="photo-drop">${student.photo ? `<img src="${student.photo}" draggable="false">` : initials(student)}</div><div class="pc-name">${escapeHtml(student.firstName)}</div>`;
-    document.body.appendChild(ghostEl);
+    const pointerId = e.pointerId;
+    const ghost = document.createElement("div");
+    ghost.className = "drag-ghost pool-chip";
+    ghost.innerHTML = `<div class="photo-drop">${student.photo ? `<img src="${student.photo}" draggable="false">` : initials(student)}</div><div class="pc-name">${escapeHtml(student.firstName)}</div>`;
+    document.body.appendChild(ghost);
+    const moveGhost = (x, y) => { ghost.style.left = x + "px"; ghost.style.top = y + "px"; };
     moveGhost(e.clientX, e.clientY);
-    try { sourceEl.setPointerCapture(e.pointerId); } catch (err) {}
+    try { sourceEl.setPointerCapture(pointerId); } catch (err) {}
     sourceEl.style.opacity = "0.3";
 
-    const onMove = (ev) => moveGhost(ev.clientX, ev.clientY);
-    const onUp = (ev) => {
+    const onMove = (ev) => { if (ev.pointerId === pointerId) moveGhost(ev.clientX, ev.clientY); };
+    const cleanup = () => {
       sourceEl.removeEventListener("pointermove", onMove);
       sourceEl.removeEventListener("pointerup", onUp);
-      if (ghostEl) { ghostEl.remove(); ghostEl = null; }
+      sourceEl.removeEventListener("pointercancel", onCancel);
+      ghost.remove();
       sourceEl.style.opacity = "";
-      ghostEl && ghostEl.style.setProperty("display", "none");
+    };
+    const onUp = (ev) => {
+      if (ev.pointerId !== pointerId) return;
       const dropTarget = document.elementFromPoint(ev.clientX, ev.clientY);
+      cleanup();
       handleStudentDrop(studentId, sourceType, sourceTable, sourceSeatIndex, dropTarget);
     };
+    const onCancel = (ev) => { if (ev.pointerId === pointerId) cleanup(); };
     sourceEl.addEventListener("pointermove", onMove);
     sourceEl.addEventListener("pointerup", onUp);
+    sourceEl.addEventListener("pointercancel", onCancel);
   });
 }
-function moveGhost(x, y) { if (ghostEl) { ghostEl.style.left = x + "px"; ghostEl.style.top = y + "px"; } }
 function wireSeatDropTarget(seatEl) { /* handled via elementFromPoint on drop, no extra listener needed */ }
 
 function handleStudentDrop(studentId, sourceType, sourceTable, sourceSeatIndex, dropTarget) {
