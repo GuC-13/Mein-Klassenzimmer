@@ -76,6 +76,8 @@
   .student-meta { flex: 1; min-width: 0; }
   .student-name { font-weight: 700; }
   .student-gender-badge { font-size: 0.75rem; color: var(--muted); }
+  .student-card.absent-today { opacity: 0.55; background: #fef2f2; }
+  .absent-toggle { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
   .gender-m { color: #2563eb; } .gender-w { color: #db2777; } .gender-d { color: #16a34a; }
 
   /* MODAL */
@@ -139,7 +141,7 @@
   #seatingEditorView.presentation-mode .seat { cursor: default; }
   #presentationModeBtn.active { background: #7c3aed; color: white; border-color: #7c3aed; }
   .presentation-exit-btn { position: fixed; top: 14px; right: 14px; width: 48px; height: 48px; border-radius: 50%; background: rgba(15,23,42,0.75); color: white; border: none; font-size: 1.3rem; font-weight: 800; z-index: 200; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
-  .presentation-exit-btn.hidden, #undoSeatsBtn.hidden { display: none; }
+  .presentation-exit-btn.hidden, #seatHistoryBtn.hidden { display: none; }
   .presentation-rotate-btn { position: fixed; top: 14px; right: 74px; height: 48px; padding: 0 18px; border-radius: 24px; background: rgba(15,23,42,0.75); color: white; border: none; font-size: 0.95rem; font-weight: 800; z-index: 200; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
   .presentation-rotate-btn.active { background: #7c3aed; }
   .presentation-rotate-btn.hidden { display: none; }
@@ -247,6 +249,11 @@
   .behavior-table th, .behavior-table td { text-align: left; padding: 10px 12px; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
   .behavior-table th { background: #f8fafc; cursor: pointer; user-select: none; white-space: nowrap; }
   .behavior-table th .sort-arrow { font-size: 0.7rem; color: var(--muted); }
+  .quick-behavior-btns { display: flex; gap: 4px; flex-shrink: 0; }
+  .quick-behavior-btn { border: none; border-radius: 8px; width: 36px; height: 36px; font-size: 1rem; cursor: pointer; background: var(--bg); }
+  .quick-behavior-btn.positive:active, .quick-behavior-btn.positive:hover { background: #dcfce7; }
+  .quick-behavior-btn.negative:active, .quick-behavior-btn.negative:hover { background: #fee2e2; }
+  .behavior-type-badge { display:inline-block; margin-right:6px; }
   .behavior-table-wrap { overflow-x: auto; margin-top: 18px; }
   .filter-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 
@@ -372,7 +379,7 @@
       <span class="toolbar-label">Sitzplätze:</span>
       <button class="btn" id="randomAssignBtn">🎲 Zufällig verteilen</button>
       <button class="btn btn-outline" id="swapSeatsBtn">🔀 Plätze tauschen</button>
-      <button class="btn btn-outline hidden" id="undoSeatsBtn">↩️ Rückgängig</button>
+      <button class="btn btn-outline hidden" id="seatHistoryBtn">🕓 Letzte Sitzordnung</button>
       <label class="toggle-line" style="font-weight:600;"><input type="checkbox" id="alternateGenderCheck" checked> ♂♀ nebeneinander bevorzugen</label>
       <button class="btn btn-outline danger" id="clearSeatsBtn">Plätze leeren</button>
     </div>
@@ -384,6 +391,7 @@
         <button id="zoomInBtn">+</button>
         <button id="zoomResetBtn" style="width:auto; padding:0 10px;">Reset</button>
       </div>
+      <button class="btn btn-outline hidden" id="canvasUndoBtn" style="padding:5px 9px; font-size:0.72rem;" title="Letzte Bewegung rückgängig machen (Tisch verschoben, SuS getauscht)">↩️ Rückgängig</button>
       <span class="toolbar-label" style="margin-left:10px;">Name:</span>
       <button class="display-opt-btn" data-namestyle="first">Vorname</button>
       <button class="display-opt-btn" data-namestyle="full">Vor- &amp; Nachname</button>
@@ -429,6 +437,10 @@
     <div class="row back-row"><button class="btn btn-secondary" data-back-behaviorpick>← Klassenwahl</button></div>
     <h1 id="behavior_title"></h1>
     <div class="list-card" id="behaviorStudentList"></div>
+    <div class="row">
+      <button class="btn btn-outline" id="behaviorSummaryToggleBtn">📊 Auswertung anzeigen</button>
+    </div>
+    <div class="list-card hidden" id="behaviorSummaryBox" style="margin-top:10px;"></div>
     <div class="behavior-table-wrap">
       <div class="filter-row">
         <select id="behaviorFilterStudent"><option value="">Alle Schüler:innen</option></select>
@@ -578,6 +590,7 @@
         <button class="display-opt-btn" data-groupsize="4">4er</button>
       </div>
       <label class="toggle-line" style="font-size:0.9rem; font-weight:600;"><input type="checkbox" id="groupsProportionalCheck" checked> Geschlecht proportional mischen</label>
+      <label class="toggle-line" style="font-size:0.9rem; font-weight:600;"><input type="checkbox" id="groupsColorsCheck" checked> Farben berücksichtigen (aus Sitzordnung)</label>
     </div>
     <button class="btn btn-big" id="createGroupsBtn">Gruppen erstellen</button>
     <div id="groupsResult" style="margin-top:18px;"></div>
@@ -717,6 +730,15 @@
       <button class="btn btn-secondary" id="copySeatingCancel">Abbrechen</button>
       <button class="btn" id="copySeatingConfirm">Kopieren</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="seatHistoryOverlay">
+  <div class="modal-box">
+    <div class="modal-header"><p>🕓 Letzte Sitzordnungen</p></div>
+    <p style="font-size:0.85rem; color:var(--muted); margin-top:-8px;">Frühere Zuteilungen (vor "Zufällig verteilen" / "Plätze tauschen") auswählen, um sie wiederherzustellen.</p>
+    <div class="scroll-list" id="seatHistoryList"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" id="seatHistoryClose">Schliessen</button></div>
   </div>
 </div>
 
@@ -881,18 +903,37 @@ const SEATINGS_KEY = "kz_seatings";
 const BEHAVIOR_KEY = "kz_behavior";
 const COLORS_KEY = "kz_colors";
 const CHECKLIST_KEY = "kz_checklist";
+const ABSENCE_KEY = "kz_absence";
 
 let classesData = JSON.parse(localStorage.getItem(CLASSES_KEY) || "{}");
 let seatingsData = JSON.parse(localStorage.getItem(SEATINGS_KEY) || "{}");
 let behaviorData = JSON.parse(localStorage.getItem(BEHAVIOR_KEY) || "{}");
 let colorsData = JSON.parse(localStorage.getItem(COLORS_KEY) || "{}");
 let checklistData = JSON.parse(localStorage.getItem(CHECKLIST_KEY) || "{}");
+let absenceData = JSON.parse(localStorage.getItem(ABSENCE_KEY) || "{}");
 
 function persistClasses() { localStorage.setItem(CLASSES_KEY, JSON.stringify(classesData)); }
 function persistSeatings() { localStorage.setItem(SEATINGS_KEY, JSON.stringify(seatingsData)); }
 function persistBehavior() { localStorage.setItem(BEHAVIOR_KEY, JSON.stringify(behaviorData)); }
 function persistColors() { localStorage.setItem(COLORS_KEY, JSON.stringify(colorsData)); }
 function persistChecklist() { localStorage.setItem(CHECKLIST_KEY, JSON.stringify(checklistData)); }
+function persistAbsence() { localStorage.setItem(ABSENCE_KEY, JSON.stringify(absenceData)); }
+function getTodayAbsentIds(className) {
+  const entry = absenceData[className];
+  if (!entry || entry.date !== todayISO()) return [];
+  return entry.ids || [];
+}
+function isAbsentToday(className, studentId) { return getTodayAbsentIds(className).includes(studentId); }
+function setStudentAbsentToday(className, studentId, absent) {
+  if (!absenceData[className] || absenceData[className].date !== todayISO()) {
+    absenceData[className] = { date: todayISO(), ids: [] };
+  }
+  const ids = absenceData[className].ids;
+  const idx = ids.indexOf(studentId);
+  if (absent && idx === -1) ids.push(studentId);
+  else if (!absent && idx !== -1) ids.splice(idx, 1);
+  persistAbsence();
+}
 function formatDateTimeDE(ts) { if (!ts) return ""; const d = new Date(ts); const pad = n => String(n).padStart(2, "0"); return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 
 function getStudent(className, studentId) {
@@ -1164,18 +1205,27 @@ function renderRoster() {
   const list = classesData[currentClass] || [];
   if (list.length === 0) { el.innerHTML = '<div class="empty-hint">Noch keine Schüler:innen in dieser Klasse.</div>'; return; }
   const genderLabel = { m: "Junge", w: "Mädchen", d: "Divers" };
-  el.innerHTML = list.map(s => `
-    <div class="student-card" data-id="${s.id}">
+  el.innerHTML = list.map(s => {
+    const absent = isAbsentToday(currentClass, s.id);
+    return `
+    <div class="student-card${absent ? " absent-today" : ""}" data-id="${s.id}">
       <div class="photo-drop" data-id="${s.id}">${s.photo ? `<img src="${s.photo}">` : initials(s)}</div>
       <div class="student-meta">
         <div class="student-name">${escapeHtml(s.firstName)} ${escapeHtml(s.lastName || "")}</div>
         <div class="student-gender-badge gender-${s.gender}">${genderLabel[s.gender] || ""}</div>
       </div>
+      <label class="toggle-line absent-toggle" style="font-size:0.75rem;"><input type="checkbox" data-absent="${s.id}" ${absent ? "checked" : ""}> abwesend heute</label>
       <div class="lr-actions">
         <button class="icon-btn" data-edit="${s.id}">✏️</button>
         <button class="icon-btn danger" data-del="${s.id}">🗑</button>
       </div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
+  el.querySelectorAll("[data-absent]").forEach(cb => cb.addEventListener("change", () => {
+    setStudentAbsentToday(currentClass, cb.dataset.absent, cb.checked);
+    const card = cb.closest(".student-card");
+    if (card) card.classList.toggle("absent-today", cb.checked);
+  }));
   el.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => openStudentModal(b.dataset.edit)));
   el.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => {
     const id = b.dataset.del;
@@ -1866,8 +1916,10 @@ function openSeatingEditor(seatingId) {
   seatingZoom = 1;
   applyZoom();
   setPresentationMode(false);
-  seatUndoSnapshot = null;
-  document.getElementById("undoSeatsBtn").classList.add("hidden");
+  if (!currentSeating.assignmentHistory) currentSeating.assignmentHistory = [];
+  updateSeatHistoryBtn();
+  seatingUndoStack = [];
+  updateCanvasUndoBtn();
   renderDisplayOptButtons();
   renderSeatingCanvas();
   renderSeatingPool();
@@ -2162,6 +2214,9 @@ function wireTableDrag(tableEl, table) {
   tableEl.addEventListener("pointerup", (e) => {
     if (!dragging) return;
     dragging = false; tableEl.style.zIndex = "";
+    if (table.x !== origX || table.y !== origY) {
+      pushSeatingUndo({ type: "move", ref: table, fromX: origX, fromY: origY });
+    }
     saveSeating();
   });
 }
@@ -2240,10 +2295,16 @@ function handleStudentDrop(studentId, sourceType, sourceTable, sourceSeatIndex, 
     if (!targetTable) return;
     const displacedStudentId = targetTable.seats[targetSeatIndex];
     if (sourceType === "seat" && sourceTable.id === targetTableId && sourceSeatIndex === targetSeatIndex) return;
+    const changes = [{ arr: targetTable.seats, index: targetSeatIndex, prevValue: targetTable.seats[targetSeatIndex] }];
+    if (sourceType === "seat") changes.push({ arr: sourceTable.seats, index: sourceSeatIndex, prevValue: sourceTable.seats[sourceSeatIndex] });
+    pushSeatingUndo({ type: "seats", changes });
     targetTable.seats[targetSeatIndex] = studentId;
     if (sourceType === "seat") sourceTable.seats[sourceSeatIndex] = displacedStudentId || null;
   } else if (poolTarget || !dropTarget) {
-    if (sourceType === "seat") sourceTable.seats[sourceSeatIndex] = null;
+    if (sourceType === "seat") {
+      pushSeatingUndo({ type: "seats", changes: [{ arr: sourceTable.seats, index: sourceSeatIndex, prevValue: sourceTable.seats[sourceSeatIndex] }] });
+      sourceTable.seats[sourceSeatIndex] = null;
+    }
   } else {
     return;
   }
@@ -2341,23 +2402,79 @@ function randomlyAssignSeats(alternateGender, onlyOccupied) {
   renderSeatingPool();
 }
 
-/* ---- Rückgängig (nach Zufällig verteilen / Plätze tauschen) ---- */
-let seatUndoSnapshot = null;
+/* ---- Letzte Sitzordnungen (Verlauf der Zuteilungen, nach Zufällig verteilen / Plätze tauschen) ---- */
+const SEAT_HISTORY_MAX = 15;
 function snapshotSeats() {
-  seatUndoSnapshot = currentSeating.tables.map(t => ({ id: t.id, seats: [...t.seats] }));
-  document.getElementById("undoSeatsBtn").classList.remove("hidden");
-}
-function undoSeatSwap() {
-  if (!seatUndoSnapshot) return;
-  seatUndoSnapshot.forEach(snap => {
-    const t = currentSeating.tables.find(x => x.id === snap.id);
-    if (t) t.seats = [...snap.seats];
+  if (!currentSeating.assignmentHistory) currentSeating.assignmentHistory = [];
+  currentSeating.assignmentHistory.unshift({
+    id: uid(),
+    date: Date.now(),
+    tables: currentSeating.tables.map(t => ({ id: t.id, seats: [...t.seats] }))
   });
-  seatUndoSnapshot = null;
-  document.getElementById("undoSeatsBtn").classList.add("hidden");
-  saveSeating(); renderSeatingCanvas(); renderSeatingPool();
+  if (currentSeating.assignmentHistory.length > SEAT_HISTORY_MAX) currentSeating.assignmentHistory.length = SEAT_HISTORY_MAX;
+  updateSeatHistoryBtn();
 }
-document.getElementById("undoSeatsBtn").addEventListener("click", undoSeatSwap);
+function updateSeatHistoryBtn() {
+  document.getElementById("seatHistoryBtn").classList.toggle("hidden", !currentSeating.assignmentHistory || currentSeating.assignmentHistory.length === 0);
+}
+function renderSeatHistoryList() {
+  const list = currentSeating.assignmentHistory || [];
+  const el = document.getElementById("seatHistoryList");
+  el.innerHTML = list.length === 0
+    ? '<div class="empty-hint">Keine gespeicherten Sitzordnungen.</div>'
+    : list.map(entry => `
+      <div class="list-row" data-history-id="${entry.id}">
+        <div><div class="lr-title">${formatDateTimeDE(entry.date)}</div></div>
+        <span>›</span>
+      </div>`).join("");
+}
+document.getElementById("seatHistoryBtn").addEventListener("click", () => {
+  renderSeatHistoryList();
+  document.getElementById("seatHistoryOverlay").classList.remove("hidden");
+});
+document.getElementById("seatHistoryClose").addEventListener("click", () => document.getElementById("seatHistoryOverlay").classList.add("hidden"));
+document.getElementById("seatHistoryList").addEventListener("click", (e) => {
+  const row = e.target.closest("[data-history-id]");
+  if (!row) return;
+  const entry = (currentSeating.assignmentHistory || []).find(x => x.id === row.dataset.historyId);
+  if (!entry) return;
+  openConfirm(`Sitzordnung vom ${formatDateTimeDE(entry.date)} wiederherstellen? Die aktuelle Zuteilung wird ersetzt.`, () => {
+    entry.tables.forEach(snap => {
+      const t = currentSeating.tables.find(x => x.id === snap.id);
+      if (t) t.seats = [...snap.seats];
+    });
+    saveSeating(); renderSeatingCanvas(); renderSeatingPool();
+    document.getElementById("seatHistoryOverlay").classList.add("hidden");
+  }, "Wiederherstellen");
+});
+
+/* ---- Rückgängig (einzelne Bewegungen: Tisch verschoben, SuS vertauscht) ---- */
+let seatingUndoStack = [];
+const SEATING_UNDO_MAX = 30;
+function pushSeatingUndo(action) {
+  seatingUndoStack.push(action);
+  if (seatingUndoStack.length > SEATING_UNDO_MAX) seatingUndoStack.shift();
+  updateCanvasUndoBtn();
+}
+function updateCanvasUndoBtn() {
+  document.getElementById("canvasUndoBtn").classList.toggle("hidden", seatingUndoStack.length === 0);
+}
+function undoLastCanvasAction() {
+  const action = seatingUndoStack.pop();
+  if (action) {
+    if (action.type === "move") {
+      action.ref.x = action.fromX;
+      action.ref.y = action.fromY;
+    } else if (action.type === "seats") {
+      action.changes.forEach(c => { c.arr[c.index] = c.prevValue; });
+    }
+    saveSeating();
+    renderSeatingCanvas();
+    renderSeatingPool();
+  }
+  updateCanvasUndoBtn();
+}
+document.getElementById("canvasUndoBtn").addEventListener("click", undoLastCanvasAction);
 
 /* =========================================================================
    SCHÜLERVERHALTEN
@@ -2383,10 +2500,51 @@ function renderBehaviorStudentList() {
     <div class="student-card">
       <div class="photo-drop" style="cursor:default;">${s.photo ? `<img src="${s.photo}">` : initials(s)}</div>
       <div class="student-meta"><div class="student-name">${escapeHtml(s.firstName)} ${escapeHtml(s.lastName || "")}</div></div>
+      <div class="quick-behavior-btns">
+        <button class="quick-behavior-btn positive" data-quick="${s.id}" data-type="positive" title="Schnell: positiver Eintrag">👍</button>
+        <button class="quick-behavior-btn negative" data-quick="${s.id}" data-type="negative" title="Schnell: negativer Eintrag">👎</button>
+      </div>
       <button class="btn" style="padding:8px 12px; font-size:0.82rem;" data-add-comment="${s.id}">+ Kommentar</button>
     </div>`).join("");
   el.querySelectorAll("[data-add-comment]").forEach(b => b.addEventListener("click", () => openCommentModal(null, b.dataset.addComment)));
+  el.querySelectorAll("[data-quick]").forEach(b => b.addEventListener("click", () => quickAddBehavior(b.dataset.quick, b.dataset.type)));
 }
+function quickAddBehavior(studentId, type) {
+  if (!behaviorData[currentBehaviorClass]) behaviorData[currentBehaviorClass] = [];
+  const label = type === "positive" ? "Positiv" : "Negativ";
+  behaviorData[currentBehaviorClass].push({ id: uid(), studentId, date: todayISO(), text: label, type });
+  persistBehavior();
+  renderBehaviorTable();
+  refreshBehaviorSummaryIfOpen();
+}
+function refreshBehaviorSummaryIfOpen() {
+  const box = document.getElementById("behaviorSummaryBox");
+  if (!box.classList.contains("hidden")) renderBehaviorSummary();
+}
+function renderBehaviorSummary() {
+  const box = document.getElementById("behaviorSummaryBox");
+  const list = classesData[currentBehaviorClass] || [];
+  const entries = behaviorData[currentBehaviorClass] || [];
+  const rows = list.map(s => {
+    const own = entries.filter(e => e.studentId === s.id);
+    const positive = own.filter(e => e.type === "positive").length;
+    const negative = own.filter(e => e.type === "negative").length;
+    return { s, total: own.length, positive, negative };
+  }).sort((a, b) => b.total - a.total);
+  box.innerHTML = rows.length === 0 || rows.every(r => r.total === 0)
+    ? '<div class="empty-hint">Noch keine Einträge für diese Klasse.</div>'
+    : rows.map(r => `
+      <div class="list-row" style="cursor:default;">
+        <div><div class="lr-title">${escapeHtml(r.s.firstName)} ${escapeHtml(r.s.lastName || "")}</div>
+        <div class="lr-sub">${r.total} Eintrag(e) gesamt${r.positive || r.negative ? ` · <span style="color:#16a34a; font-weight:700;">+${r.positive}</span> / <span style="color:#dc2626; font-weight:700;">−${r.negative}</span>` : ""}</div></div>
+      </div>`).join("");
+}
+document.getElementById("behaviorSummaryToggleBtn").addEventListener("click", () => {
+  const box = document.getElementById("behaviorSummaryBox");
+  const nowHidden = box.classList.toggle("hidden");
+  document.getElementById("behaviorSummaryToggleBtn").textContent = nowHidden ? "📊 Auswertung anzeigen" : "📊 Auswertung ausblenden";
+  if (!nowHidden) renderBehaviorSummary();
+});
 function renderBehaviorFilterOptions() {
   const sel = document.getElementById("behaviorFilterStudent");
   const list = classesData[currentBehaviorClass] || [];
@@ -2441,6 +2599,7 @@ document.getElementById("commentModalSave").addEventListener("click", () => {
   persistBehavior();
   document.getElementById("commentModal").classList.add("hidden");
   renderBehaviorTable();
+  refreshBehaviorSummaryIfOpen();
 });
 function renderBehaviorTable() {
   const list = (behaviorData[currentBehaviorClass] || []).slice();
@@ -2464,7 +2623,7 @@ function renderBehaviorTable() {
     <tr>
       <td>${formatDateDE(r.date)}</td>
       <td>${escapeHtml(r.name)}</td>
-      <td>${escapeHtml(r.text)}</td>
+      <td>${r.type === "positive" ? '<span class="behavior-type-badge positive">👍</span>' : r.type === "negative" ? '<span class="behavior-type-badge negative">👎</span>' : ""}${escapeHtml(r.text)}</td>
       <td style="white-space:nowrap;">
         <button class="icon-btn" data-edit-comment="${r.id}">✏️</button>
         <button class="icon-btn danger" data-del-comment="${r.id}">🗑</button>
@@ -2477,6 +2636,7 @@ function renderBehaviorTable() {
       behaviorData[currentBehaviorClass] = behaviorData[currentBehaviorClass].filter(x => x.id !== id);
       persistBehavior();
       renderBehaviorTable();
+      refreshBehaviorSummaryIfOpen();
     }, "Löschen");
   }));
 }
@@ -3562,10 +3722,14 @@ function openRandomStudentForClass(className) {
   updateRandomRemainingLabel();
   showView("randomStudent");
 }
-function resetRandomPool() { randomRemainingIds = (classesData[currentRandomClass] || []).map(s => s.id); }
+function resetRandomPool() {
+  randomRemainingIds = (classesData[currentRandomClass] || []).filter(s => !isAbsentToday(currentRandomClass, s.id)).map(s => s.id);
+}
 function updateRandomRemainingLabel() {
-  const total = (classesData[currentRandomClass] || []).length;
-  document.getElementById("randomStudentRemaining").textContent = `${randomRemainingIds.length} von ${total} noch nicht dran gewesen`;
+  const total = (classesData[currentRandomClass] || []).filter(s => !isAbsentToday(currentRandomClass, s.id)).length;
+  const absentCount = getTodayAbsentIds(currentRandomClass).length;
+  document.getElementById("randomStudentRemaining").textContent = `${randomRemainingIds.length} von ${total} noch nicht dran gewesen`
+    + (absentCount > 0 ? ` · ${absentCount} heute abwesend` : "");
 }
 document.getElementById("randomDrawBtn").addEventListener("click", () => {
   if (!classesData[currentRandomClass] || classesData[currentRandomClass].length === 0) { alert("Diese Klasse hat noch keine Schüler:innen."); return; }
@@ -3600,21 +3764,60 @@ document.querySelectorAll("[data-groupsize]").forEach(b => b.addEventListener("c
   currentGroupSize = Number(b.dataset.groupsize);
   document.querySelectorAll("[data-groupsize]").forEach(x => x.classList.toggle("active", x === b));
 }));
-document.getElementById("createGroupsBtn").addEventListener("click", () => {
-  const students = (classesData[currentGroupsClass] || []).slice();
-  if (students.length === 0) { alert("Diese Klasse hat noch keine Schüler:innen."); return; }
-  const proportional = document.getElementById("groupsProportionalCheck").checked;
-  const numGroups = Math.max(1, Math.round(students.length / currentGroupSize));
-  const groups = Array.from({ length: numGroups }, () => []);
-  if (proportional) {
-    const byGender = { m: [], w: [], d: [] };
-    students.forEach(s => (byGender[s.gender] || byGender.d).push(s));
-    let placeCounter = 0;
-    Object.values(byGender).forEach(list => {
-      shuffleArr(list).forEach(s => { groups[placeCounter % numGroups].push(s); placeCounter++; });
+function groupsPairCost(student, other, proportional, useColors, colorDefs) {
+  let cost = 0;
+  if (proportional && student.gender !== "d" && other.gender !== "d" && student.gender === other.gender) cost += 1;
+  if (useColors) {
+    (student.colors || []).forEach(cid => {
+      if ((other.colors || []).includes(cid)) {
+        const def = colorDefs.find(x => x.id === cid);
+        const mode = def ? def.mode : null;
+        if (mode === "apart") cost += 3;
+        else if (mode === "together") cost -= 2;
+      }
     });
-  } else {
+  }
+  return cost;
+}
+function buildGroupsWithConstraints(students, numGroups, proportional, useColors) {
+  const targetSize = Math.ceil(students.length / numGroups);
+  const colorDefs = colorsData[currentGroupsClass] || [];
+  function attempt() {
+    const groups = Array.from({ length: numGroups }, () => []);
+    shuffleArr(students).forEach(student => {
+      let bestIdx = -1, bestCost = Infinity;
+      groups.forEach((g, idx) => {
+        if (g.length >= targetSize) return;
+        let cost = 0;
+        g.forEach(other => { cost += groupsPairCost(student, other, proportional, useColors, colorDefs); });
+        if (cost < bestCost) { bestCost = cost; bestIdx = idx; }
+      });
+      groups[bestIdx].push(student);
+    });
+    let total = 0;
+    groups.forEach(g => g.forEach((student, i) => g.forEach((other, j) => { if (i !== j) total += groupsPairCost(student, other, proportional, useColors, colorDefs); })));
+    return { groups, total };
+  }
+  let best = null;
+  for (let i = 0; i < 60; i++) {
+    const result = attempt();
+    if (!best || result.total < best.total) best = result;
+    if (best.total <= 0) break;
+  }
+  return best.groups;
+}
+document.getElementById("createGroupsBtn").addEventListener("click", () => {
+  const students = (classesData[currentGroupsClass] || []).filter(s => !isAbsentToday(currentGroupsClass, s.id));
+  if (students.length === 0) { alert("Diese Klasse hat noch keine (anwesenden) Schüler:innen."); return; }
+  const proportional = document.getElementById("groupsProportionalCheck").checked;
+  const useColors = document.getElementById("groupsColorsCheck").checked;
+  const numGroups = Math.max(1, Math.round(students.length / currentGroupSize));
+  let groups;
+  if (!proportional && !useColors) {
+    groups = Array.from({ length: numGroups }, () => []);
     shuffleArr(students).forEach((s, i) => groups[i % numGroups].push(s));
+  } else {
+    groups = buildGroupsWithConstraints(students, numGroups, proportional, useColors);
   }
   const genderIcon = { m: "♂", w: "♀", d: "⚧" };
   document.getElementById("groupsResult").innerHTML = groups.map((g, i) => `
