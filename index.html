@@ -92,6 +92,18 @@
   .seating-toolbar.compact { gap: 6px; margin-bottom: 8px; }
   .seating-toolbar.compact .btn { padding: 5px 9px; font-size: 0.72rem; }
   .seating-toolbar.compact .toggle-line { font-size: 0.72rem !important; }
+  .icon-toolbtn { border: 2px solid var(--border); background: white; border-radius: 10px; width: 42px; height: 42px; font-size: 1.15rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .icon-toolbtn:active { transform: scale(0.95); }
+  .icon-toolbtn.hidden { display: none; }
+  #groupSizeModeWrap.hidden, #groupCountModeWrap.hidden { display: none; }
+  .dropdown-wrap { position: relative; }
+  .dropdown-panel { position: absolute; top: 100%; left: 0; margin-top: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.18); padding: 8px; z-index: 50; display: flex; flex-direction: column; gap: 4px; min-width: 240px; }
+  .dropdown-panel.hidden { display: none; }
+  .dropdown-item { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 9px 10px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; color: var(--text); }
+  .dropdown-item:hover { background: var(--bg); }
+  .dropdown-item.danger { color: var(--danger); }
+  .dropdown-sep { height: 1px; background: var(--border); margin: 4px 2px; }
+  .dropdown-section-label { font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; padding: 4px 10px 0; }
   .seating-toolbar .toolbar-label { font-size: 0.82rem; font-weight: 700; color: var(--muted); }
   .seating-layout { display: flex; gap: 12px; align-items: flex-start; position: relative; }
   .seating-pool { width: 150px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px; max-height: 640px; overflow-y: auto; }
@@ -101,6 +113,7 @@
   #seatingEditorView.presentation-mode .room-objects-mini { display: none; }
   .seating-pool h3 { font-size: 0.85rem; margin: 0 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
   .pool-chip { display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px; margin-bottom: 6px; cursor: grab; touch-action: none; user-select: none; }
+  .pool-chip-canvas { position: absolute; margin-bottom: 0; z-index: 2; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
   .pool-chip .photo-drop { width: 30px; height: 30px; font-size: 0.75rem; border: none; cursor: default; }
   .pool-chip .pc-name { font-size: 0.82rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .seating-canvas-wrap { flex: 1; overflow: auto; background: #eef2f7; border: 1px solid var(--border); border-radius: 12px; max-height: 640px; }
@@ -369,41 +382,50 @@
       <button class="btn btn-outline hide-in-presentation" id="renameSeatingBtn" style="padding:6px 12px; font-size:0.78rem;">✏️ Umbenennen</button>
     </div>
     <h2 class="sub hide-in-presentation" id="seatingEditor_updated" style="margin-bottom:12px;"></h2>
-    <div class="seating-toolbar hide-in-presentation">
-      <button class="btn btn-outline" id="loadTemplateBtn">📐 Vorlage laden</button>
-      <button class="btn btn-outline" id="copySeatingBtn">📋 In andere Klasse kopieren</button>
-      <button class="btn btn-outline" id="presentationModeBtn">🖥️ Präsentieransicht</button>
-      <button class="btn-subtle" id="exportSeatingBtn" style="margin-left:auto;">📤 Als Vorlage exportieren</button>
-    </div>
-    <div class="seating-toolbar compact hide-in-presentation">
-      <span class="toolbar-label">Sitzplätze:</span>
-      <button class="btn" id="randomAssignBtn">🎲 Zufällig verteilen</button>
-      <button class="btn btn-outline" id="swapSeatsBtn">🔀 Plätze tauschen</button>
-      <button class="btn btn-outline hidden" id="seatHistoryBtn">🕓 Letzte Sitzordnung</button>
-      <label class="toggle-line" style="font-weight:600;"><input type="checkbox" id="alternateGenderCheck" checked> ♂♀ nebeneinander bevorzugen</label>
-      <button class="btn btn-outline danger" id="clearSeatsBtn">Plätze leeren</button>
-    </div>
-    <div class="seating-toolbar hide-in-presentation">
-      <span class="toolbar-label">Ansicht:</span>
-      <div class="zoom-controls">
-        <button id="zoomOutBtn">−</button>
-        <span class="zoom-label" id="zoomLabel">100%</span>
-        <button id="zoomInBtn">+</button>
-        <button id="zoomResetBtn" style="width:auto; padding:0 10px;">Reset</button>
+    <div class="seating-toolbar hide-in-presentation" id="seatingIconToolbar">
+      <div class="dropdown-wrap">
+        <button class="icon-toolbtn" id="distributionMenuBtn" title="Sitzplatzverteilung">🎲</button>
+        <div class="dropdown-panel hidden" id="distributionMenu">
+          <button class="dropdown-item" id="randomAssignBtn">🎲 Neu verteilen</button>
+          <button class="dropdown-item" id="swapSeatsBtn">🔀 Sitze tauschen (Positionen behalten)</button>
+          <button class="dropdown-item danger" id="clearSeatsBtn">🧹 Sitzplan zurücksetzen</button>
+          <button class="dropdown-item hidden" id="seatHistoryBtn">🕓 Letzte Sitzordnungen</button>
+          <div class="dropdown-sep"></div>
+          <label class="toggle-line dropdown-item" style="cursor:pointer;"><input type="checkbox" id="alternateGenderCheck" checked> ♂♀ nebeneinander bevorzugen</label>
+        </div>
       </div>
-      <button class="btn btn-outline hidden" id="canvasUndoBtn" style="padding:5px 9px; font-size:0.72rem;" title="Letzte Bewegung rückgängig machen (Tisch verschoben, SuS getauscht)">↩️ Rückgängig</button>
-      <span class="toolbar-label" style="margin-left:10px;">Name:</span>
-      <button class="display-opt-btn" data-namestyle="first">Vorname</button>
-      <button class="display-opt-btn" data-namestyle="full">Vor- &amp; Nachname</button>
-      <span class="toolbar-label" style="margin-left:10px;">Foto:</span>
-      <button class="display-opt-btn" data-showphoto="1">An</button>
-      <button class="display-opt-btn" data-showphoto="0">Aus</button>
+      <button class="icon-toolbtn" id="seatBanBtn" title="Sitzverbote festlegen">🚫</button>
+      <button class="icon-toolbtn" id="presentationModeBtn" title="Präsentieransicht">🖥️</button>
+      <button class="icon-toolbtn hidden" id="canvasUndoBtn" title="Letzte Bewegung rückgängig machen (Tisch verschoben, SuS getauscht)">↩️</button>
+      <button class="icon-toolbtn hidden" id="canvasRedoBtn" title="Rückgängig gemachte Bewegung wiederherstellen">↪️</button>
+      <div class="dropdown-wrap" style="margin-left:auto;">
+        <button class="icon-toolbtn" id="templatesMenuBtn" title="Vorlagen">🗂️</button>
+        <div class="dropdown-panel hidden" id="templatesMenu" style="right:0; left:auto;">
+          <button class="dropdown-item" id="loadTemplateBtn">📐 Vorlage laden</button>
+          <button class="dropdown-item" id="copySeatingBtn">📋 In andere Klasse kopieren</button>
+          <button class="dropdown-item" id="exportSeatingBtn">📤 Als Vorlage exportieren (teilen)</button>
+        </div>
+      </div>
+      <div class="dropdown-wrap">
+        <button class="icon-toolbtn" id="viewMenuBtn" title="Ansicht">👁️</button>
+        <div class="dropdown-panel hidden" id="viewMenu" style="right:0; left:auto;">
+          <div class="dropdown-section-label">Name</div>
+          <button class="dropdown-item display-opt-btn" data-namestyle="first">Vorname</button>
+          <button class="dropdown-item display-opt-btn" data-namestyle="full">Vor- &amp; Nachname</button>
+          <div class="dropdown-section-label">Foto</div>
+          <button class="dropdown-item display-opt-btn" data-showphoto="1">An</button>
+          <button class="dropdown-item display-opt-btn" data-showphoto="0">Aus</button>
+          <div class="dropdown-sep"></div>
+          <div class="zoom-controls" style="justify-content:center;">
+            <button id="zoomOutBtn">−</button>
+            <span class="zoom-label" id="zoomLabel">100%</span>
+            <button id="zoomInBtn">+</button>
+            <button id="zoomResetBtn" style="width:auto; padding:0 10px;">Reset</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="seating-layout">
-      <div class="seating-pool hide-in-presentation">
-        <h3>Nicht zugeteilt</h3>
-        <div id="seatingPool"></div>
-      </div>
       <div class="seating-canvas-wrap">
         <div class="seating-canvas-sizer" id="seatingCanvasSizer">
           <div class="seating-canvas" id="seatingCanvas"></div>
@@ -583,11 +605,22 @@
     <div class="row back-row"><button class="btn btn-secondary" data-back-groupspick>← Klassenwahl</button></div>
     <h1 id="groupsSetup_title"></h1>
     <div class="setup-card">
-      <label class="field-label">Gruppengrösse</label>
-      <div class="choice-row" style="display:flex; gap:8px; margin-bottom:10px;">
-        <button class="display-opt-btn" data-groupsize="2">2er</button>
-        <button class="display-opt-btn" data-groupsize="3">3er</button>
-        <button class="display-opt-btn" data-groupsize="4">4er</button>
+      <label class="field-label">Modus</label>
+      <div class="choice-row" style="display:flex; gap:8px; margin-bottom:14px;">
+        <button class="display-opt-btn active" data-groupmode="size">Nach Gruppengrösse</button>
+        <button class="display-opt-btn" data-groupmode="count">Nach Anzahl Gruppen</button>
+      </div>
+      <div id="groupSizeModeWrap">
+        <label class="field-label">Gruppengrösse</label>
+        <div class="choice-row" style="display:flex; gap:8px; margin-bottom:10px;">
+          <button class="display-opt-btn" data-groupsize="2">2er</button>
+          <button class="display-opt-btn" data-groupsize="3">3er</button>
+          <button class="display-opt-btn" data-groupsize="4">4er</button>
+        </div>
+      </div>
+      <div id="groupCountModeWrap" class="hidden">
+        <label class="field-label">Anzahl Gruppen (2–15)</label>
+        <input type="number" id="groupCountInput" min="2" max="15" value="2" style="width:100px; margin-bottom:10px;">
       </div>
       <label class="toggle-line" style="font-size:0.9rem; font-weight:600;"><input type="checkbox" id="groupsProportionalCheck" checked> Geschlecht proportional mischen</label>
       <label class="toggle-line" style="font-size:0.9rem; font-weight:600;"><input type="checkbox" id="groupsColorsCheck" checked> Farben berücksichtigen (aus Sitzordnung)</label>
@@ -693,7 +726,7 @@
 <div class="modal-overlay hidden" id="layoutTemplateOverlay">
   <div class="modal-box">
     <p style="font-weight:800; margin-top:0;">📐 Vorlage laden</p>
-    <p style="font-size:0.85rem; color:var(--muted); margin-top:-8px;">Ersetzt die aktuellen Tische und Raum-Objekte (zugeteilte SuS kommen zurück in den Pool). Lehrerpult und Wandtafel werden automatisch vorne platziert.</p>
+    <p style="font-size:0.85rem; color:var(--muted); margin-top:-8px;">Ersetzt die aktuellen Tische und Raum-Objekte (zugeteilte SuS werden wieder frei im Raster platziert). Lehrerpult und Wandtafel werden automatisch vorne platziert.</p>
     <button class="btn btn-outline" data-apply-template="frontal" style="width:100%; margin-bottom:8px;">➡️ Frontalformation<br><span style="font-weight:400; font-size:0.78rem;">3 Reihen à 4 Tische, alle zur Wandtafel</span></button>
     <button class="btn btn-outline" data-apply-template="u" style="width:100%; margin-bottom:8px;">🔄 U-Formation<br><span style="font-weight:400; font-size:0.78rem;">3 vertikal links + 4 vertikal rechts + 3 frontal unten + 2 Tische in der Mitte</span></button>
     <button class="btn btn-outline" data-apply-template="gruppen" style="width:100%; margin-bottom:8px;">👥 Gruppenformation<br><span style="font-weight:400; font-size:0.78rem;">6 Vierergruppen, je 2 Tische gegenüber</span></button>
@@ -716,6 +749,21 @@
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="mehrfachplatzCancel">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="seatBanModal">
+  <div class="modal-box">
+    <p style="font-weight:800; margin-top:0;">🚫 Sitzverbote festlegen</p>
+    <p style="font-size:0.85rem; color:var(--muted); margin-top:-8px;">Wähle eine Person und hake an, neben wem sie nicht sitzen darf. Wird intern über eine automatische "Abstand"-Farbe umgesetzt (sichtbar unter Klasse bearbeiten → Farben) und wirkt sich auch auf "Neu verteilen" sowie die Gruppenerstellung aus.</p>
+    <label class="field-label">Person</label>
+    <select id="seatBanStudentSelect"></select>
+    <label class="field-label">Darf nicht sitzen neben...</label>
+    <div class="scroll-list" id="seatBanCheckboxList"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="seatBanCancel">Schliessen</button>
+      <button class="btn" id="seatBanSave">Speichern</button>
     </div>
   </div>
 </div>
@@ -1881,7 +1929,8 @@ function setPresentationMode(on) {
   document.getElementById("presentationRotateBtn").classList.toggle("hidden", !presentationMode);
   document.getElementById("presentationRotateBtn").classList.toggle("active", isPresentationRotated());
   const btn = document.getElementById("presentationModeBtn");
-  btn.textContent = presentationMode ? "✕ Präsentieransicht verlassen" : "🖥️ Präsentieransicht";
+  btn.textContent = presentationMode ? "✕" : "🖥️";
+  btn.title = presentationMode ? "Präsentieransicht verlassen" : "Präsentieransicht";
   btn.classList.toggle("active", presentationMode);
   renderSeatingCanvas();
   if (presentationMode) {
@@ -1919,7 +1968,9 @@ function openSeatingEditor(seatingId) {
   if (!currentSeating.assignmentHistory) currentSeating.assignmentHistory = [];
   updateSeatHistoryBtn();
   seatingUndoStack = [];
+  seatingRedoStack = [];
   updateCanvasUndoBtn();
+  updateCanvasRedoBtn();
   renderDisplayOptButtons();
   renderSeatingCanvas();
   renderSeatingPool();
@@ -1944,16 +1995,26 @@ function assignedStudentIds() {
   return ids;
 }
 function renderSeatingPool() {
-  const el = document.getElementById("seatingPool");
+  const canvas = document.getElementById("seatingCanvas");
+  canvas.querySelectorAll(".pool-chip-canvas").forEach(el => el.remove());
+  if (presentationMode) return;
   const assigned = assignedStudentIds();
   const list = (classesData[currentSeatingClass] || []).filter(s => !assigned.has(s.id));
-  if (list.length === 0) { el.innerHTML = '<div class="empty-hint" style="padding:14px 4px; font-size:0.8rem;">Alle zugeteilt.</div>'; return; }
-  el.innerHTML = list.map(s => `
-    <div class="pool-chip" data-student-id="${s.id}">
-      <div class="photo-drop">${s.photo ? `<img src="${s.photo}" draggable="false">` : initials(s)}</div>
-      <div class="pc-name">${escapeHtml(s.firstName)}</div>
-    </div>`).join("");
-  el.querySelectorAll(".pool-chip").forEach(chip => wireStudentDrag(chip, chip.dataset.studentId, "pool", null, -1));
+  if (!currentSeating.poolPositions) currentSeating.poolPositions = {};
+  let needsPersist = false;
+  list.forEach((s, i) => {
+    let pos = currentSeating.poolPositions[s.id];
+    if (!pos) { pos = { x: 10, y: 10 + i * 62 }; currentSeating.poolPositions[s.id] = pos; needsPersist = true; }
+    const chip = document.createElement("div");
+    chip.className = "pool-chip pool-chip-canvas";
+    chip.dataset.studentId = s.id;
+    chip.style.left = pos.x + "px";
+    chip.style.top = pos.y + "px";
+    chip.innerHTML = `<div class="photo-drop">${s.photo ? `<img src="${s.photo}" draggable="false">` : initials(s)}</div><div class="pc-name">${escapeHtml(s.firstName)}</div>`;
+    canvas.appendChild(chip);
+    wireStudentDrag(chip, s.id, "pool", null, -1);
+  });
+  if (needsPersist) persistSeatings();
 }
 
 function tableDims(type) {
@@ -2052,7 +2113,7 @@ function renderSeatingCanvas() {
     wireTableDrag(tableEl, t);
     tableEl.querySelector("[data-remove-table]").addEventListener("click", (e) => {
       e.stopPropagation();
-      openConfirm(isBare ? "Diesen Platz entfernen? Zugeteilte SuS kommen zurück in den Pool." : "Diesen Tisch entfernen? Zugeteilte SuS kommen zurück in den Pool.", () => {
+      openConfirm(isBare ? "Diesen Platz entfernen? Zugeteilte SuS werden wieder frei im Raster platziert." : "Diesen Tisch entfernen? Zugeteilte SuS werden wieder frei im Raster platziert.", () => {
         currentSeating.tables = currentSeating.tables.filter(x => x.id !== t.id);
         saveSeating(); renderSeatingCanvas(); renderSeatingPool();
       }, "Entfernen");
@@ -2064,6 +2125,7 @@ function renderSeatingCanvas() {
       wireSeatDropTarget(seatEl, t, idx);
     });
   });
+  renderSeatingPool();
 }
 function seatNameSizeClass(name) {
   const len = name.length;
@@ -2192,8 +2254,80 @@ document.getElementById("loadTemplateBtn").addEventListener("click", () => docum
 document.getElementById("layoutTemplateCancel").addEventListener("click", () => document.getElementById("layoutTemplateOverlay").classList.add("hidden"));
 document.querySelectorAll("[data-apply-template]").forEach(btn => btn.addEventListener("click", () => {
   const kind = btn.dataset.applyTemplate;
-  openConfirm("Aktuelle Tische und Raum-Objekte werden durch die Vorlage ersetzt (zugeteilte SuS kommen zurück in den Pool). Fortfahren?", () => applyLayoutTemplate(kind), null, "Vorlage laden");
+  openConfirm("Aktuelle Tische und Raum-Objekte werden durch die Vorlage ersetzt (zugeteilte SuS werden wieder frei im Raster platziert). Fortfahren?", () => applyLayoutTemplate(kind), null, "Vorlage laden");
 }));
+
+/* ---- Toolbar-Dropdowns (Vorlagen / Sitzplatzverteilung / Ansicht) ---- */
+function wireSeatingDropdown(btnId, panelId) {
+  const btn = document.getElementById(btnId), panel = document.getElementById(panelId);
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const wasHidden = panel.classList.contains("hidden");
+    document.querySelectorAll(".dropdown-panel").forEach(p => p.classList.add("hidden"));
+    if (wasHidden) panel.classList.remove("hidden");
+  });
+  panel.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (e.target.closest(".dropdown-item")) setTimeout(() => panel.classList.add("hidden"), 0);
+  });
+}
+wireSeatingDropdown("templatesMenuBtn", "templatesMenu");
+wireSeatingDropdown("distributionMenuBtn", "distributionMenu");
+wireSeatingDropdown("viewMenuBtn", "viewMenu");
+document.addEventListener("click", () => document.querySelectorAll(".dropdown-panel").forEach(p => p.classList.add("hidden")));
+
+/* ---- Sitzverbote (baut auf dem Farben-System mit Modus "Abstand" auf) ---- */
+function getBanColorForStudent(studentId) {
+  return (colorsData[currentSeatingClass] || []).find(c => c.banOwnerId === studentId) || null;
+}
+function openSeatBanModal() {
+  const students = classesData[currentSeatingClass] || [];
+  if (students.length < 2) { openConfirm("Diese Klasse braucht mindestens zwei Schüler:innen für Sitzverbote.", null, "OK"); return; }
+  const sel = document.getElementById("seatBanStudentSelect");
+  sel.innerHTML = students.map(s => `<option value="${s.id}">${escapeHtml(s.firstName)} ${escapeHtml(s.lastName || "")}</option>`).join("");
+  renderSeatBanCheckboxes();
+  document.getElementById("seatBanModal").classList.remove("hidden");
+}
+function renderSeatBanCheckboxes() {
+  const studentId = document.getElementById("seatBanStudentSelect").value;
+  const others = (classesData[currentSeatingClass] || []).filter(s => s.id !== studentId);
+  const color = getBanColorForStudent(studentId);
+  const bannedSet = new Set(color ? others.filter(s => (s.colors || []).includes(color.id)).map(s => s.id) : []);
+  document.getElementById("seatBanCheckboxList").innerHTML = others.map(s => `<label style="display:flex; align-items:center; gap:8px; padding:5px 0; font-size:0.9rem; cursor:pointer;"><input type="checkbox" data-ban-id="${s.id}" ${bannedSet.has(s.id) ? "checked" : ""}>${escapeHtml(s.firstName)} ${escapeHtml(s.lastName || "")}</label>`).join("");
+}
+function saveSeatBan(studentId, bannedIds) {
+  if (!colorsData[currentSeatingClass]) colorsData[currentSeatingClass] = [];
+  let color = getBanColorForStudent(studentId);
+  const student = getStudent(currentSeatingClass, studentId);
+  if (color) {
+    (classesData[currentSeatingClass] || []).forEach(s => { if (s.colors) s.colors = s.colors.filter(cid => cid !== color.id); });
+  }
+  if (bannedIds.length === 0) {
+    if (color) colorsData[currentSeatingClass] = colorsData[currentSeatingClass].filter(c => c.id !== color.id);
+    persistColors(); persistClasses();
+    return;
+  }
+  if (!color) {
+    color = { id: uid(), name: `🚫 ${student.firstName} ${student.lastName || ""}`.trim(), hex: "#ef4444", mode: "apart", banOwnerId: studentId };
+    colorsData[currentSeatingClass].push(color);
+  }
+  [studentId, ...bannedIds].forEach(id => {
+    const s = getStudent(currentSeatingClass, id);
+    if (!s) return;
+    if (!s.colors) s.colors = [];
+    if (!s.colors.includes(color.id)) s.colors.push(color.id);
+  });
+  persistColors(); persistClasses();
+}
+document.getElementById("seatBanBtn").addEventListener("click", openSeatBanModal);
+document.getElementById("seatBanStudentSelect").addEventListener("change", renderSeatBanCheckboxes);
+document.getElementById("seatBanCancel").addEventListener("click", () => document.getElementById("seatBanModal").classList.add("hidden"));
+document.getElementById("seatBanSave").addEventListener("click", () => {
+  const studentId = document.getElementById("seatBanStudentSelect").value;
+  const bannedIds = [...document.querySelectorAll("#seatBanCheckboxList input[data-ban-id]:checked")].map(cb => cb.dataset.banId);
+  saveSeatBan(studentId, bannedIds);
+  renderSeatBanCheckboxes();
+});
 
 /* ---- Tisch verschieben (Pointer-Drag) ---- */
 function wireTableDrag(tableEl, table) {
@@ -2273,8 +2407,9 @@ function wireStudentDrag(sourceEl, studentId, sourceType, sourceTable, sourceSea
     const onUp = (ev) => {
       if (ev.pointerId !== pointerId) return;
       const dropTarget = document.elementFromPoint(ev.clientX, ev.clientY);
+      const dropX = ev.clientX, dropY = ev.clientY;
       cleanup();
-      handleStudentDrop(studentId, sourceType, sourceTable, sourceSeatIndex, dropTarget);
+      handleStudentDrop(studentId, sourceType, sourceTable, sourceSeatIndex, dropTarget, dropX, dropY);
     };
     const onCancel = (ev) => { if (ev.pointerId === pointerId) cleanup(); };
     sourceEl.addEventListener("pointermove", onMove);
@@ -2284,9 +2419,8 @@ function wireStudentDrag(sourceEl, studentId, sourceType, sourceTable, sourceSea
 }
 function wireSeatDropTarget(seatEl) { /* handled via elementFromPoint on drop, no extra listener needed */ }
 
-function handleStudentDrop(studentId, sourceType, sourceTable, sourceSeatIndex, dropTarget) {
+function handleStudentDrop(studentId, sourceType, sourceTable, sourceSeatIndex, dropTarget, dropClientX, dropClientY) {
   const seatTarget = dropTarget ? dropTarget.closest(".seat") : null;
-  const poolTarget = dropTarget ? dropTarget.closest("#seatingPool, .seating-pool") : null;
 
   if (seatTarget) {
     const targetTableId = seatTarget.dataset.tableId;
@@ -2300,13 +2434,18 @@ function handleStudentDrop(studentId, sourceType, sourceTable, sourceSeatIndex, 
     pushSeatingUndo({ type: "seats", changes });
     targetTable.seats[targetSeatIndex] = studentId;
     if (sourceType === "seat") sourceTable.seats[sourceSeatIndex] = displacedStudentId || null;
-  } else if (poolTarget || !dropTarget) {
+  } else {
+    if (!currentSeating.poolPositions) currentSeating.poolPositions = {};
+    if (dropClientX != null && dropClientY != null) {
+      const rect = document.getElementById("seatingCanvas").getBoundingClientRect();
+      const x = Math.max(0, (dropClientX - rect.left) / seatingZoom - 25);
+      const y = Math.max(0, (dropClientY - rect.top) / seatingZoom - 25);
+      currentSeating.poolPositions[studentId] = { x, y };
+    }
     if (sourceType === "seat") {
       pushSeatingUndo({ type: "seats", changes: [{ arr: sourceTable.seats, index: sourceSeatIndex, prevValue: sourceTable.seats[sourceSeatIndex] }] });
       sourceTable.seats[sourceSeatIndex] = null;
     }
-  } else {
-    return;
   }
   saveSeating();
   renderSeatingCanvas();
@@ -2448,33 +2587,63 @@ document.getElementById("seatHistoryList").addEventListener("click", (e) => {
   }, "Wiederherstellen");
 });
 
-/* ---- Rückgängig (einzelne Bewegungen: Tisch verschoben, SuS vertauscht) ---- */
+/* ---- Rückgängig / Wiederherstellen (einzelne Bewegungen: Tisch verschoben, SuS vertauscht) ---- */
 let seatingUndoStack = [];
+let seatingRedoStack = [];
 const SEATING_UNDO_MAX = 30;
 function pushSeatingUndo(action) {
   seatingUndoStack.push(action);
   if (seatingUndoStack.length > SEATING_UNDO_MAX) seatingUndoStack.shift();
+  seatingRedoStack = [];
   updateCanvasUndoBtn();
+  updateCanvasRedoBtn();
 }
 function updateCanvasUndoBtn() {
   document.getElementById("canvasUndoBtn").classList.toggle("hidden", seatingUndoStack.length === 0);
 }
+function updateCanvasRedoBtn() {
+  document.getElementById("canvasRedoBtn").classList.toggle("hidden", seatingRedoStack.length === 0);
+}
+function invertCanvasAction(action) {
+  if (action.type === "move") {
+    return { type: "move", ref: action.ref, fromX: action.ref.x, fromY: action.ref.y };
+  }
+  return { type: "seats", changes: action.changes.map(c => ({ arr: c.arr, index: c.index, prevValue: c.arr[c.index] })) };
+}
+function applyCanvasAction(action) {
+  if (action.type === "move") {
+    action.ref.x = action.fromX;
+    action.ref.y = action.fromY;
+  } else if (action.type === "seats") {
+    action.changes.forEach(c => { c.arr[c.index] = c.prevValue; });
+  }
+}
 function undoLastCanvasAction() {
   const action = seatingUndoStack.pop();
   if (action) {
-    if (action.type === "move") {
-      action.ref.x = action.fromX;
-      action.ref.y = action.fromY;
-    } else if (action.type === "seats") {
-      action.changes.forEach(c => { c.arr[c.index] = c.prevValue; });
-    }
+    seatingRedoStack.push(invertCanvasAction(action));
+    applyCanvasAction(action);
     saveSeating();
     renderSeatingCanvas();
     renderSeatingPool();
   }
   updateCanvasUndoBtn();
+  updateCanvasRedoBtn();
+}
+function redoLastCanvasAction() {
+  const action = seatingRedoStack.pop();
+  if (action) {
+    seatingUndoStack.push(invertCanvasAction(action));
+    applyCanvasAction(action);
+    saveSeating();
+    renderSeatingCanvas();
+    renderSeatingPool();
+  }
+  updateCanvasUndoBtn();
+  updateCanvasRedoBtn();
 }
 document.getElementById("canvasUndoBtn").addEventListener("click", undoLastCanvasAction);
+document.getElementById("canvasRedoBtn").addEventListener("click", redoLastCanvasAction);
 
 /* =========================================================================
    SCHÜLERVERHALTEN
@@ -3753,6 +3922,7 @@ document.getElementById("randomResetBtn").addEventListener("click", () => {
    ========================================================================= */
 let currentGroupsClass = null;
 let currentGroupSize = 2;
+let currentGroupMode = "size";
 function openGroupsSetupForClass(className) {
   currentGroupsClass = className;
   document.getElementById("groupsSetup_title").textContent = `👨‍👩‍👧‍👦 ${className}`;
@@ -3763,6 +3933,12 @@ function openGroupsSetupForClass(className) {
 document.querySelectorAll("[data-groupsize]").forEach(b => b.addEventListener("click", () => {
   currentGroupSize = Number(b.dataset.groupsize);
   document.querySelectorAll("[data-groupsize]").forEach(x => x.classList.toggle("active", x === b));
+}));
+document.querySelectorAll("[data-groupmode]").forEach(b => b.addEventListener("click", () => {
+  currentGroupMode = b.dataset.groupmode;
+  document.querySelectorAll("[data-groupmode]").forEach(x => x.classList.toggle("active", x === b));
+  document.getElementById("groupSizeModeWrap").classList.toggle("hidden", currentGroupMode !== "size");
+  document.getElementById("groupCountModeWrap").classList.toggle("hidden", currentGroupMode !== "count");
 }));
 function groupsPairCost(student, other, proportional, useColors, colorDefs) {
   let cost = 0;
@@ -3811,7 +3987,13 @@ document.getElementById("createGroupsBtn").addEventListener("click", () => {
   if (students.length === 0) { alert("Diese Klasse hat noch keine (anwesenden) Schüler:innen."); return; }
   const proportional = document.getElementById("groupsProportionalCheck").checked;
   const useColors = document.getElementById("groupsColorsCheck").checked;
-  const numGroups = Math.max(1, Math.round(students.length / currentGroupSize));
+  let numGroups;
+  if (currentGroupMode === "count") {
+    const requested = Math.max(2, Math.min(15, Number(document.getElementById("groupCountInput").value) || 2));
+    numGroups = Math.max(1, Math.min(requested, students.length));
+  } else {
+    numGroups = Math.max(1, Math.round(students.length / currentGroupSize));
+  }
   let groups;
   if (!proportional && !useColors) {
     groups = Array.from({ length: numGroups }, () => []);
