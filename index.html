@@ -24,6 +24,7 @@
   .btn { border: none; border-radius: 10px; padding: 12px 18px; font-size: 1rem; font-weight: 700; cursor: pointer; color: white; background: var(--accent); }
   .btn-big { width: 100%; padding: 20px; font-size: 1.15rem; border-radius: 16px; margin-bottom: 12px; }
   .btn-secondary { background: #64748b; }
+  .btn-secondary.btn-active { background: var(--accent); }
   .btn-danger { background: var(--danger); }
   .btn-outline { background: white; color: var(--accent); border: 2px solid var(--accent); }
   .btn-outline.danger { color: var(--danger); border-color: var(--danger); }
@@ -49,6 +50,7 @@
   .tile-groups { background: linear-gradient(135deg, #0d9488, #134e4a); }
   .tile-movement { background: linear-gradient(135deg, #ea580c, #7c2d12); }
   .tile-checklist { background: linear-gradient(135deg, #059669, #064e3b); }
+  .tile-writeroom { background: linear-gradient(135deg, #dc2626, #7f1d1d); }
 
   /* LISTS / CARDS */
   .list-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
@@ -96,6 +98,10 @@
   .icon-toolbtn:active { transform: scale(0.95); }
   .icon-toolbtn.hidden { display: none; }
   #groupSizeModeWrap.hidden, #groupCountModeWrap.hidden { display: none; }
+  #schreibraumJoinPinWrap.hidden { display: none; }
+  #schreibraumSetupNote.hidden, #schreibraumJoinError.hidden, #schreibraumWriteQuestion.hidden { display: none; }
+  #schreibraumDrawWrap.hidden { display: none; }
+  #schreibraumWriteTextarea.hidden { display: none; }
   .dropdown-wrap { position: relative; }
   .dropdown-panel { position: absolute; top: 100%; left: 0; margin-top: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.18); padding: 8px; z-index: 50; display: flex; flex-direction: column; gap: 4px; min-width: 240px; }
   .dropdown-panel.hidden { display: none; }
@@ -644,6 +650,79 @@
     <div id="movementExerciseList"></div>
   </div>
 
+  <!-- SCHREIB-RAUM: Wahl Lehrperson/Schüler -->
+  <div id="schreibraumPickView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
+    <h1>🖊️ Schreib-Raum</h1>
+    <h2 class="sub">SuS beantworten eine Frage live auf ihrem eigenen Gerät. Jedes Gerät braucht Internet.</h2>
+    <div class="mode-choice-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:20px;">
+      <button class="btn btn-big" id="schreibraumHostBtn">👩‍🏫 Raum eröffnen</button>
+      <button class="btn btn-big btn-outline" id="schreibraumJoinChoiceBtn">🙋 Raum beitreten</button>
+    </div>
+    <p id="schreibraumSetupNote" class="hidden" style="color:var(--muted); font-size:0.9rem; margin-top:16px;"></p>
+  </div>
+
+  <!-- SCHREIB-RAUM: Host-Ansicht -->
+  <div id="schreibraumHostView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="schreibraumHostCloseBtn">← Raum schliessen</button></div>
+    <h1>👩‍🏫 Schreib-Raum eröffnet</h1>
+    <div class="setup-card" style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+      <div>
+        <label class="field-label">PIN</label>
+        <div id="schreibraumPinDisplay" style="font-size:2.4rem; font-weight:800; letter-spacing:0.15em;">----</div>
+        <p style="color:var(--muted); font-size:0.85rem; max-width:220px;">SuS scannen den QR-Code oder geben die PIN unter "Raum beitreten" ein.</p>
+      </div>
+      <canvas id="schreibraumQrCanvas" style="width:140px; height:140px; image-rendering:pixelated;"></canvas>
+    </div>
+    <div class="setup-card">
+      <label class="field-label">Frage (optional, erscheint bei allen SuS)</label>
+      <input type="text" id="schreibraumQuestionInput" placeholder="z.B. Was ist ein Prisma?">
+    </div>
+    <p style="color:var(--muted); font-size:0.85rem;"><span id="schreibraumHostCount">0</span> Person(en) beigetreten</p>
+    <button class="btn btn-big" id="schreibraumEnterRoomBtn">🖥️ Raum betreten (alle Bildschirme sehen)</button>
+  </div>
+
+  <!-- SCHREIB-RAUM: Alle Bildschirme (Host) -->
+  <div id="schreibraumRoomView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="schreibraumRoomBackBtn">← Lobby</button></div>
+    <h1>🖥️ Schreib-Raum <span id="schreibraumRoomPin" style="color:var(--muted); font-size:1rem;"></span></h1>
+    <p style="color:var(--muted); font-size:0.85rem;"><span id="schreibraumRoomCount">0</span> Person(en) beigetreten</p>
+    <div id="schreibraumHostGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px;"></div>
+  </div>
+
+  <!-- SCHREIB-RAUM: Beitreten (Schüler) -->
+  <div id="schreibraumJoinView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" data-back-schreibraumpick>← Zurück</button></div>
+    <h1>🙋 Schreib-Raum beitreten</h1>
+    <div class="setup-card">
+      <div id="schreibraumJoinPinWrap">
+        <label class="field-label">PIN</label>
+        <input type="text" id="schreibraumJoinPinInput" placeholder="z.B. 4821" maxlength="6" inputmode="numeric" style="font-size:1.3rem; text-align:center; letter-spacing:0.1em;">
+        <div style="height:12px;"></div>
+      </div>
+      <label class="field-label">Dein Name</label>
+      <input type="text" id="schreibraumJoinNameInput" placeholder="Name" maxlength="24">
+    </div>
+    <p id="schreibraumJoinError" class="hidden" style="color:var(--danger); font-size:0.9rem;"></p>
+    <button class="btn btn-big" id="schreibraumJoinBtn">Beitreten</button>
+  </div>
+
+  <!-- SCHREIB-RAUM: Schreiben (Schüler) -->
+  <div id="schreibraumWriteView" class="view hidden">
+    <div class="row back-row"><button class="btn btn-secondary" id="schreibraumWriteLeaveBtn">← Verlassen</button></div>
+    <h1 style="text-align:center; font-size:2rem;" id="schreibraumWriteName"></h1>
+    <p id="schreibraumWriteQuestion" class="sub hidden" style="font-size:1.1rem; font-weight:700; color:var(--text);"></p>
+    <div class="choice-row" style="display:flex; gap:8px; margin-bottom:10px;">
+      <button class="btn btn-secondary" id="schreibraumModeTextBtn" style="flex:1;">⌨️ Tippen</button>
+      <button class="btn btn-secondary" id="schreibraumModeDrawBtn" style="flex:1;">✏️ Zeichnen</button>
+    </div>
+    <textarea id="schreibraumWriteTextarea" placeholder="Hier schreiben …" style="width:100%; box-sizing:border-box; min-height:50vh; font-size:1.2rem; padding:14px; border-radius:12px; border:1px solid var(--border); resize:vertical;"></textarea>
+    <div id="schreibraumDrawWrap" class="hidden">
+      <canvas id="schreibraumDrawCanvas" style="width:100%; height:50vh; touch-action:none; border-radius:12px; border:1px solid var(--border); background:#ffffff; display:block;"></canvas>
+      <button class="btn btn-secondary" id="schreibraumDrawClearBtn" style="margin-top:10px;">🗑️ Löschen</button>
+    </div>
+  </div>
+
 </div>
 
 <!-- Add/Edit Class Modal -->
@@ -1007,6 +1086,7 @@ document.querySelectorAll("[data-back-randompick]").forEach(b => b.addEventListe
 document.querySelectorAll("[data-back-groupspick]").forEach(b => b.addEventListener("click", () => showView("groupsPick")));
 document.querySelectorAll("[data-back-movementcats]").forEach(b => b.addEventListener("click", () => showView("movementCats")));
 document.querySelectorAll("[data-back-checklistpick]").forEach(b => b.addEventListener("click", () => showView("checklistPick")));
+document.querySelectorAll("[data-back-schreibraumpick]").forEach(b => b.addEventListener("click", () => showView("schreibraumPick")));
 
 /* ---- Home: Kacheln, Reihenfolge per Drag&Drop ---- */
 const HOME_TILES = [
@@ -1017,7 +1097,8 @@ const HOME_TILES = [
   { id: "randomPick", cls: "tile-random", icon: "🎯", title: "Zufallsschüler", sub: "Zufällig eine Person auswählen" },
   { id: "groupsPick", cls: "tile-groups", icon: "👨‍👩‍👧‍👦", title: "Gruppenerstellung", sub: "Zufallsgruppen bilden" },
   { id: "movementCats", cls: "tile-movement", icon: "🤸", title: "Bewegungspause", sub: "Kurze Auflockerungsübungen" },
-  { id: "checklistPick", cls: "tile-checklist", icon: "✅", title: "Klassenliste", sub: "Aufgaben pro Schüler:in ankreuzen" }
+  { id: "checklistPick", cls: "tile-checklist", icon: "✅", title: "Klassenliste", sub: "Aufgaben pro Schüler:in ankreuzen" },
+  { id: "schreibraumPick", cls: "tile-writeroom", icon: "🖊️", title: "Schreib-Raum", sub: "SuS antworten live per QR-Code" }
 ];
 const HOME_ORDER_KEY = "kz_home_order";
 const HOME_HIDDEN_KEY = "kz_home_hidden";
@@ -1047,6 +1128,7 @@ function navigateHome(target) {
   else if (target === "groupsPick") { renderClassPickerList("groupsClassList", (name) => openGroupsSetupForClass(name)); showView("groupsPick"); }
   else if (target === "movementCats") { renderMovementCats(); showView("movementCats"); }
   else if (target === "checklistPick") { renderClassPickerList("checklistClassList", (name) => openChecklistForClass(name)); showView("checklistPick"); }
+  else if (target === "schreibraumPick") { showView("schreibraumPick"); }
 }
 function renderHomeTiles() {
   const order = getHomeOrder();
@@ -4099,6 +4181,260 @@ function openMovementDetail(ex) {
   document.getElementById("movementDetailModal").classList.remove("hidden");
 }
 document.getElementById("movementDetailClose").addEventListener("click", () => document.getElementById("movementDetailModal").classList.add("hidden"));
+
+/* =========================================================================
+   SCHREIB-RAUM (Live-Antworten per QR-Code, gemeinsames Firebase-Projekt)
+   ========================================================================= */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyC6CidIBQ4YZmg-v7EVgr8penemrvusKRE",
+  authDomain: "mathe-duell-klassenmodus.firebaseapp.com",
+  projectId: "mathe-duell-klassenmodus",
+  storageBucket: "mathe-duell-klassenmodus.firebasestorage.app",
+  messagingSenderId: "913891950917",
+  appId: "1:913891950917:web:c98d999f19c0946e4cfe2c"
+};
+function isFirebaseConfigured() { return !!FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith("PASTE_HIER"); }
+let firebaseDb = null, firebaseReady = false;
+function loadScriptOnce(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement("script");
+    s.src = src; s.onload = () => resolve(); s.onerror = () => reject(new Error("load failed: " + src));
+    document.head.appendChild(s);
+  });
+}
+async function ensureFirebase() {
+  if (firebaseReady) return true;
+  if (!isFirebaseConfigured()) return false;
+  try {
+    await loadScriptOnce("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
+    await loadScriptOnce("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js");
+    if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    firebaseDb = firebase.firestore();
+    firebaseDb.settings({ experimentalAutoDetectLongPolling: true });
+    firebaseReady = true;
+    return true;
+  } catch (e) {
+    console.error("Schreib-Raum: Firebase konnte nicht geladen werden.", e);
+    return false;
+  }
+}
+let schreibraumPin = null, schreibraumIsHost = false;
+let schreibraumStudentId = null, schreibraumStudentName = null;
+let schreibraumStudentsUnsub = null, schreibraumRoomUnsub = null;
+let schreibraumPendingJoinPin = null;
+function schreibraumGeneratePin() { return String(Math.floor(Math.random() * 9000) + 1000); }
+function schreibraumStopListening() {
+  if (schreibraumStudentsUnsub) { schreibraumStudentsUnsub(); schreibraumStudentsUnsub = null; }
+  if (schreibraumRoomUnsub) { schreibraumRoomUnsub(); schreibraumRoomUnsub = null; }
+}
+function schreibraumShowNote(text) {
+  const note = document.getElementById("schreibraumSetupNote");
+  note.textContent = text;
+  note.classList.remove("hidden");
+}
+async function schreibraumCheckReady() {
+  if (!isFirebaseConfigured()) { schreibraumShowNote("Der Schreib-Raum ist auf dieser Seite noch nicht eingerichtet (fehlende Firebase-Konfiguration)."); return false; }
+  const ok = await ensureFirebase();
+  if (!ok) schreibraumShowNote("Verbindung zum Schreib-Raum-Server konnte nicht hergestellt werden. Prüfe die Internetverbindung.");
+  return ok;
+}
+document.getElementById("schreibraumHostBtn").addEventListener("click", async () => {
+  const ok = await schreibraumCheckReady();
+  if (!ok) return;
+  schreibraumIsHost = true;
+  let pin = schreibraumGeneratePin(), exists = true, attempts = 0;
+  try {
+    do {
+      pin = schreibraumGeneratePin();
+      const doc = await firebaseDb.collection("writerooms").doc(pin).get();
+      exists = doc.exists;
+      attempts++;
+    } while (exists && attempts < 5);
+    schreibraumPin = pin;
+    await firebaseDb.collection("writerooms").doc(pin).set({ createdAt: Date.now(), phase: "open", question: "" });
+  } catch (e) {
+    console.error("Schreib-Raum: Raum konnte nicht erstellt werden.", e);
+    openConfirm("Raum konnte nicht erstellt werden. Prüfe die Internetverbindung.", null, "OK");
+    return;
+  }
+  document.getElementById("schreibraumPinDisplay").textContent = pin;
+  document.getElementById("schreibraumRoomPin").textContent = "· PIN " + pin;
+  document.getElementById("schreibraumQuestionInput").value = "";
+  document.getElementById("schreibraumHostGrid").innerHTML = "";
+  document.getElementById("schreibraumHostCount").textContent = "0";
+  document.getElementById("schreibraumRoomCount").textContent = "0";
+  showView("schreibraumHost");
+  const joinUrl = `${location.origin}${location.pathname}?schreibraum=${pin}`;
+  qrDrawToCanvas(document.getElementById("schreibraumQrCanvas"), joinUrl, 4);
+  schreibraumStopListening();
+  schreibraumStudentsUnsub = firebaseDb.collection("writerooms").doc(pin).collection("students").onSnapshot(snap => {
+    const students = [];
+    snap.forEach(d => students.push({ id: d.id, ...d.data() }));
+    students.sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+    document.getElementById("schreibraumHostCount").textContent = String(students.length);
+    document.getElementById("schreibraumRoomCount").textContent = String(students.length);
+    document.getElementById("schreibraumHostGrid").innerHTML = students.map(s => `
+      <div class="setup-card" style="padding:12px;">
+        <div style="font-weight:800; font-size:1.1rem; margin-bottom:6px;">${escapeHtml(s.name)}</div>
+        ${s.mode === "draw" && s.drawingData
+          ? `<img src="${s.drawingData}" style="width:100%; border-radius:8px; border:1px solid var(--border); background:#fff;">`
+          : `<div style="white-space:pre-wrap; min-height:60px; color:var(--text);">${escapeHtml(s.text || "")}</div>`}
+      </div>`).join("") || `<p style="color:var(--muted);">Noch niemand beigetreten.</p>`;
+  }, err => console.error("Schreib-Raum: Antworten konnten nicht geladen werden.", err));
+});
+document.getElementById("schreibraumEnterRoomBtn").addEventListener("click", () => showView("schreibraumRoom"));
+document.getElementById("schreibraumRoomBackBtn").addEventListener("click", () => showView("schreibraumHost"));
+document.getElementById("schreibraumQuestionInput").addEventListener("input", (e) => {
+  if (!schreibraumPin) return;
+  firebaseDb.collection("writerooms").doc(schreibraumPin).update({ question: e.target.value }).catch(err => console.error("Schreib-Raum: Frage konnte nicht gespeichert werden.", err));
+});
+document.getElementById("schreibraumHostCloseBtn").addEventListener("click", () => {
+  schreibraumStopListening();
+  showView("home");
+});
+document.getElementById("schreibraumJoinChoiceBtn").addEventListener("click", () => {
+  document.getElementById("schreibraumJoinError").classList.add("hidden");
+  document.getElementById("schreibraumJoinPinInput").value = "";
+  document.getElementById("schreibraumJoinNameInput").value = "";
+  document.getElementById("schreibraumJoinPinWrap").classList.remove("hidden");
+  showView("schreibraumJoin");
+});
+document.getElementById("schreibraumJoinBtn").addEventListener("click", async () => {
+  const pin = document.getElementById("schreibraumJoinPinInput").value.trim();
+  const name = document.getElementById("schreibraumJoinNameInput").value.trim();
+  const errEl = document.getElementById("schreibraumJoinError");
+  errEl.classList.add("hidden");
+  if (!pin || !name) { errEl.textContent = "Bitte PIN und Namen eingeben."; errEl.classList.remove("hidden"); return; }
+  const ok = await ensureFirebase();
+  if (!ok) { errEl.textContent = "Keine Verbindung zum Schreib-Raum-Server möglich."; errEl.classList.remove("hidden"); return; }
+  try {
+    const roomRef = firebaseDb.collection("writerooms").doc(pin);
+    const roomDoc = await roomRef.get();
+    if (!roomDoc.exists) { errEl.textContent = "Diese PIN existiert nicht."; errEl.classList.remove("hidden"); return; }
+    schreibraumIsHost = false;
+    schreibraumPin = pin;
+    schreibraumStudentName = name;
+    const studentRef = await roomRef.collection("students").add({ name, text: "", mode: "text", joinedAt: Date.now(), updatedAt: Date.now() });
+    schreibraumStudentId = studentRef.id;
+    document.getElementById("schreibraumWriteName").textContent = name;
+    document.getElementById("schreibraumWriteTextarea").value = "";
+    document.getElementById("schreibraumWriteQuestion").classList.add("hidden");
+    schreibraumSetMode("text");
+    showView("schreibraumWrite");
+    schreibraumStopListening();
+    schreibraumRoomUnsub = roomRef.onSnapshot(snap => {
+      const room = snap.data();
+      if (!room) return;
+      const qEl = document.getElementById("schreibraumWriteQuestion");
+      if (room.question) { qEl.textContent = "❓ " + room.question; qEl.classList.remove("hidden"); }
+      else { qEl.classList.add("hidden"); }
+    }, err => console.error("Schreib-Raum: Raum-Update fehlgeschlagen.", err));
+  } catch (e) {
+    console.error("Schreib-Raum: Beitritt fehlgeschlagen.", e);
+    errEl.textContent = "Beitritt fehlgeschlagen. Prüfe die Internetverbindung.";
+    errEl.classList.remove("hidden");
+  }
+});
+let schreibraumSaveTimeout = null;
+document.getElementById("schreibraumWriteTextarea").addEventListener("input", (e) => {
+  if (!schreibraumPin || !schreibraumStudentId) return;
+  clearTimeout(schreibraumSaveTimeout);
+  const text = e.target.value;
+  schreibraumSaveTimeout = setTimeout(() => {
+    firebaseDb.collection("writerooms").doc(schreibraumPin).collection("students").doc(schreibraumStudentId).update({ text, mode: "text", updatedAt: Date.now() }).catch(err => console.error("Schreib-Raum: Antwort konnte nicht gespeichert werden.", err));
+  }, 400);
+});
+
+/* ---- Schreib-Raum: Zeichnen ---- */
+let schreibraumMode = "text";
+function schreibraumSetMode(mode) {
+  schreibraumMode = mode;
+  document.getElementById("schreibraumWriteTextarea").classList.toggle("hidden", mode !== "text");
+  document.getElementById("schreibraumDrawWrap").classList.toggle("hidden", mode !== "draw");
+  document.getElementById("schreibraumModeTextBtn").classList.toggle("btn-active", mode === "text");
+  document.getElementById("schreibraumModeDrawBtn").classList.toggle("btn-active", mode === "draw");
+  if (mode === "draw") schreibraumSetupCanvas();
+}
+document.getElementById("schreibraumModeTextBtn").addEventListener("click", () => schreibraumSetMode("text"));
+document.getElementById("schreibraumModeDrawBtn").addEventListener("click", () => schreibraumSetMode("draw"));
+let schreibraumCanvasReady = false;
+function schreibraumSetupCanvas() {
+  const canvas = document.getElementById("schreibraumDrawCanvas");
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(rect.width * dpr);
+  canvas.height = Math.round(rect.height * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, rect.width, rect.height);
+  ctx.strokeStyle = "#0f172a";
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  schreibraumCanvasReady = true;
+}
+(function schreibraumWireCanvas() {
+  const canvas = document.getElementById("schreibraumDrawCanvas");
+  let drawing = false, lastX = 0, lastY = 0;
+  function pos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+  canvas.addEventListener("pointerdown", (e) => {
+    if (!schreibraumCanvasReady) schreibraumSetupCanvas();
+    drawing = true;
+    const p = pos(e);
+    lastX = p.x; lastY = p.y;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!drawing) return;
+    const p = pos(e);
+    const ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    lastX = p.x; lastY = p.y;
+  });
+  function endStroke() {
+    if (!drawing) return;
+    drawing = false;
+    schreibraumSyncDrawing();
+  }
+  canvas.addEventListener("pointerup", endStroke);
+  canvas.addEventListener("pointercancel", endStroke);
+  canvas.addEventListener("pointerleave", () => { if (drawing) endStroke(); });
+})();
+function schreibraumSyncDrawing() {
+  if (!schreibraumPin || !schreibraumStudentId) return;
+  const canvas = document.getElementById("schreibraumDrawCanvas");
+  const drawingData = canvas.toDataURL("image/png");
+  firebaseDb.collection("writerooms").doc(schreibraumPin).collection("students").doc(schreibraumStudentId).update({ drawingData, mode: "draw", updatedAt: Date.now() }).catch(err => console.error("Schreib-Raum: Zeichnung konnte nicht gespeichert werden.", err));
+}
+document.getElementById("schreibraumDrawClearBtn").addEventListener("click", () => {
+  schreibraumSetupCanvas();
+  schreibraumSyncDrawing();
+});
+document.getElementById("schreibraumWriteLeaveBtn").addEventListener("click", () => {
+  openConfirm("Schreib-Raum wirklich verlassen?", () => {
+    schreibraumStopListening();
+    showView("home");
+  }, "Verlassen");
+});
+(function schreibraumCheckUrlJoin() {
+  const params = new URLSearchParams(location.search);
+  const pin = params.get("schreibraum");
+  if (pin) {
+    schreibraumPendingJoinPin = pin;
+    document.getElementById("schreibraumJoinPinInput").value = pin;
+    document.getElementById("schreibraumJoinPinWrap").classList.add("hidden");
+    showView("schreibraumJoin");
+    document.getElementById("schreibraumJoinNameInput").focus();
+  }
+})();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
