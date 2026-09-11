@@ -174,6 +174,11 @@
   .presentation-rotate-btn { position: fixed; top: 14px; right: 74px; height: 48px; padding: 0 18px; border-radius: 24px; background: rgba(15,23,42,0.75); color: white; border: none; font-size: 0.95rem; font-weight: 800; z-index: 200; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
   .presentation-rotate-btn.active { background: #7c3aed; }
   .presentation-rotate-btn.hidden { display: none; }
+  #importMappingArea.hidden { display: none; }
+  #participantsArea.hidden { display: none; }
+  #behaviorSummaryBox.hidden { display: none; }
+  #toggleParticipantsBtn.hidden { display: none; }
+  .qr-error.hidden { display: none; }
   #seatingEditorView.presentation-mode { padding: 0; }
   #seatingEditorView.presentation-mode .seating-layout { display: block; }
   #seatingEditorView.presentation-mode .seating-canvas-wrap { position: fixed; inset: 0; width: 100vw; height: 100vh; max-height: none; border: none; border-radius: 0; z-index: 100; touch-action: none; }
@@ -1314,7 +1319,9 @@ function renderClassesList() {
     const name = b.dataset.delete;
     openConfirm(`Klasse "${name}" inkl. aller Schüler:innen, Sitzordnungen und Kommentare wirklich löschen?`, () => {
       delete classesData[name]; delete seatingsData[name]; delete behaviorData[name]; delete colorsData[name];
+      delete checklistData[name]; delete absenceData[name];
       persistClasses(); persistSeatings(); persistBehavior(); persistColors();
+      persistChecklist(); persistAbsence();
       renderClassesList();
     }, "Löschen");
   }));
@@ -1340,7 +1347,12 @@ document.getElementById("classModalSave").addEventListener("click", () => {
       seatingsData[name] = seatingsData[classModalEditingName] || []; delete seatingsData[classModalEditingName];
       behaviorData[name] = behaviorData[classModalEditingName] || []; delete behaviorData[classModalEditingName];
       colorsData[name] = colorsData[classModalEditingName] || []; delete colorsData[classModalEditingName];
+      checklistData[name] = checklistData[classModalEditingName]; delete checklistData[classModalEditingName];
+      absenceData[name] = absenceData[classModalEditingName]; delete absenceData[classModalEditingName];
+      if (!checklistData[name]) delete checklistData[name];
+      if (!absenceData[name]) delete absenceData[name];
       persistSeatings(); persistBehavior(); persistColors();
+      persistChecklist(); persistAbsence();
     }
   } else {
     if (classesData[name]) { alert("Diese Klasse existiert bereits."); return; }
@@ -4250,7 +4262,7 @@ let schreibraumPin = null, schreibraumIsHost = false;
 let schreibraumStudentId = null, schreibraumStudentName = null;
 let schreibraumStudentsUnsub = null, schreibraumRoomUnsub = null;
 let schreibraumPendingJoinPin = null;
-const SCHREIBRAUM_AWAY_MS = 8000;
+const SCHREIBRAUM_AWAY_MS = 15000;
 let schreibraumHeartbeatIv = null;
 let schreibraumLastStudents = [];
 let schreibraumHostWatchIv = null;
@@ -4258,7 +4270,7 @@ function schreibraumGeneratePin() { return String(Math.floor(Math.random() * 900
 function schreibraumWriteActive() {
   if (!schreibraumPin || !schreibraumStudentId) return;
   firebaseDb.collection("writerooms").doc(schreibraumPin).collection("students").doc(schreibraumStudentId)
-    .update({ active: !document.hidden, lastSeen: Date.now() })
+    .update({ active: !document.hidden, lastSeen: firebase.firestore.FieldValue.serverTimestamp() })
     .catch(err => console.error("Schreib-Raum: Status konnte nicht aktualisiert werden.", err));
 }
 function schreibraumStartHeartbeat() {
@@ -4274,7 +4286,8 @@ let schreibraumCurrentQuestion = "";
 function schreibraumRenderHostGrid() {
   const students = schreibraumLastStudents;
   const html = students.map(s => {
-    const away = s.active === false || (Date.now() - (s.lastSeen || 0) > SCHREIBRAUM_AWAY_MS);
+    const lastSeenMs = s.lastSeen && typeof s.lastSeen.toMillis === "function" ? s.lastSeen.toMillis() : 0;
+    const away = s.active === false || (lastSeenMs > 0 && Date.now() - lastSeenMs > SCHREIBRAUM_AWAY_MS);
     return `
       <div class="setup-card${away ? " schreibraum-card-away" : ""}" style="padding:12px;">
         <div style="font-weight:800; font-size:1.1rem; margin-bottom:6px;">${escapeHtml(s.name)}${away ? '<span class="schreibraum-away-badge">Abwesend</span>' : ""}</div>
@@ -4368,11 +4381,16 @@ document.getElementById("schreibraumQrOpenBtn").addEventListener("click", () => 
 document.getElementById("schreibraumQrCloseBtn").addEventListener("click", () => {
   document.getElementById("schreibraumQrFullscreen").classList.add("hidden");
 });
+let schreibraumQuestionSaveTimeout = null;
 document.getElementById("schreibraumQuestionInput").addEventListener("input", (e) => {
   if (!schreibraumPin) return;
   schreibraumCurrentQuestion = e.target.value;
   schreibraumRenderMonitorQuestion();
-  firebaseDb.collection("writerooms").doc(schreibraumPin).update({ question: e.target.value }).catch(err => console.error("Schreib-Raum: Frage konnte nicht gespeichert werden.", err));
+  clearTimeout(schreibraumQuestionSaveTimeout);
+  const question = e.target.value;
+  schreibraumQuestionSaveTimeout = setTimeout(() => {
+    firebaseDb.collection("writerooms").doc(schreibraumPin).update({ question }).catch(err => console.error("Schreib-Raum: Frage konnte nicht gespeichert werden.", err));
+  }, 400);
 });
 document.getElementById("schreibraumHostCloseBtn").addEventListener("click", () => {
   schreibraumStopListening();
@@ -4400,7 +4418,7 @@ document.getElementById("schreibraumJoinBtn").addEventListener("click", async ()
     schreibraumIsHost = false;
     schreibraumPin = pin;
     schreibraumStudentName = name;
-    const studentRef = await roomRef.collection("students").add({ name, text: "", mode: "text", joinedAt: Date.now(), updatedAt: Date.now(), active: true, lastSeen: Date.now() });
+    const studentRef = await roomRef.collection("students").add({ name, text: "", mode: "text", joinedAt: Date.now(), updatedAt: Date.now(), active: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
     schreibraumStudentId = studentRef.id;
     document.getElementById("schreibraumWriteName").textContent = name;
     document.getElementById("schreibraumWriteTextarea").value = "";
