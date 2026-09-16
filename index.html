@@ -2592,6 +2592,31 @@ function seatWorldPos(table, seatIndex) {
   const rx = dx * Math.cos(rad) - dy * Math.sin(rad), ry = dx * Math.sin(rad) + dy * Math.cos(rad);
   return { x: table.x + dims.w / 2 + rx, y: table.y + dims.h / 2 + ry };
 }
+function pairKey(id1, id2) { return id1 < id2 ? `${id1}|${id2}` : `${id2}|${id1}`; }
+// Ermittelt alle Nachbar-Paare (gleicher Tisch ODER Tisch in der Nähe) für eine gegebene
+// Sitzverteilung - genutzt sowohl für die aktuelle (bald überschriebene) Verteilung als
+// auch für den letzten Verlaufseintrag, damit "zufällig verteilen" diese Paare meidet.
+function neighborPairsForSeats(tablesGeometry, seatsById, neighborThreshold) {
+  const slots = [];
+  tablesGeometry.forEach(t => {
+    const seats = seatsById[t.id];
+    if (!seats) return;
+    seats.forEach((sid, idx) => {
+      if (!sid) return;
+      const pos = seatWorldPos(t, idx);
+      slots.push({ tableId: t.id, id: sid, x: pos.x, y: pos.y });
+    });
+  });
+  const pairs = new Set();
+  for (let i = 0; i < slots.length; i++) {
+    for (let j = i + 1; j < slots.length; j++) {
+      const sameTable = slots[i].tableId === slots[j].tableId;
+      const dist = Math.hypot(slots[i].x - slots[j].x, slots[i].y - slots[j].y);
+      if (sameTable || dist < neighborThreshold) pairs.add(pairKey(slots[i].id, slots[j].id));
+    }
+  }
+  return pairs;
+}
 function randomlyAssignSeats(alternateGender, onlyOccupied) {
   const seatSlots = [];
   currentSeating.tables.forEach(t => t.seats.forEach((sid, idx) => {
@@ -2611,6 +2636,24 @@ function randomlyAssignSeats(alternateGender, onlyOccupied) {
     });
     return n;
   });
+  // "Nebeneinander" heisst hier bewusst nicht nur "gleicher Tisch", sondern auch der
+  // Tisch direkt daneben (siehe neighborThreshold oben) - dieselbe Definition wird
+  // hier für die Wiederholungs-Vermeidung verwendet wie für Geschlecht/Farben-Regeln.
+  // Paare, die in der aktuellen (bald ersetzten) Verteilung ODER in der letzten
+  // gespeicherten Verteilung bereits nebeneinander sassen, werden stark bestraft,
+  // damit eine Neuverteilung tatsächlich neue Nachbarschaften bringt.
+  const recentPairs = new Set();
+  const currentSeatsById = {};
+  currentSeating.tables.forEach(t => { currentSeatsById[t.id] = t.seats; });
+  neighborPairsForSeats(currentSeating.tables, currentSeatsById, neighborThreshold).forEach(p => recentPairs.add(p));
+  // Nicht nur die letzte, sondern die letzten paar gespeicherten Verteilungen einbeziehen -
+  // so bleiben Paare auch über mehrere Neuverteilungen hinweg auseinander, nicht nur einmalig.
+  const RECENT_ROUNDS_TO_AVOID = 4;
+  (currentSeating.assignmentHistory || []).slice(0, RECENT_ROUNDS_TO_AVOID).forEach(entry => {
+    const histSeatsById = {};
+    entry.tables.forEach(h => { histSeatsById[h.id] = h.seats; });
+    neighborPairsForSeats(currentSeating.tables, histSeatsById, neighborThreshold).forEach(p => recentPairs.add(p));
+  });
   const colorDefs = colorsData[currentSeatingClass] || [];
   function colorMode(colorId) { const c = colorDefs.find(x => x.id === colorId); return c ? c.mode : null; }
   function placementCost(student, seatIdx, placement) {
@@ -2618,6 +2661,7 @@ function randomlyAssignSeats(alternateGender, onlyOccupied) {
     neighborsOf[seatIdx].forEach(j => {
       const other = placement[j];
       if (!other) return;
+      if (recentPairs.has(pairKey(student.id, other.id))) cost += 1000;
       if (alternateGender && student.gender !== "d" && other.gender !== "d" && student.gender === other.gender) cost += 1;
       (student.colors || []).forEach(cid => {
         if ((other.colors || []).includes(cid)) {
