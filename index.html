@@ -224,6 +224,9 @@
   .board-timer-extra label { font-size: 0.68rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
   .board-timer-extra input[type="number"] { width: 44px; text-align: center; padding: 3px; }
   .board-timer-extra-display { font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); }
+  .board-timer-questions-status { margin-top: 8px; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; display: inline-block; }
+  .board-timer-questions-status.allowed { background: #f0fdf4; color: var(--success); }
+  .board-timer-questions-status.forbidden { background: #fef2f2; color: var(--danger); }
   .material-widget-title { font-weight: 800; font-size: 0.95rem; margin-bottom: 8px; }
   .material-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 6px 10px 2px; }
   .material-icon { border-radius: 12px; padding: 8px 4px; cursor: pointer; position: relative; font-size: 1.7rem; border: 3px solid; user-select: none; }
@@ -3602,11 +3605,15 @@ function getExtraDisplaySec(el) {
 function renderTimerWidget(el) {
   if (el.extraOn === undefined) el.extraOn = false;
   if (el.extraMin === undefined) el.extraMin = 10;
+  if (el.questionsOn === undefined) el.questionsOn = false;
+  if (el.questionsMin === undefined) el.questionsMin = 10;
   const currentDisplay = el.running ? Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000)) : el.remainingSec;
   const h = Math.floor(el.durationSec / 3600), m = Math.floor((el.durationSec % 3600) / 60);
   const fontSize = Math.max(26, Math.round(el.h * 0.24));
   const extraDisplaySec = getExtraDisplaySec(el);
   const extraLocked = el.running || !!el.extraEndTimestamp;
+  const elapsedSec = el.durationSec - currentDisplay;
+  const questionsAllowed = elapsedSec < el.questionsMin * 60;
   return `<div class="board-widget" style="width:100%; height:100%;">
     <div class="board-timer-setup">
       <label>Std.<input type="number" min="0" max="2" data-timer-hours="${el.id}" value="${h}" ${el.running ? "disabled" : ""}></label>
@@ -3622,6 +3629,11 @@ function renderTimerWidget(el) {
       <label>+ Min. <input type="number" min="1" max="180" data-timer-extra-min="${el.id}" value="${el.extraMin}" ${extraLocked ? "disabled" : ""}></label>
       <div class="board-timer-extra-display" data-timer-extra-display="${el.id}">${formatCountdown(extraDisplaySec)}</div>
     </div>` : ""}
+    ${!el.running ? `<label class="board-timer-extra-toggle"><input type="checkbox" data-timer-questions-toggle="${el.id}" ${el.questionsOn ? "checked" : ""}> Fragen erlaubt für</label>
+    ${el.questionsOn ? `<div class="board-timer-extra">
+      <label>Min. <input type="number" min="1" max="180" data-timer-questions-min="${el.id}" value="${el.questionsMin}"></label>
+    </div>` : ""}` : ""}
+    ${el.questionsOn && el.running ? `<div class="board-timer-questions-status ${questionsAllowed ? "allowed" : "forbidden"}" data-timer-questions-status="${el.id}">${questionsAllowed ? "Fragen erlaubt" : "keine Fragen mehr erlaubt"}</div>` : ""}
   </div>`;
 }
 function renderMaterialWidget(el) {
@@ -3811,6 +3823,18 @@ function wireTimerWidget(wrap, el) {
     saveBoard();
     renderBoardCanvas();
   });
+  const questionsToggle = wrap.querySelector(`[data-timer-questions-toggle="${el.id}"]`);
+  if (questionsToggle) questionsToggle.addEventListener("change", () => {
+    el.questionsOn = questionsToggle.checked;
+    saveBoard();
+    renderBoardCanvas();
+  });
+  const questionsMinInput = wrap.querySelector(`[data-timer-questions-min="${el.id}"]`);
+  if (questionsMinInput) questionsMinInput.addEventListener("change", () => {
+    el.questionsMin = Math.min(180, Math.max(1, Number(questionsMinInput.value) || 10));
+    saveBoard();
+    renderBoardCanvas();
+  });
 }
 let addMaterialTargetElId = null;
 function wireMaterialWidget(wrap, el) {
@@ -3884,6 +3908,16 @@ setInterval(() => {
           const remaining = Math.max(0, Math.round((el.endTimestamp - Date.now()) / 1000));
           const displayEl = document.querySelector(`[data-timer-display="${el.id}"]`);
           if (displayEl) displayEl.textContent = formatCountdown(remaining);
+          if (el.questionsOn) {
+            const elapsedSec = el.durationSec - remaining;
+            const questionsAllowed = elapsedSec < el.questionsMin * 60;
+            const statusEl = document.querySelector(`[data-timer-questions-status="${el.id}"]`);
+            if (statusEl) {
+              statusEl.textContent = questionsAllowed ? "Fragen erlaubt" : "keine Fragen mehr erlaubt";
+              statusEl.classList.toggle("allowed", questionsAllowed);
+              statusEl.classList.toggle("forbidden", !questionsAllowed);
+            }
+          }
           if (remaining <= 0) {
             el.running = false; el.endTimestamp = null; el.remainingSec = 0;
             needsRerender = true;
