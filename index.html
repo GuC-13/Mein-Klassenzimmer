@@ -25,14 +25,6 @@
   .btn-big { width: 100%; padding: 20px; font-size: 1.15rem; border-radius: 16px; margin-bottom: 12px; }
   .btn-secondary { background: #64748b; }
   .btn-secondary.btn-active { background: var(--accent); }
-  .schreibraum-color-swatch { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
-  .schreibraum-color-swatch.schreibraum-active { border-color: var(--text); box-shadow: 0 0 0 2px #fff inset; }
-  .schreibraum-size-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
-  .schreibraum-size-btn span { display: block; border-radius: 50%; background: #0f172a; }
-  .schreibraum-size-btn.schreibraum-active { border-color: var(--accent); background: #eff6ff; }
-  #schreibraumEraserBtn.btn-active { background: var(--accent); }
-  .schreibraum-card-away { filter: grayscale(1); opacity: 0.5; }
-  .schreibraum-away-badge { display: inline-block; font-size: 0.75rem; font-weight: 700; color: #fff; background: #64748b; border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
   .btn-danger { background: var(--danger); }
   .btn-outline { background: white; color: var(--accent); border: 2px solid var(--accent); }
   .btn-outline.danger { color: var(--danger); border-color: var(--danger); }
@@ -44,6 +36,15 @@
   .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
   .home-tile { border: none; border-radius: 18px; padding: 22px 14px; cursor: grab; color: white; font-weight: 800; font-size: 1.05rem; text-align: left; display: flex; align-items: center; gap: 10px; touch-action: none; user-select: none; position: relative; width: 100%; }
   .home-tile.dragging { opacity: 0.35; }
+  .active-class-bar { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; }
+  .active-class-bar label { font-weight: 800; font-size: 0.9rem; white-space: nowrap; }
+  .active-class-bar select { flex: 1; min-width: 0; padding: 8px 10px; border: 2px solid var(--border); border-radius: 10px; font-size: 0.95rem; font-weight: 700; background: white; color: var(--text); }
+  .active-class-bar.is-set { border-color: var(--accent); background: #eff6ff; }
+  .active-class-bar.is-set select { border-color: var(--accent); }
+  .backup-reminder { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; background: #fffbeb; border: 1px solid #f59e0b; border-radius: 14px; padding: 10px 14px; font-size: 0.88rem; }
+  .backup-reminder.hidden { display: none; }
+  .backup-reminder-actions { display: flex; gap: 8px; }
+  .backup-reminder .btn { padding: 8px 12px; font-size: 0.82rem; margin-bottom: 0; }
   .home-tile .ti { font-size: 1.8rem; flex-shrink: 0; }
   .home-tile .sub-text { display: block; font-size: 0.72rem; font-weight: 500; opacity: 0.9; margin-top: 3px; }
   .home-tile-ghost { position: fixed; z-index: 500; pointer-events: none; opacity: 0.9; border-radius: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.35); }
@@ -105,13 +106,9 @@
   .icon-toolbtn { border: 2px solid var(--border); background: white; border-radius: 10px; width: 42px; height: 42px; font-size: 1.15rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .icon-toolbtn:active { transform: scale(0.95); }
   .icon-toolbtn.hidden { display: none; }
+  .icon-toolbtn.labeled { width: auto; padding: 0 12px; gap: 6px; color: var(--text); }
+  .icon-toolbtn .tb-label { font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
   #groupSizeModeWrap.hidden, #groupCountModeWrap.hidden { display: none; }
-  #schreibraumSetupNote.hidden, #schreibraumJoinError.hidden, #schreibraumWriteQuestion.hidden { display: none; }
-  #schreibraumMonitorQuestion.hidden { display: none; }
-  #schreibraumDrawWrap.hidden { display: none; }
-  #schreibraumQrFullscreen { display: flex; }
-  #schreibraumQrFullscreen.hidden { display: none; }
-  #schreibraumWriteTextarea.hidden { display: none; }
   .dropdown-wrap { position: relative; }
   .dropdown-panel { position: absolute; top: 100%; left: 0; margin-top: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.18); padding: 8px; z-index: 50; display: flex; flex-direction: column; gap: 4px; min-width: 240px; }
   .dropdown-panel.hidden { display: none; }
@@ -158,6 +155,35 @@
   .table-remove-btn { top: -10px; right: -10px; background: var(--danger); color: white; z-index: 3; }
   .table-rotate-handle { bottom: -10px; right: -10px; background: var(--accent); color: white; cursor: grab; z-index: 3; touch-action: none; }
   .table-resize-handle { position: absolute; bottom: -10px; left: -10px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; background: #16a34a; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; cursor: nwse-resize; z-index: 3; touch-action: none; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  /* Bearbeiten-Knöpfe (✕ ⟳ ⤡) nur am angetippten Tisch/Objekt zeigen */
+  .table-el > .table-remove-btn, .table-el > .table-rotate-handle,
+  .object-el > .table-remove-btn, .object-el > .table-rotate-handle, .object-el > .table-resize-handle { display: none; }
+  .table-el.is-selected > .table-remove-btn, .table-el.is-selected > .table-rotate-handle,
+  .object-el.is-selected > .table-remove-btn, .object-el.is-selected > .table-rotate-handle, .object-el.is-selected > .table-resize-handle { display: flex; }
+  .table-el.is-selected > .table-shape, .object-el.is-selected > .object-shape { outline: 3px solid var(--accent); outline-offset: 3px; }
+  .table-el.is-selected > .table-shape.bare { outline-offset: 0; border-radius: 50%; }
+  .seating-empty-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 15; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 24px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.12); max-width: 90%; }
+  .seating-empty-hint.hidden { display: none; }
+  .seating-empty-hint .btn { margin-bottom: 0; }
+  /* Sitzplan drucken / als PDF sichern */
+  #seatingPrintArea { display: none; background: white; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  #seatingPrintArea .sp-head { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #0f172a; padding-bottom: 6px; margin-bottom: 10px; }
+  #seatingPrintArea .sp-title { font-size: 20px; font-weight: 800; }
+  #seatingPrintArea .sp-sub, #seatingPrintArea .sp-date { font-size: 12px; color: #475569; }
+  #seatingPrintArea .sp-stage { position: relative; overflow: hidden; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px; }
+  #seatingPrintArea .sp-canvas { position: absolute; top: 0; left: 0; width: 1900px; height: 1200px; transform-origin: 0 0; }
+  #seatingPrintArea .seat .seat-name.len-s { font-size: 0.72rem; }
+  #seatingPrintArea .seat .seat-name.len-m { font-size: 0.62rem; }
+  #seatingPrintArea .seat .seat-name.len-l { font-size: 0.53rem; }
+  #seatingPrintArea .seat .seat-name.len-xl { font-size: 0.45rem; }
+  #seatingPrintArea .seat.empty { color: transparent; }
+  #seatingPrintArea .sp-foot { margin-top: 8px; font-size: 11px; color: #475569; }
+  @media print {
+    @page { size: A4 landscape; margin: 10mm; }
+    html, body { background: white !important; }
+    body.printing-seating > *:not(#seatingPrintArea) { display: none !important; }
+    body.printing-seating #seatingPrintArea { display: block; }
+  }
   .drag-ghost { position: fixed; z-index: 500; pointer-events: none; opacity: 0.85; transform: translate(-50%, -50%); }
   .toggle-line { display: flex; align-items: center; gap: 8px; }
   .display-opt-btn { background: white; border: 2px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
@@ -193,6 +219,15 @@
   #app.board-fullwidth #boardEditorView:not(.hidden) .board-canvas-wrap { flex: 1; min-height: 0; }
   .board-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .board-toolbar .btn { padding: 9px 13px; font-size: 0.82rem; margin-bottom: 0; }
+  .board-toolbar { position: relative; z-index: 40; }
+  .board-toolbar .dropdown-panel { min-width: 220px; }
+  .board-bg-swatches { display: flex; gap: 8px; padding: 4px 10px 6px; }
+  .board-fmt-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  .board-fmt-group .fmt-btn { width: 30px; height: 30px; }
+  .board-fmt-group .fmt-swatch { width: 22px; height: 22px; }
+  #boardEditor_title { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .board-fmt-group.hidden, .board-fmt-hint.hidden { display: none; }
+  .board-fmt-hint { font-size: 0.75rem; color: var(--muted); }
   .board-toolbar-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
   .fmt-btn { background: white; border: 2px solid var(--border); border-radius: 6px; width: 34px; height: 34px; font-weight: 800; cursor: pointer; font-size: 0.9rem; }
   .fmt-swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; }
@@ -321,6 +356,17 @@
     <h1>🏫 Klassenzimmer-Manager</h1>
     <h2 class="sub">Klassen, Sitzordnung &amp; Verhalten</h2>
     <h2 class="sub" style="margin-top:-8px; font-size:0.78rem;">Boxen lange gedrückt halten und ziehen, um die Reihenfolge zu ändern</h2>
+    <div class="active-class-bar" id="activeClassBar">
+      <label for="activeClassSelect">👥 Aktive Klasse</label>
+      <select id="activeClassSelect"></select>
+    </div>
+    <div class="backup-reminder hidden" id="backupReminder">
+      <span>💾 <b id="backupReminderText"></b> Sichern Sie Ihre Daten in die Dateien-App.</span>
+      <span class="backup-reminder-actions">
+        <button class="btn" id="backupReminderBtn">Jetzt sichern</button>
+        <button class="btn btn-secondary" id="backupReminderLaterBtn">Später</button>
+      </span>
+    </div>
     <div class="home-grid" id="homeGrid"></div>
     <button class="settings-fab" id="homeSettingsBtn">⚙️</button>
   </div>
@@ -408,7 +454,7 @@
     <h2 class="sub hide-in-presentation" id="seatingEditor_updated" style="margin-bottom:12px;"></h2>
     <div class="seating-toolbar hide-in-presentation" id="seatingIconToolbar">
       <div class="dropdown-wrap">
-        <button class="icon-toolbtn" id="distributionMenuBtn" title="Sitzplatzverteilung">🎲</button>
+        <button class="icon-toolbtn labeled" id="distributionMenuBtn" title="Sitzplatzverteilung">🎲<span class="tb-label">Verteilen ▾</span></button>
         <div class="dropdown-panel hidden" id="distributionMenu">
           <button class="dropdown-item" id="randomAssignBtn">🎲 Neu verteilen</button>
           <button class="dropdown-item" id="swapSeatsBtn">🔀 Sitze tauschen (Positionen behalten)</button>
@@ -418,12 +464,13 @@
           <label class="toggle-line dropdown-item" style="cursor:pointer;"><input type="checkbox" id="alternateGenderCheck" checked> ♂♀ nebeneinander bevorzugen</label>
         </div>
       </div>
-      <button class="icon-toolbtn" id="seatBanBtn" title="Sitzverbote festlegen">🚫</button>
-      <button class="icon-toolbtn" id="presentationModeBtn" title="Präsentieransicht">🖥️</button>
+      <button class="icon-toolbtn labeled" id="seatBanBtn" title="Sitzverbote festlegen">🚫<span class="tb-label">Sitzverbote</span></button>
+      <button class="icon-toolbtn labeled" id="presentationModeBtn" title="Präsentieransicht">🖥️<span class="tb-label">Präsentieren</span></button>
+      <button class="icon-toolbtn labeled" id="printSeatingBtn" title="Sitzplan drucken oder als PDF sichern">🖨️<span class="tb-label">PDF / Drucken</span></button>
       <button class="icon-toolbtn hidden" id="canvasUndoBtn" title="Letzte Bewegung rückgängig machen (Tisch verschoben, SuS getauscht)">↩️</button>
       <button class="icon-toolbtn hidden" id="canvasRedoBtn" title="Rückgängig gemachte Bewegung wiederherstellen">↪️</button>
       <div class="dropdown-wrap" style="margin-left:auto;">
-        <button class="icon-toolbtn" id="templatesMenuBtn" title="Vorlagen">🗂️</button>
+        <button class="icon-toolbtn labeled" id="templatesMenuBtn" title="Vorlagen">🗂️<span class="tb-label">Vorlagen ▾</span></button>
         <div class="dropdown-panel hidden" id="templatesMenu" style="right:0; left:auto;">
           <button class="dropdown-item" id="loadTemplateBtn">📐 Vorlage laden</button>
           <button class="dropdown-item" id="copySeatingBtn">📋 In andere Klasse kopieren</button>
@@ -431,7 +478,7 @@
         </div>
       </div>
       <div class="dropdown-wrap">
-        <button class="icon-toolbtn" id="viewMenuBtn" title="Ansicht">👁️</button>
+        <button class="icon-toolbtn labeled" id="viewMenuBtn" title="Ansicht">👁️<span class="tb-label">Ansicht ▾</span></button>
         <div class="dropdown-panel hidden" id="viewMenu" style="right:0; left:auto;">
           <div class="dropdown-section-label">Name</div>
           <button class="dropdown-item display-opt-btn" data-namestyle="first">Vorname</button>
@@ -454,6 +501,12 @@
         <div class="seating-canvas-sizer" id="seatingCanvasSizer">
           <div class="seating-canvas" id="seatingCanvas"></div>
         </div>
+      </div>
+      <div class="seating-empty-hint hidden hide-in-presentation" id="seatingEmptyHint">
+        <div style="font-size:2rem;">🪑</div>
+        <div style="font-weight:800; font-size:1.05rem; margin:4px 0;">Noch keine Tische im Raum</div>
+        <div style="font-size:0.85rem; color:var(--muted); margin-bottom:12px;">Am schnellsten mit einer fertigen Raum-Vorlage starten –<br>oder rechts einzelne Tische hinzufügen.</div>
+        <button class="btn" id="seatingEmptyTemplateBtn">📐 Mit Vorlage starten</button>
       </div>
       <div class="room-objects-mini hide-in-presentation">
         <span class="toolbar-label">Tische &amp; Plätze</span>
@@ -556,40 +609,55 @@
       <button class="btn btn-secondary" data-back-boardslist>← Leinwände</button>
       <span style="font-weight:800;" id="boardEditor_title"></span>
       <div class="board-toolbar-sep"></div>
-      <button class="btn btn-outline" id="addTextBtn">+ Text</button>
-      <button class="btn btn-outline" id="addImageBtn">+ Bild</button>
-      <button class="btn btn-outline" id="addTimerBtn">+ Timer</button>
-      <button class="btn btn-outline" id="addClockBtn">+ Uhr</button>
-      <button class="btn btn-outline" id="addMaterialBtn">+ Material</button>
-      <button class="btn btn-outline" id="addVolumeBtn">+ Lautstärke</button>
-      <button class="btn btn-outline" id="addQrBtn">+ QR-Code</button>
+      <div class="dropdown-wrap">
+        <button class="btn" id="boardAddMenuBtn">+ Element ▾</button>
+        <div class="dropdown-panel hidden" id="boardAddMenu">
+          <button class="dropdown-item" id="addTextBtn">📝 Text</button>
+          <button class="dropdown-item" id="addImageBtn">🖼️ Bild</button>
+          <button class="dropdown-item" id="addTimerBtn">⏱️ Timer</button>
+          <button class="dropdown-item" id="addClockBtn">🕒 Uhr</button>
+          <button class="dropdown-item" id="addMaterialBtn">✏️ Material</button>
+          <button class="dropdown-item" id="addVolumeBtn">🔊 Lautstärke-Ampel</button>
+          <button class="dropdown-item" id="addQrBtn">🔳 QR-Code</button>
+        </div>
+      </div>
       <input type="file" accept="image/*" id="boardImageInput" style="display:none;">
-      <div class="board-toolbar-sep"></div>
-      <button class="fmt-btn" id="fmtBoldBtn" style="font-style:normal;"><b>B</b></button>
-      <button class="fmt-btn" id="fmtItalicBtn"><i>I</i></button>
-      <button class="fmt-btn" id="fmtUnderlineBtn"><u>U</u></button>
-      <button class="fmt-btn" id="fmtListBtn" title="Aufzählung">☰</button>
-      <button class="fmt-btn" id="fmtSizeMinusBtn">A-</button>
-      <button class="fmt-btn" id="fmtSizePlusBtn">A+</button>
-      <button class="fmt-swatch" style="background:#0f172a;" data-fmt-color="#0f172a"></button>
-      <button class="fmt-swatch" style="background:#dc2626;" data-fmt-color="#dc2626"></button>
-      <button class="fmt-swatch" style="background:#16a34a;" data-fmt-color="#16a34a"></button>
-      <button class="fmt-swatch" style="background:#2563eb;" data-fmt-color="#2563eb"></button>
-      <button class="fmt-swatch" style="background:#ffffff; border-color:#94a3b8;" data-fmt-color="#ffffff"></button>
-      <div class="board-toolbar-sep"></div>
-      <span style="font-size:0.8rem; font-weight:700; color:var(--muted);">Hintergrund:</span>
-      <button class="fmt-swatch" style="background:#f8fafc; border-color:#94a3b8;" data-board-bg="light"></button>
-      <button class="fmt-swatch" style="background:#0f172a;" data-board-bg="dark"></button>
-      <button class="fmt-swatch" style="background:#0c4a6e;" data-board-bg="blue"></button>
-      <button class="btn btn-outline" id="boardBgImageBtn" style="padding:6px 10px; font-size:0.78rem;">🖼️ Bild</button>
-      <input type="file" accept="image/*" id="boardBgImageInput" style="display:none;">
-      <button class="btn btn-outline" id="boardBgImageRemoveBtn" style="padding:6px 10px; font-size:0.78rem; display:none;">✕ Bild entfernen</button>
-      <label id="boardBgOpacityLabel" style="display:none; align-items:center; gap:6px; font-size:0.75rem; color:var(--muted); font-weight:700;">
-        Deckkraft <input type="range" id="boardBgOpacityInput" min="10" max="100" value="100" style="width:90px;">
-      </label>
-      <button class="btn-subtle" id="exportBoardBtn">📤 Als Vorlage exportieren</button>
-      <div class="board-toolbar-sep"></div>
-      <button class="btn" id="presentModeBtn">🖥️ Präsentieren</button>
+      <div class="dropdown-wrap">
+        <button class="btn btn-outline" id="boardBgMenuBtn">🎨 Hintergrund ▾</button>
+        <div class="dropdown-panel hidden" id="boardBgMenu">
+          <div class="dropdown-section-label">Farbe</div>
+          <div class="board-bg-swatches">
+            <button class="fmt-swatch" style="background:#f8fafc; border-color:#94a3b8;" data-board-bg="light" title="Hell"></button>
+            <button class="fmt-swatch" style="background:#0f172a;" data-board-bg="dark" title="Dunkel"></button>
+            <button class="fmt-swatch" style="background:#0c4a6e;" data-board-bg="blue" title="Blau"></button>
+          </div>
+          <div class="dropdown-section-label">Bild</div>
+          <button class="dropdown-item" id="boardBgImageBtn">🖼️ Hintergrundbild wählen</button>
+          <input type="file" accept="image/*" id="boardBgImageInput" style="display:none;">
+          <button class="dropdown-item danger" id="boardBgImageRemoveBtn" style="display:none;">✕ Bild entfernen</button>
+          <label id="boardBgOpacityLabel" style="display:none; align-items:center; gap:6px; font-size:0.75rem; color:var(--muted); font-weight:700; padding:4px 10px;">
+            Deckkraft <input type="range" id="boardBgOpacityInput" min="10" max="100" value="100" style="width:110px;">
+          </label>
+          <div class="dropdown-sep"></div>
+          <button class="dropdown-item" id="exportBoardBtn">📤 Als Vorlage exportieren</button>
+        </div>
+      </div>
+      <div class="board-fmt-group hidden" id="boardFmtGroup">
+        <div class="board-toolbar-sep"></div>
+        <button class="fmt-btn" id="fmtBoldBtn" style="font-style:normal;"><b>B</b></button>
+        <button class="fmt-btn" id="fmtItalicBtn"><i>I</i></button>
+        <button class="fmt-btn" id="fmtUnderlineBtn"><u>U</u></button>
+        <button class="fmt-btn" id="fmtListBtn" title="Aufzählung">☰</button>
+        <button class="fmt-btn" id="fmtSizeMinusBtn">A-</button>
+        <button class="fmt-btn" id="fmtSizePlusBtn">A+</button>
+        <button class="fmt-swatch" style="background:#0f172a;" data-fmt-color="#0f172a"></button>
+        <button class="fmt-swatch" style="background:#dc2626;" data-fmt-color="#dc2626"></button>
+        <button class="fmt-swatch" style="background:#16a34a;" data-fmt-color="#16a34a"></button>
+        <button class="fmt-swatch" style="background:#2563eb;" data-fmt-color="#2563eb"></button>
+        <button class="fmt-swatch" style="background:#ffffff; border-color:#94a3b8;" data-fmt-color="#ffffff"></button>
+      </div>
+      <span class="board-fmt-hint" id="boardFmtHint">Tipp: Text antippen, um ihn zu formatieren</span>
+      <button class="btn" id="presentModeBtn" style="margin-left:auto;">🖥️ Präsentieren</button>
     </div>
     <div class="board-canvas-wrap" id="boardCanvasWrap">
       <div class="board-canvas" id="boardCanvas"></div>
@@ -668,98 +736,11 @@
     <div id="movementExerciseList"></div>
   </div>
 
-  <!-- SCHREIB-RAUM: Wahl Lehrperson/Schüler -->
-  <div id="schreibraumPickView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
-    <h1>🖊️ Schreib-Raum</h1>
-    <h2 class="sub">SuS beantworten eine Frage live auf ihrem eigenen Gerät. Jedes Gerät braucht Internet.</h2>
-    <div class="mode-choice-grid" style="margin-top:20px;">
-      <button class="btn btn-big" id="schreibraumHostBtn">👩‍🏫 Raum eröffnen</button>
-    </div>
-    <p id="schreibraumSetupNote" class="hidden" style="color:var(--muted); font-size:0.9rem; margin-top:16px;"></p>
-  </div>
-
-  <!-- SCHREIB-RAUM: Host-Ansicht -->
-  <div id="schreibraumHostView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" id="schreibraumHostCloseBtn">← Raum schliessen</button></div>
-    <h1>👩‍🏫 Schreib-Raum <span id="schreibraumRoomPin" style="color:var(--muted); font-size:1rem;"></span></h1>
-    <div class="setup-card" style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
-      <div>
-        <label class="field-label">PIN</label>
-        <div id="schreibraumPinDisplay" style="font-size:2.4rem; font-weight:800; letter-spacing:0.15em;">----</div>
-        <p style="color:var(--muted); font-size:0.85rem; max-width:220px;">SuS scannen den QR-Code, um beizutreten.</p>
-      </div>
-      <button id="schreibraumQrOpenBtn" style="background:none; border:none; padding:0; cursor:pointer;" aria-label="QR-Code vergrössern">
-        <canvas id="schreibraumQrCanvas" style="width:140px; height:140px; image-rendering:pixelated;"></canvas>
-      </button>
-    </div>
-    <div class="setup-card">
-      <label class="field-label">Frage (optional, erscheint bei allen SuS)</label>
-      <input type="text" id="schreibraumQuestionInput" placeholder="z.B. Was ist ein Prisma?">
-    </div>
-    <p style="color:var(--muted); font-size:0.85rem;"><span id="schreibraumHostCount">0</span> Person(en) beigetreten</p>
-    <button class="btn btn-big" id="schreibraumMonitorOpenBtn">🖥️ Alle Bildschirme anzeigen</button>
-    <div id="schreibraumHostGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px;"></div>
-  </div>
-
-  <!-- SCHREIB-RAUM: Monitor-Ansicht (nur die Bildschirme, für bis zu 24 SuS) -->
-  <div id="schreibraumMonitorView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" id="schreibraumMonitorBackBtn">← Zurück zur Übersicht</button></div>
-    <h1 style="font-size:1.4rem;">🖥️ Alle Bildschirme <span id="schreibraumMonitorPin" style="color:var(--muted); font-size:1rem;"></span></h1>
-    <p id="schreibraumMonitorQuestion" class="hidden" style="font-weight:700; font-size:1.05rem; margin:0 0 4px;"></p>
-    <p style="color:var(--muted); font-size:0.85rem;"><span id="schreibraumMonitorCount">0</span> Person(en) beigetreten</p>
-    <div id="schreibraumMonitorGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:10px;"></div>
-  </div>
-
-  <!-- SCHREIB-RAUM: QR Vollbild -->
-  <div id="schreibraumQrFullscreen" class="hidden" style="position:fixed; inset:0; background:#ffffff; z-index:300; flex-direction:column; align-items:center; justify-content:center; gap:20px;">
-    <canvas id="schreibraumQrCanvasBig" style="width:min(80vw, 500px); height:min(80vw, 500px); image-rendering:pixelated;"></canvas>
-    <div style="font-size:2rem; font-weight:800; letter-spacing:0.15em;" id="schreibraumQrBigPin">----</div>
-    <button class="btn btn-secondary" id="schreibraumQrCloseBtn">Schliessen</button>
-  </div>
-
-  <!-- SCHREIB-RAUM: Beitreten (Schüler, nur über QR-Link erreichbar) -->
-  <div id="schreibraumJoinView" class="view hidden">
-    <h1>🙋 Schreib-Raum beitreten</h1>
-    <div class="setup-card">
-      <label class="field-label">Dein Name</label>
-      <input type="text" id="schreibraumJoinNameInput" placeholder="Name" maxlength="24">
-    </div>
-    <p id="schreibraumJoinError" class="hidden" style="color:var(--danger); font-size:0.9rem;"></p>
-    <button class="btn btn-big" id="schreibraumJoinBtn">Beitreten</button>
-  </div>
-
-  <!-- SCHREIB-RAUM: Schreiben (Schüler) -->
-  <div id="schreibraumWriteView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" id="schreibraumWriteLeaveBtn">← Verlassen</button></div>
-    <h1 style="text-align:center; font-size:2rem;" id="schreibraumWriteName"></h1>
-    <p id="schreibraumWriteQuestion" class="sub hidden" style="font-size:1.1rem; font-weight:700; color:var(--text);"></p>
-    <div class="choice-row" style="display:flex; gap:8px; margin-bottom:10px;">
-      <button class="btn btn-secondary" id="schreibraumModeTextBtn" style="flex:1;">⌨️ Tippen</button>
-      <button class="btn btn-secondary" id="schreibraumModeDrawBtn" style="flex:1;">✏️ Zeichnen</button>
-    </div>
-    <textarea id="schreibraumWriteTextarea" placeholder="Hier schreiben …" style="width:100%; box-sizing:border-box; min-height:50vh; font-size:1.2rem; padding:14px; border-radius:12px; border:1px solid var(--border); resize:vertical;"></textarea>
-    <div id="schreibraumDrawWrap" class="hidden">
-      <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
-        <div style="display:flex; gap:6px;">
-          <button class="schreibraum-color-swatch schreibraum-active" data-color="#0f172a" style="background:#0f172a;" aria-label="Schwarz"></button>
-          <button class="schreibraum-color-swatch" data-color="#2563eb" style="background:#2563eb;" aria-label="Blau"></button>
-          <button class="schreibraum-color-swatch" data-color="#dc2626" style="background:#dc2626;" aria-label="Rot"></button>
-          <button class="schreibraum-color-swatch" data-color="#16a34a" style="background:#16a34a;" aria-label="Grün"></button>
-        </div>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <button class="schreibraum-size-btn" data-size="3" aria-label="Dünn"><span style="width:6px; height:6px;"></span></button>
-          <button class="schreibraum-size-btn schreibraum-active" data-size="6" aria-label="Mittel"><span style="width:11px; height:11px;"></span></button>
-          <button class="schreibraum-size-btn" data-size="11" aria-label="Dick"><span style="width:18px; height:18px;"></span></button>
-        </div>
-        <button class="btn btn-secondary" id="schreibraumEraserBtn">🧽 Radierer</button>
-        <button class="btn btn-secondary" id="schreibraumDrawClearBtn">🗑️ Alles löschen</button>
-      </div>
-      <canvas id="schreibraumDrawCanvas" style="width:100%; height:68vh; touch-action:none; border-radius:16px; border:1px solid var(--border); background:#ffffff; display:block; box-shadow:0 4px 16px rgba(15,23,42,0.12);"></canvas>
-    </div>
-  </div>
 
 </div>
+
+<!-- SITZPLAN: Druck-/PDF-Ansicht (nur beim Drucken sichtbar) -->
+<div id="seatingPrintArea" aria-hidden="true"></div>
 
 <!-- Add/Edit Class Modal -->
 <div class="modal-overlay hidden" id="settingsOverlay">
@@ -768,7 +749,8 @@
     <label class="field-label">Sichtbare Boxen auf der Startseite</label>
     <div id="settingsTilesList"></div>
     <label class="field-label" style="margin-top:16px;">Daten sichern</label>
-    <p style="font-size:0.8rem; color:var(--muted); margin-top:-6px;">Exportiert alle Klassen, Sitzordnungen, Verhaltensdaten, Farben und Leinwände als Datei – zum Sichern oder Übertragen auf ein anderes Gerät.</p>
+    <p style="font-size:0.8rem; color:var(--muted); margin-top:-6px;">Exportiert alle Klassen, Sitzordnungen, Verhaltensdaten, Farben und Leinwände als Datei – zum Sichern oder Übertragen auf ein anderes Gerät. Auf dem iPad «In Dateien sichern» wählen und als Ort «Auf meinem iPad» (nicht iCloud).</p>
+    <p style="font-size:0.8rem; margin-top:-4px;" id="backupStatusText"></p>
     <div class="row" style="display:flex; gap:10px;">
       <button class="btn btn-outline" id="exportBackupBtn" style="flex:1;">💾 Exportieren</button>
       <button class="btn btn-outline" id="importBackupBtn" style="flex:1;">📥 Importieren</button>
@@ -1111,17 +1093,19 @@ function showView(name) {
   document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
   document.getElementById(name + "View").classList.remove("hidden");
   document.getElementById("app").classList.toggle("board-fullwidth", name === "seatingEditor" || name === "boardEditor");
+  if (name === "home") { renderActiveClassBar(); renderBackupReminder(); }
 }
 document.querySelectorAll("[data-back-home]").forEach(b => b.addEventListener("click", () => showView("home")));
 document.querySelectorAll("[data-back-classes]").forEach(b => b.addEventListener("click", () => showView("classes")));
-document.querySelectorAll("[data-back-seatingpick]").forEach(b => b.addEventListener("click", () => showView("seatingPick")));
+function backToClassPick(view) { showView(getActiveClass() ? "home" : view); }
+document.querySelectorAll("[data-back-seatingpick]").forEach(b => b.addEventListener("click", () => backToClassPick("seatingPick")));
 document.querySelectorAll("[data-back-seatinglist]").forEach(b => b.addEventListener("click", () => renderSeatingList(currentSeatingClass)));
-document.querySelectorAll("[data-back-behaviorpick]").forEach(b => b.addEventListener("click", () => showView("behaviorPick")));
+document.querySelectorAll("[data-back-behaviorpick]").forEach(b => b.addEventListener("click", () => backToClassPick("behaviorPick")));
 document.querySelectorAll("[data-back-boardslist]").forEach(b => b.addEventListener("click", () => { setPresentMode(false); stopAllVolumeWidgets(); renderBoardsList(); showView("boardsList"); }));
-document.querySelectorAll("[data-back-randompick]").forEach(b => b.addEventListener("click", () => showView("randomPick")));
-document.querySelectorAll("[data-back-groupspick]").forEach(b => b.addEventListener("click", () => showView("groupsPick")));
+document.querySelectorAll("[data-back-randompick]").forEach(b => b.addEventListener("click", () => backToClassPick("randomPick")));
+document.querySelectorAll("[data-back-groupspick]").forEach(b => b.addEventListener("click", () => backToClassPick("groupsPick")));
 document.querySelectorAll("[data-back-movementcats]").forEach(b => b.addEventListener("click", () => showView("movementCats")));
-document.querySelectorAll("[data-back-checklistpick]").forEach(b => b.addEventListener("click", () => showView("checklistPick")));
+document.querySelectorAll("[data-back-checklistpick]").forEach(b => b.addEventListener("click", () => backToClassPick("checklistPick")));
 
 /* ---- Home: Kacheln, Reihenfolge per Drag&Drop ---- */
 const HOME_TILES = [
@@ -1133,7 +1117,7 @@ const HOME_TILES = [
   { id: "groupsPick", cls: "tile-groups", icon: "👨‍👩‍👧‍👦", title: "Gruppenerstellung", sub: "Zufallsgruppen bilden" },
   { id: "movementCats", cls: "tile-movement", icon: "🤸", title: "Bewegungspause", sub: "Kurze Auflockerungsübungen" },
   { id: "checklistPick", cls: "tile-checklist", icon: "✅", title: "Klassenliste", sub: "Aufgaben pro Schüler:in ankreuzen" },
-  { id: "schreibraumPick", cls: "tile-writeroom", icon: "🖊️", title: "Schreib-Raum", sub: "SuS antworten live per QR-Code" }
+  { id: "schreibraumPick", cls: "tile-writeroom", icon: "🖊️", title: "Schreib-Raum", sub: "Öffnet eigene Webseite (SuS antworten live per QR-Code)" }
 ];
 const HOME_ORDER_KEY = "kz_home_order";
 const HOME_HIDDEN_KEY = "kz_home_hidden";
@@ -1154,16 +1138,50 @@ function getHomeHidden() {
   return Array.isArray(saved) ? saved.filter(id => ids.includes(id)) : [];
 }
 function saveHomeHidden(hidden) { localStorage.setItem(HOME_HIDDEN_KEY, JSON.stringify(hidden)); }
+/* ---- Aktive Klasse: einmal auf der Startseite wählen, alle Module öffnen sie direkt ---- */
+const ACTIVE_CLASS_KEY = "kz_active_class";
+const CLASS_PICK_TARGETS = {
+  seatingPick: { listId: "seatingClassList", open: (name) => openSeatingListForClass(name) },
+  behaviorPick: { listId: "behaviorClassList", open: (name) => openBehaviorForClass(name) },
+  randomPick: { listId: "randomClassList", open: (name) => openRandomStudentForClass(name) },
+  groupsPick: { listId: "groupsClassList", open: (name) => openGroupsSetupForClass(name) },
+  checklistPick: { listId: "checklistClassList", open: (name) => openChecklistForClass(name) }
+};
+function getActiveClass() {
+  const name = localStorage.getItem(ACTIVE_CLASS_KEY);
+  return name && classesData[name] ? name : null;
+}
+function setActiveClass(name) {
+  if (name) localStorage.setItem(ACTIVE_CLASS_KEY, name);
+  else localStorage.removeItem(ACTIVE_CLASS_KEY);
+  renderActiveClassBar();
+}
+function renderActiveClassBar() {
+  const active = getActiveClass();
+  const names = Object.keys(classesData);
+  const sel = document.getElementById("activeClassSelect");
+  sel.innerHTML = `<option value="">– jedes Mal wählen –</option>` + names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)} (${classesData[n].length})</option>`).join("");
+  sel.value = active || "";
+  document.getElementById("activeClassBar").classList.toggle("is-set", !!active);
+  document.getElementById("activeClassBar").style.display = names.length ? "" : "none";
+  // Zurück-Knöpfe der Module führen bei gesetzter Klasse direkt zum Start
+  document.querySelectorAll("[data-back-seatingpick], [data-back-behaviorpick], [data-back-randompick], [data-back-groupspick], [data-back-checklistpick]")
+    .forEach(b => { b.textContent = active ? "← Start" : "← Klassenwahl"; });
+}
+document.getElementById("activeClassSelect").addEventListener("change", (e) => setActiveClass(e.target.value || null));
 function navigateHome(target) {
+  const pick = CLASS_PICK_TARGETS[target];
+  if (pick) {
+    const active = getActiveClass();
+    if (active) { pick.open(active); return; }
+    renderClassPickerList(pick.listId, (name) => { setActiveClass(name); pick.open(name); });
+    showView(target);
+    return;
+  }
   if (target === "classes") { renderClassesList(); showView("classes"); }
-  else if (target === "seatingPick") { renderClassPickerList("seatingClassList", (name) => openSeatingListForClass(name)); showView("seatingPick"); }
-  else if (target === "behaviorPick") { renderClassPickerList("behaviorClassList", (name) => openBehaviorForClass(name)); showView("behaviorPick"); }
   else if (target === "boardsList") { renderBoardsList(); showView("boardsList"); }
-  else if (target === "randomPick") { renderClassPickerList("randomClassList", (name) => openRandomStudentForClass(name)); showView("randomPick"); }
-  else if (target === "groupsPick") { renderClassPickerList("groupsClassList", (name) => openGroupsSetupForClass(name)); showView("groupsPick"); }
   else if (target === "movementCats") { renderMovementCats(); showView("movementCats"); }
-  else if (target === "checklistPick") { renderClassPickerList("checklistClassList", (name) => openChecklistForClass(name)); showView("checklistPick"); }
-  else if (target === "schreibraumPick") { showView("schreibraumPick"); }
+  else if (target === "schreibraumPick") { window.open("https://guc-13.github.io/Schreibraum/", "_blank"); }
 }
 function renderHomeTiles() {
   const order = getHomeOrder();
@@ -1194,23 +1212,89 @@ function renderSettingsTiles() {
 }
 document.getElementById("homeSettingsBtn").addEventListener("click", () => {
   renderSettingsTiles();
+  renderBackupStatus();
   document.getElementById("settingsOverlay").classList.remove("hidden");
 });
 document.getElementById("settingsCloseBtn").addEventListener("click", () => document.getElementById("settingsOverlay").classList.add("hidden"));
-document.getElementById("exportBackupBtn").addEventListener("click", () => {
+/* ---- Datensicherung: dauerhafter Speicher, Backup über Teilen-Menü, Erinnerung ---- */
+// Meta-Schlüssel bewusst ohne "kz_"-Präfix, damit sie nicht ins Backup gelangen
+const LAST_BACKUP_KEY = "kzmeta_last_backup";
+const BACKUP_SNOOZE_KEY = "kzmeta_backup_snooze";
+const FIRST_DATA_KEY = "kzmeta_first_data";
+const DAY_MS = 24 * 60 * 60 * 1000;
+let storagePersisted = null;
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persisted()
+    .then(p => p ? true : navigator.storage.persist())
+    .then(p => { storagePersisted = !!p; renderBackupStatus(); })
+    .catch(() => {});
+}
+function getMetaNum(key) { return Number(localStorage.getItem(key)) || 0; }
+function buildBackupFile() {
   const data = {};
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key.startsWith("kz_")) data[key] = localStorage.getItem(key);
   }
   const payload = { app: "klassenzimmer-manager", exportedAt: new Date().toISOString(), data };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
   const dateStr = new Date().toISOString().slice(0, 10);
-  a.href = url; a.download = `klassenzimmer-backup-${dateStr}.json`;
+  return new File([JSON.stringify(payload, null, 2)], `klassenzimmer-backup-${dateStr}.json`, { type: "application/json" });
+}
+function markBackupDone() {
+  localStorage.setItem(LAST_BACKUP_KEY, String(Date.now()));
+  localStorage.removeItem(BACKUP_SNOOZE_KEY);
+  renderBackupStatus();
+  renderBackupReminder();
+}
+function downloadBackupFile(file) {
+  const url = URL.createObjectURL(file);
+  const a = document.createElement("a");
+  a.href = url; a.download = file.name;
   document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function exportBackup() {
+  const file = buildBackupFile();
+  // iPad/iPhone: Teilen-Menü → «In Dateien sichern», Speicherort selbst wählen
+  if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: file.name })
+      .then(markBackupDone)
+      .catch(err => { if (err && err.name !== "AbortError") { downloadBackupFile(file); markBackupDone(); } });
+    return;
+  }
+  downloadBackupFile(file);
+  markBackupDone();
+}
+function renderBackupStatus() {
+  const el = document.getElementById("backupStatusText");
+  if (!el) return;
+  const last = getMetaNum(LAST_BACKUP_KEY);
+  const lastText = last ? `Letzte Sicherung: ${formatDateTimeDE(last)}` : "Noch keine Sicherung erstellt.";
+  const persistText = storagePersisted === true ? "Speicher auf diesem Gerät: dauerhaft ✓"
+    : storagePersisted === false ? "Speicher: vom Browser verwaltet – App am besten über den Home-Bildschirm öffnen." : "";
+  el.innerHTML = `${escapeHtml(lastText)}${persistText ? "<br>" + escapeHtml(persistText) : ""}`;
+}
+function renderBackupReminder() {
+  const box = document.getElementById("backupReminder");
+  const hasData = Object.keys(classesData).length > 0;
+  const now = Date.now();
+  if (hasData && !getMetaNum(FIRST_DATA_KEY)) localStorage.setItem(FIRST_DATA_KEY, String(now));
+  const last = getMetaNum(LAST_BACKUP_KEY);
+  const due = last ? now - last > 14 * DAY_MS : (hasData && now - getMetaNum(FIRST_DATA_KEY) > 3 * DAY_MS);
+  const show = hasData && due && now > getMetaNum(BACKUP_SNOOZE_KEY);
+  box.classList.toggle("hidden", !show);
+  if (show) {
+    const days = last ? Math.floor((now - last) / DAY_MS) : 0;
+    document.getElementById("backupReminderText").textContent = last
+      ? `Letzte Datensicherung vor ${days} Tagen.`
+      : "Noch keine Datensicherung erstellt.";
+  }
+}
+document.getElementById("exportBackupBtn").addEventListener("click", exportBackup);
+document.getElementById("backupReminderBtn").addEventListener("click", exportBackup);
+document.getElementById("backupReminderLaterBtn").addEventListener("click", () => {
+  localStorage.setItem(BACKUP_SNOOZE_KEY, String(Date.now() + 3 * DAY_MS));
+  renderBackupReminder();
 });
 document.getElementById("importBackupBtn").addEventListener("click", () => document.getElementById("importBackupFileInput").click());
 document.getElementById("importBackupFileInput").addEventListener("change", (e) => {
@@ -1281,6 +1365,8 @@ function wireHomeTileDrag() {
   });
 }
 renderHomeTiles();
+renderActiveClassBar();
+renderBackupReminder();
 
 function renderClassPickerList(containerId, onPick) {
   const el = document.getElementById(containerId);
@@ -1354,6 +1440,7 @@ document.getElementById("classModalSave").addEventListener("click", () => {
       absenceData[name] = absenceData[classModalEditingName]; delete absenceData[classModalEditingName];
       if (!checklistData[name]) delete checklistData[name];
       if (!absenceData[name]) delete absenceData[name];
+      if (localStorage.getItem(ACTIVE_CLASS_KEY) === classModalEditingName) localStorage.setItem(ACTIVE_CLASS_KEY, name);
       persistSeatings(); persistBehavior(); persistColors();
       persistChecklist(); persistAbsence();
     }
@@ -1995,6 +2082,7 @@ seatingCanvasWrapEl.addEventListener("pointerdown", (e) => {
   if (seatingPinchPointers.size === 2) { seatingPinchStartDist = seatingPinchDist(); seatingPinchStartZoom = seatingZoom; seatingPanStart = null; }
   else if (seatingPinchPointers.size === 1) {
     const onInteractive = e.target.closest(".table-el, .object-el");
+    if (!onInteractive) selectSeatingItem(null);
     seatingPanStart = (!presentationMode && onInteractive) ? null : { x: e.clientX, y: e.clientY, scrollLeft: seatingCanvasWrapEl.scrollLeft, scrollTop: seatingCanvasWrapEl.scrollTop };
   }
 });
@@ -2053,7 +2141,7 @@ function setPresentationMode(on) {
   document.getElementById("presentationRotateBtn").classList.toggle("hidden", !presentationMode);
   document.getElementById("presentationRotateBtn").classList.toggle("active", isPresentationRotated());
   const btn = document.getElementById("presentationModeBtn");
-  btn.textContent = presentationMode ? "✕" : "🖥️";
+  btn.innerHTML = presentationMode ? '✕<span class="tb-label">Beenden</span>' : '🖥️<span class="tb-label">Präsentieren</span>';
   btn.title = presentationMode ? "Präsentieransicht verlassen" : "Präsentieransicht";
   btn.classList.toggle("active", presentationMode);
   renderSeatingCanvas();
@@ -2091,6 +2179,7 @@ function openSeatingEditor(seatingId) {
   setPresentationMode(false);
   if (!currentSeating.assignmentHistory) currentSeating.assignmentHistory = [];
   updateSeatHistoryBtn();
+  selectedSeatingItemId = null;
   seatingUndoStack = [];
   seatingRedoStack = [];
   updateCanvasUndoBtn();
@@ -2184,6 +2273,14 @@ function wireResizeHandle(handleEl, obj, minW, minH, onResize) {
     saveSeating();
   });
 }
+let selectedSeatingItemId = null;
+function selectSeatingItem(id) {
+  if (presentationMode) id = null;
+  selectedSeatingItemId = id;
+  document.querySelectorAll("#seatingCanvas .table-el, #seatingCanvas .object-el").forEach(el => {
+    el.classList.toggle("is-selected", !!id && (el.dataset.tableId === id || el.dataset.objectId === id));
+  });
+}
 function renderSeatingCanvas() {
   const canvas = document.getElementById("seatingCanvas");
   canvas.innerHTML = "";
@@ -2192,8 +2289,9 @@ function renderSeatingCanvas() {
     if (!def) return;
     if (!o.w) { o.w = def.w; o.h = def.h; }
     const objEl = document.createElement("div");
-    objEl.className = "object-el";
+    objEl.className = "object-el" + (selectedSeatingItemId === o.id ? " is-selected" : "");
     objEl.dataset.objectId = o.id;
+    objEl.addEventListener("pointerdown", () => selectSeatingItem(o.id), true);
     objEl.style.width = o.w + "px"; objEl.style.height = o.h + "px";
     const objTotalRot = (o.rot || 0) + (isPresentationRotated() ? 90 : 0);
     objEl.innerHTML = `
@@ -2223,8 +2321,9 @@ function renderSeatingCanvas() {
     const dims = { w: t.w, h: t.h };
     const isBare = t.type.startsWith("platz");
     const tableEl = document.createElement("div");
-    tableEl.className = `table-el table-${t.type}`;
+    tableEl.className = `table-el table-${t.type}` + (selectedSeatingItemId === t.id ? " is-selected" : "");
     tableEl.dataset.tableId = t.id;
+    tableEl.addEventListener("pointerdown", () => selectSeatingItem(t.id), true);
     tableEl.style.width = dims.w + "px"; tableEl.style.height = dims.h + "px";
     tableEl.innerHTML = `
       <div class="table-shape${isBare ? " bare" : ""}" style="width:${dims.w}px; height:${dims.h}px;">
@@ -2250,6 +2349,8 @@ function renderSeatingCanvas() {
     });
   });
   renderSeatingPool();
+  const isEmpty = !currentSeating.tables.length && !(currentSeating.objects || []).length;
+  document.getElementById("seatingEmptyHint").classList.toggle("hidden", !isEmpty || presentationMode);
 }
 function seatNameSizeClass(name) {
   const len = name.length;
@@ -2270,6 +2371,39 @@ function updateTableTransform(tableEl, table) {
   const d = displayRect(table);
   tableEl.style.transform = `translate(${d.x}px, ${d.y}px) rotate(${d.rot}deg)`;
 }
+
+/* ---- Sitzplan drucken / als PDF sichern (über den Druckdialog des Geräts) ---- */
+function buildSeatingPrintArea() {
+  const area = document.getElementById("seatingPrintArea");
+  const b = computeSeatingBounds();
+  const pad = 20;
+  const w = b.maxX - b.minX + pad * 2, h = b.maxY - b.minY + pad * 2;
+  // A4 quer abzüglich Rand (ca. 1040 × 700 px), Platz für Kopf- und Fusszeile
+  const scale = Math.min(1040 / w, 610 / h, 1.4);
+  const assigned = assignedStudentIds();
+  const unassigned = (classesData[currentSeatingClass] || []).filter(s => !assigned.has(s.id));
+  area.innerHTML = `
+    <div class="sp-head">
+      <div><div class="sp-title">🪑 ${escapeHtml(currentSeating.name)}</div><div class="sp-sub">Klasse ${escapeHtml(currentSeatingClass)}</div></div>
+      <div class="sp-date">Stand: ${formatDateTimeDE(currentSeating.updatedAt)}</div>
+    </div>
+    <div class="sp-stage" style="width:${Math.round(w * scale)}px; height:${Math.round(h * scale)}px;">
+      <div class="sp-canvas" style="transform:scale(${scale}) translate(${pad - b.minX}px, ${pad - b.minY}px);">${document.getElementById("seatingCanvas").innerHTML}</div>
+    </div>
+    ${unassigned.length ? `<div class="sp-foot">Ohne Platz: ${unassigned.map(s => escapeHtml(studentDisplayName(s, currentSeating.nameStyle))).join(", ")}</div>` : ""}`;
+  area.querySelectorAll(".pool-chip-canvas, .table-remove-btn, .table-rotate-handle, .table-resize-handle").forEach(el => el.remove());
+  area.querySelectorAll(".is-selected").forEach(el => el.classList.remove("is-selected"));
+}
+function printSeatingPlan() {
+  if (!currentSeating) return;
+  if (!currentSeating.tables.length) { alert("Bitte zuerst Tische hinzufügen."); return; }
+  buildSeatingPrintArea();
+  document.body.classList.add("printing-seating");
+  const cleanup = () => { document.body.classList.remove("printing-seating"); window.removeEventListener("afterprint", cleanup); };
+  window.addEventListener("afterprint", cleanup);
+  setTimeout(() => window.print(), 50);
+}
+document.getElementById("printSeatingBtn").addEventListener("click", printSeatingPlan);
 
 document.getElementById("addTable1erBtn").addEventListener("click", () => addTable("1er"));
 document.getElementById("addTable2erBtn").addEventListener("click", () => addTable("2er"));
@@ -2375,9 +2509,11 @@ function applyLayoutTemplate(kind) {
   document.getElementById("layoutTemplateOverlay").classList.add("hidden");
 }
 document.getElementById("loadTemplateBtn").addEventListener("click", () => document.getElementById("layoutTemplateOverlay").classList.remove("hidden"));
+document.getElementById("seatingEmptyTemplateBtn").addEventListener("click", () => document.getElementById("layoutTemplateOverlay").classList.remove("hidden"));
 document.getElementById("layoutTemplateCancel").addEventListener("click", () => document.getElementById("layoutTemplateOverlay").classList.add("hidden"));
 document.querySelectorAll("[data-apply-template]").forEach(btn => btn.addEventListener("click", () => {
   const kind = btn.dataset.applyTemplate;
+  if (!currentSeating.tables.length && !(currentSeating.objects || []).length) { applyLayoutTemplate(kind); return; }
   openConfirm("Aktuelle Tische und Raum-Objekte werden durch die Vorlage ersetzt (zugeteilte SuS werden wieder frei im Raster platziert). Fortfahren?", () => applyLayoutTemplate(kind), null, "Vorlage laden");
 }));
 
@@ -3264,6 +3400,7 @@ function openBoardEditor(boardId) {
   applyBoardBg();
   setPresentMode(false);
   renderBoardCanvas();
+  selectBoardItem(null);
   showView("boardEditor");
 }
 function saveBoard() { currentBoard.updatedAt = Date.now(); persistBoards(); }
@@ -3676,6 +3813,11 @@ let selectedBoardItemId = null;
 function selectBoardItem(id) {
   selectedBoardItemId = id;
   document.querySelectorAll(".board-item").forEach(w => w.classList.toggle("selected", w.dataset.itemId === id));
+  // Textformatierung nur zeigen, wenn ein Textfeld ausgewählt ist
+  const sel = id && currentBoard ? currentBoard.elements.find(x => x.id === id) : null;
+  const isText = !!sel && sel.type === "text";
+  document.getElementById("boardFmtGroup").classList.toggle("hidden", !isText);
+  document.getElementById("boardFmtHint").classList.toggle("hidden", isText || !(currentBoard && currentBoard.elements.some(x => x.type === "text")));
 }
 document.getElementById("boardCanvas").addEventListener("pointerdown", (e) => {
   if (e.target.id === "boardCanvas") selectBoardItem(null);
@@ -4083,6 +4225,8 @@ function setPresentMode(on) {
   else if (document.fullscreenElement) { document.exitFullscreen && document.exitFullscreen().catch(() => {}); }
 }
 document.getElementById("exportBoardBtn").addEventListener("click", () => { if (currentBoard) exportBoardAsTemplate(currentBoard); });
+wireSeatingDropdown("boardAddMenuBtn", "boardAddMenu");
+wireSeatingDropdown("boardBgMenuBtn", "boardBgMenu");
 document.getElementById("presentModeBtn").addEventListener("click", () => setPresentMode(true));
 document.getElementById("exitPresentBtn").addEventListener("click", () => setPresentMode(false));
 
@@ -4308,353 +4452,6 @@ function openMovementDetail(ex) {
   document.getElementById("movementDetailModal").classList.remove("hidden");
 }
 document.getElementById("movementDetailClose").addEventListener("click", () => document.getElementById("movementDetailModal").classList.add("hidden"));
-
-/* =========================================================================
-   SCHREIB-RAUM (Live-Antworten per QR-Code, gemeinsames Firebase-Projekt)
-   ========================================================================= */
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyC6CidIBQ4YZmg-v7EVgr8penemrvusKRE",
-  authDomain: "mathe-duell-klassenmodus.firebaseapp.com",
-  projectId: "mathe-duell-klassenmodus",
-  storageBucket: "mathe-duell-klassenmodus.firebasestorage.app",
-  messagingSenderId: "913891950917",
-  appId: "1:913891950917:web:c98d999f19c0946e4cfe2c"
-};
-function isFirebaseConfigured() { return !!FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith("PASTE_HIER"); }
-let firebaseDb = null, firebaseReady = false;
-function loadScriptOnce(src) {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
-    const s = document.createElement("script");
-    s.src = src; s.onload = () => resolve(); s.onerror = () => reject(new Error("load failed: " + src));
-    document.head.appendChild(s);
-  });
-}
-async function ensureFirebase() {
-  if (firebaseReady) return true;
-  if (!isFirebaseConfigured()) return false;
-  try {
-    await loadScriptOnce("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
-    await loadScriptOnce("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js");
-    if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    firebaseDb = firebase.firestore();
-    firebaseDb.settings({ experimentalAutoDetectLongPolling: true });
-    firebaseReady = true;
-    return true;
-  } catch (e) {
-    console.error("Schreib-Raum: Firebase konnte nicht geladen werden.", e);
-    return false;
-  }
-}
-let schreibraumPin = null, schreibraumIsHost = false;
-let schreibraumStudentId = null, schreibraumStudentName = null;
-let schreibraumStudentsUnsub = null, schreibraumRoomUnsub = null;
-let schreibraumPendingJoinPin = null;
-const SCHREIBRAUM_AWAY_MS = 15000;
-let schreibraumHeartbeatIv = null;
-let schreibraumLastStudents = [];
-let schreibraumHostWatchIv = null;
-function schreibraumGeneratePin() { return String(Math.floor(Math.random() * 9000) + 1000); }
-function schreibraumWriteActive() {
-  if (!schreibraumPin || !schreibraumStudentId) return;
-  firebaseDb.collection("writerooms").doc(schreibraumPin).collection("students").doc(schreibraumStudentId)
-    .update({ active: !document.hidden, lastSeen: firebase.firestore.FieldValue.serverTimestamp() })
-    .catch(err => console.error("Schreib-Raum: Status konnte nicht aktualisiert werden.", err));
-}
-function schreibraumStartHeartbeat() {
-  schreibraumStopHeartbeat();
-  document.addEventListener("visibilitychange", schreibraumWriteActive);
-  schreibraumHeartbeatIv = setInterval(schreibraumWriteActive, 4000);
-}
-function schreibraumStopHeartbeat() {
-  if (schreibraumHeartbeatIv) { clearInterval(schreibraumHeartbeatIv); schreibraumHeartbeatIv = null; }
-  document.removeEventListener("visibilitychange", schreibraumWriteActive);
-}
-let schreibraumCurrentQuestion = "";
-function schreibraumRenderHostGrid() {
-  const students = schreibraumLastStudents;
-  const html = students.map(s => {
-    const lastSeenMs = s.lastSeen && typeof s.lastSeen.toMillis === "function" ? s.lastSeen.toMillis() : 0;
-    const away = s.active === false || (lastSeenMs > 0 && Date.now() - lastSeenMs > SCHREIBRAUM_AWAY_MS);
-    return `
-      <div class="setup-card${away ? " schreibraum-card-away" : ""}" style="padding:12px;">
-        <div style="font-weight:800; font-size:1.1rem; margin-bottom:6px;">${escapeHtml(s.name)}${away ? '<span class="schreibraum-away-badge">Abwesend</span>' : ""}</div>
-        ${s.mode === "draw" && s.drawingData
-          ? `<img src="${s.drawingData}" style="width:100%; border-radius:8px; border:1px solid var(--border); background:#fff;">`
-          : `<div style="white-space:pre-wrap; min-height:60px; color:var(--text);">${escapeHtml(s.text || "")}</div>`}
-      </div>`;
-  }).join("") || `<p style="color:var(--muted);">Noch niemand beigetreten.</p>`;
-  document.getElementById("schreibraumHostGrid").innerHTML = html;
-  document.getElementById("schreibraumMonitorGrid").innerHTML = html;
-  document.getElementById("schreibraumMonitorCount").textContent = String(students.length);
-}
-function schreibraumRenderMonitorQuestion() {
-  const qEl = document.getElementById("schreibraumMonitorQuestion");
-  if (schreibraumCurrentQuestion) { qEl.textContent = "❓ " + schreibraumCurrentQuestion; qEl.classList.remove("hidden"); }
-  else { qEl.classList.add("hidden"); }
-}
-function schreibraumStartHostWatch() {
-  schreibraumStopHostWatch();
-  schreibraumHostWatchIv = setInterval(schreibraumRenderHostGrid, 3000);
-}
-function schreibraumStopHostWatch() {
-  if (schreibraumHostWatchIv) { clearInterval(schreibraumHostWatchIv); schreibraumHostWatchIv = null; }
-}
-function schreibraumStopListening() {
-  if (schreibraumStudentsUnsub) { schreibraumStudentsUnsub(); schreibraumStudentsUnsub = null; }
-  if (schreibraumRoomUnsub) { schreibraumRoomUnsub(); schreibraumRoomUnsub = null; }
-  schreibraumStopHeartbeat();
-  schreibraumStopHostWatch();
-}
-function schreibraumShowNote(text) {
-  const note = document.getElementById("schreibraumSetupNote");
-  note.textContent = text;
-  note.classList.remove("hidden");
-}
-async function schreibraumCheckReady() {
-  if (!isFirebaseConfigured()) { schreibraumShowNote("Der Schreib-Raum ist auf dieser Seite noch nicht eingerichtet (fehlende Firebase-Konfiguration)."); return false; }
-  const ok = await ensureFirebase();
-  if (!ok) schreibraumShowNote("Verbindung zum Schreib-Raum-Server konnte nicht hergestellt werden. Prüfe die Internetverbindung.");
-  return ok;
-}
-document.getElementById("schreibraumHostBtn").addEventListener("click", async () => {
-  const ok = await schreibraumCheckReady();
-  if (!ok) return;
-  schreibraumIsHost = true;
-  let pin = schreibraumGeneratePin(), exists = true, attempts = 0;
-  try {
-    do {
-      pin = schreibraumGeneratePin();
-      const doc = await firebaseDb.collection("writerooms").doc(pin).get();
-      exists = doc.exists;
-      attempts++;
-    } while (exists && attempts < 5);
-    schreibraumPin = pin;
-    await firebaseDb.collection("writerooms").doc(pin).set({ createdAt: Date.now(), phase: "open", question: "" });
-  } catch (e) {
-    console.error("Schreib-Raum: Raum konnte nicht erstellt werden.", e);
-    openConfirm("Raum konnte nicht erstellt werden. Prüfe die Internetverbindung.", null, "OK");
-    return;
-  }
-  document.getElementById("schreibraumPinDisplay").textContent = pin;
-  document.getElementById("schreibraumRoomPin").textContent = "· PIN " + pin;
-  document.getElementById("schreibraumMonitorPin").textContent = "· PIN " + pin;
-  document.getElementById("schreibraumQuestionInput").value = "";
-  schreibraumCurrentQuestion = "";
-  schreibraumRenderMonitorQuestion();
-  document.getElementById("schreibraumHostGrid").innerHTML = "";
-  document.getElementById("schreibraumMonitorGrid").innerHTML = "";
-  document.getElementById("schreibraumHostCount").textContent = "0";
-  document.getElementById("schreibraumMonitorCount").textContent = "0";
-  showView("schreibraumHost");
-  const joinUrl = `${location.origin}${location.pathname}?schreibraum=${pin}`;
-  qrDrawToCanvas(document.getElementById("schreibraumQrCanvas"), joinUrl, 4);
-  schreibraumStopListening();
-  schreibraumStudentsUnsub = firebaseDb.collection("writerooms").doc(pin).collection("students").onSnapshot(snap => {
-    const students = [];
-    snap.forEach(d => students.push({ id: d.id, ...d.data() }));
-    students.sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
-    document.getElementById("schreibraumHostCount").textContent = String(students.length);
-    schreibraumLastStudents = students;
-    schreibraumRenderHostGrid();
-  }, err => console.error("Schreib-Raum: Antworten konnten nicht geladen werden.", err));
-  schreibraumStartHostWatch();
-});
-document.getElementById("schreibraumQrOpenBtn").addEventListener("click", () => {
-  const joinUrl = `${location.origin}${location.pathname}?schreibraum=${schreibraumPin}`;
-  qrDrawToCanvas(document.getElementById("schreibraumQrCanvasBig"), joinUrl, 10);
-  document.getElementById("schreibraumQrBigPin").textContent = schreibraumPin;
-  document.getElementById("schreibraumQrFullscreen").classList.remove("hidden");
-});
-document.getElementById("schreibraumQrCloseBtn").addEventListener("click", () => {
-  document.getElementById("schreibraumQrFullscreen").classList.add("hidden");
-});
-let schreibraumQuestionSaveTimeout = null;
-document.getElementById("schreibraumQuestionInput").addEventListener("input", (e) => {
-  if (!schreibraumPin) return;
-  schreibraumCurrentQuestion = e.target.value;
-  schreibraumRenderMonitorQuestion();
-  clearTimeout(schreibraumQuestionSaveTimeout);
-  const question = e.target.value;
-  schreibraumQuestionSaveTimeout = setTimeout(() => {
-    firebaseDb.collection("writerooms").doc(schreibraumPin).update({ question }).catch(err => console.error("Schreib-Raum: Frage konnte nicht gespeichert werden.", err));
-  }, 400);
-});
-document.getElementById("schreibraumHostCloseBtn").addEventListener("click", () => {
-  schreibraumStopListening();
-  showView("home");
-});
-document.getElementById("schreibraumMonitorOpenBtn").addEventListener("click", () => {
-  showView("schreibraumMonitor");
-});
-document.getElementById("schreibraumMonitorBackBtn").addEventListener("click", () => {
-  showView("schreibraumHost");
-});
-document.getElementById("schreibraumJoinBtn").addEventListener("click", async () => {
-  const pin = schreibraumPendingJoinPin;
-  const name = document.getElementById("schreibraumJoinNameInput").value.trim();
-  const errEl = document.getElementById("schreibraumJoinError");
-  errEl.classList.add("hidden");
-  if (!pin) { errEl.textContent = "Ungültiger Link. Bitte über den QR-Code beitreten."; errEl.classList.remove("hidden"); return; }
-  if (!name) { errEl.textContent = "Bitte einen Namen eingeben."; errEl.classList.remove("hidden"); return; }
-  const ok = await ensureFirebase();
-  if (!ok) { errEl.textContent = "Keine Verbindung zum Schreib-Raum-Server möglich."; errEl.classList.remove("hidden"); return; }
-  try {
-    const roomRef = firebaseDb.collection("writerooms").doc(pin);
-    const roomDoc = await roomRef.get();
-    if (!roomDoc.exists) { errEl.textContent = "Diese PIN existiert nicht."; errEl.classList.remove("hidden"); return; }
-    schreibraumIsHost = false;
-    schreibraumPin = pin;
-    schreibraumStudentName = name;
-    const studentRef = await roomRef.collection("students").add({ name, text: "", mode: "text", joinedAt: Date.now(), updatedAt: Date.now(), active: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
-    schreibraumStudentId = studentRef.id;
-    document.getElementById("schreibraumWriteName").textContent = name;
-    document.getElementById("schreibraumWriteTextarea").value = "";
-    document.getElementById("schreibraumWriteQuestion").classList.add("hidden");
-    schreibraumSetMode("text");
-    showView("schreibraumWrite");
-    schreibraumStopListening();
-    schreibraumStartHeartbeat();
-    schreibraumRoomUnsub = roomRef.onSnapshot(snap => {
-      const room = snap.data();
-      if (!room) return;
-      const qEl = document.getElementById("schreibraumWriteQuestion");
-      if (room.question) { qEl.textContent = "❓ " + room.question; qEl.classList.remove("hidden"); }
-      else { qEl.classList.add("hidden"); }
-    }, err => console.error("Schreib-Raum: Raum-Update fehlgeschlagen.", err));
-  } catch (e) {
-    console.error("Schreib-Raum: Beitritt fehlgeschlagen.", e);
-    errEl.textContent = "Beitritt fehlgeschlagen. Prüfe die Internetverbindung.";
-    errEl.classList.remove("hidden");
-  }
-});
-let schreibraumSaveTimeout = null;
-document.getElementById("schreibraumWriteTextarea").addEventListener("input", (e) => {
-  if (!schreibraumPin || !schreibraumStudentId) return;
-  clearTimeout(schreibraumSaveTimeout);
-  const text = e.target.value;
-  schreibraumSaveTimeout = setTimeout(() => {
-    firebaseDb.collection("writerooms").doc(schreibraumPin).collection("students").doc(schreibraumStudentId).update({ text, mode: "text", updatedAt: Date.now() }).catch(err => console.error("Schreib-Raum: Antwort konnte nicht gespeichert werden.", err));
-  }, 400);
-});
-
-/* ---- Schreib-Raum: Zeichnen ---- */
-let schreibraumMode = "text";
-function schreibraumSetMode(mode) {
-  schreibraumMode = mode;
-  document.getElementById("schreibraumWriteTextarea").classList.toggle("hidden", mode !== "text");
-  document.getElementById("schreibraumDrawWrap").classList.toggle("hidden", mode !== "draw");
-  document.getElementById("schreibraumModeTextBtn").classList.toggle("btn-active", mode === "text");
-  document.getElementById("schreibraumModeDrawBtn").classList.toggle("btn-active", mode === "draw");
-  if (mode === "draw") schreibraumSetupCanvas();
-}
-document.getElementById("schreibraumModeTextBtn").addEventListener("click", () => schreibraumSetMode("text"));
-document.getElementById("schreibraumModeDrawBtn").addEventListener("click", () => schreibraumSetMode("draw"));
-let schreibraumCanvasReady = false;
-let schreibraumPenColor = "#0f172a", schreibraumPenSize = 6, schreibraumIsEraser = false;
-function schreibraumSetupCanvas() {
-  const canvas = document.getElementById("schreibraumDrawCanvas");
-  const rect = canvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.round(rect.width * dpr);
-  canvas.height = Math.round(rect.height * dpr);
-  const ctx = canvas.getContext("2d");
-  ctx.scale(dpr, dpr);
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, rect.width, rect.height);
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  schreibraumCanvasReady = true;
-}
-document.querySelectorAll(".schreibraum-color-swatch").forEach(btn => btn.addEventListener("click", () => {
-  schreibraumPenColor = btn.dataset.color;
-  schreibraumIsEraser = false;
-  document.querySelectorAll(".schreibraum-color-swatch").forEach(b => b.classList.toggle("schreibraum-active", b === btn));
-  document.getElementById("schreibraumEraserBtn").classList.remove("btn-active");
-}));
-document.querySelectorAll(".schreibraum-size-btn").forEach(btn => btn.addEventListener("click", () => {
-  schreibraumPenSize = Number(btn.dataset.size);
-  document.querySelectorAll(".schreibraum-size-btn").forEach(b => b.classList.toggle("schreibraum-active", b === btn));
-}));
-document.getElementById("schreibraumEraserBtn").addEventListener("click", () => {
-  schreibraumIsEraser = !schreibraumIsEraser;
-  document.getElementById("schreibraumEraserBtn").classList.toggle("btn-active", schreibraumIsEraser);
-});
-(function schreibraumWireCanvas() {
-  const canvas = document.getElementById("schreibraumDrawCanvas");
-  let drawing = false, points = [];
-  function pos(e) {
-    const rect = canvas.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  }
-  function strokeSegment(p0, p1, p2) {
-    const ctx = canvas.getContext("2d");
-    ctx.strokeStyle = schreibraumIsEraser ? "#ffffff" : schreibraumPenColor;
-    ctx.lineWidth = schreibraumIsEraser ? schreibraumPenSize * 4 : schreibraumPenSize;
-    const mid1 = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
-    const mid2 = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-    ctx.beginPath();
-    ctx.moveTo(mid1.x, mid1.y);
-    ctx.quadraticCurveTo(p1.x, p1.y, mid2.x, mid2.y);
-    ctx.stroke();
-  }
-  canvas.addEventListener("pointerdown", (e) => {
-    if (!schreibraumCanvasReady) schreibraumSetupCanvas();
-    drawing = true;
-    const p = pos(e);
-    points = [p, p];
-    const ctx = canvas.getContext("2d");
-    ctx.strokeStyle = schreibraumIsEraser ? "#ffffff" : schreibraumPenColor;
-    ctx.lineWidth = schreibraumIsEraser ? schreibraumPenSize * 4 : schreibraumPenSize;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, ctx.lineWidth / 2, 0, Math.PI * 2);
-    ctx.fillStyle = ctx.strokeStyle;
-    ctx.fill();
-    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
-  });
-  canvas.addEventListener("pointermove", (e) => {
-    if (!drawing) return;
-    const p = pos(e);
-    points.push(p);
-    if (points.length >= 3) {
-      const l = points.length - 1;
-      strokeSegment(points[l - 2], points[l - 1], points[l]);
-    }
-  });
-  function endStroke() {
-    if (!drawing) return;
-    drawing = false;
-    schreibraumSyncDrawing();
-  }
-  canvas.addEventListener("pointerup", endStroke);
-  canvas.addEventListener("pointercancel", endStroke);
-  canvas.addEventListener("pointerleave", () => { if (drawing) endStroke(); });
-})();
-function schreibraumSyncDrawing() {
-  if (!schreibraumPin || !schreibraumStudentId) return;
-  const canvas = document.getElementById("schreibraumDrawCanvas");
-  const drawingData = canvas.toDataURL("image/png");
-  firebaseDb.collection("writerooms").doc(schreibraumPin).collection("students").doc(schreibraumStudentId).update({ drawingData, mode: "draw", updatedAt: Date.now() }).catch(err => console.error("Schreib-Raum: Zeichnung konnte nicht gespeichert werden.", err));
-}
-document.getElementById("schreibraumDrawClearBtn").addEventListener("click", () => {
-  schreibraumSetupCanvas();
-  schreibraumSyncDrawing();
-});
-document.getElementById("schreibraumWriteLeaveBtn").addEventListener("click", () => {
-  openConfirm("Schreib-Raum wirklich verlassen?", () => {
-    schreibraumStopListening();
-    showView("home");
-  }, "Verlassen");
-});
-(function schreibraumCheckUrlJoin() {
-  const params = new URLSearchParams(location.search);
-  const pin = params.get("schreibraum");
-  if (pin) {
-    schreibraumPendingJoinPin = pin;
-    showView("schreibraumJoin");
-    document.getElementById("schreibraumJoinNameInput").focus();
-  }
-})();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
