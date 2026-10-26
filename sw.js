@@ -1,4 +1,4 @@
-const CACHE_NAME = "klassenzimmer-cache-v7";
+const CACHE_NAME = "klassenzimmer-cache-v8";
 const FILES_TO_CACHE = ["./", "./index.html"];
 
 self.addEventListener("install", (event) => {
