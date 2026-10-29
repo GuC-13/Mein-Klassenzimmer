@@ -224,12 +224,12 @@
   #app.board-fullwidth #boardEditorView:not(.hidden) { display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
   #app.board-fullwidth #boardEditorView:not(.hidden) .board-canvas-wrap { flex: 1; min-height: 0; }
   .board-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .board-toolbar .btn { padding: 9px 13px; font-size: 0.82rem; margin-bottom: 0; }
+  .board-toolbar .btn { margin-bottom: 0; }
   .board-toolbar { position: relative; z-index: 40; }
   .board-toolbar .dropdown-panel { min-width: 220px; }
   .board-bg-swatches { display: flex; gap: 8px; padding: 4px 10px 6px; }
   .board-fmt-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-  .board-fmt-group .fmt-btn { width: 30px; height: 30px; }
+  .board-fmt-group .fmt-btn { width: 44px; height: 44px; border-radius: 10px; }
   .board-fmt-group .fmt-swatch { width: 22px; height: 22px; }
   #boardEditor_title { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .board-fmt-group.hidden, .board-fmt-hint.hidden { display: none; }
@@ -431,7 +431,7 @@
 
   <!-- KLASSEN: Import aus Excel/CSV -->
   <div id="importClassView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-classes>← Klassen</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-classes>← Klassen verwalten</button></div>
     <h1>📥 Klasse importieren</h1>
     <h2 class="sub">Unterstützt .xlsx (Excel) und .csv – es werden nur Vorname, Nachname und (falls vorhanden) Geschlecht übernommen.</h2>
     <div class="setup-card">
@@ -461,7 +461,7 @@
 
   <!-- KLASSEN: Schülerliste einer Klasse -->
   <div id="rosterView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-classes>← Klassen</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-classes>← Klassen verwalten</button></div>
     <h1 id="roster_title"></h1>
     <div class="list-card" id="rosterList"></div>
     <div class="row">
@@ -479,7 +479,7 @@
 
   <!-- SITZORDNUNG: Liste der Sitzordnungen einer Klasse -->
   <div id="seatingListView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-seatingpick>← Klassenwahl</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-seatingpick>← Klasse wählen</button></div>
     <h1 id="seatingList_title"></h1>
     <div class="list-card" id="seatingListList"></div>
     <button class="btn btn-big" id="addSeatingBtn">+ Neue Sitzordnung</button>
@@ -583,7 +583,7 @@
 
   <!-- SCHÜLERVERHALTEN: Hauptansicht -->
   <div id="behaviorView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-behaviorpick>← Klassenwahl</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-behaviorpick>← Klasse wählen</button></div>
     <h1 id="behavior_title"></h1>
     <div class="list-card" id="behaviorStudentList"></div>
     <div class="row">
@@ -613,13 +613,13 @@
   <!-- KLASSENLISTE: Klasse wählen -->
   <div id="checklistPickView" class="view hidden">
     <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
-    <h1>✅ Klassenliste – Klasse wählen</h1>
+    <h1>✅ Abhakliste – Klasse wählen</h1>
     <div class="list-card" id="checklistClassList"></div>
   </div>
 
   <!-- KLASSENLISTE: Hauptansicht -->
   <div id="checklistView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-checklistpick>← Klassenwahl</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-checklistpick>← Klasse wählen</button></div>
     <h1 id="checklist_title"></h1>
     <div class="row" style="margin-bottom:14px;">
       <button class="btn btn-outline" id="checklistAddColBtn">+ Spalte hinzufügen</button>
@@ -657,11 +657,11 @@
   <!-- LEINWAND: Editor / Präsentation -->
   <div id="boardEditorView" class="view hidden" style="max-width:none; padding:0;">
     <div class="board-toolbar" id="boardToolbarMain">
-      <button class="btn btn-secondary" data-back-boardslist>← Leinwände</button>
+      <button class="btn btn-secondary" data-back-boardslist>← Leinwand</button>
       <span style="font-weight:800;" id="boardEditor_title"></span>
       <div class="board-toolbar-sep"></div>
       <div class="dropdown-wrap">
-        <button class="btn" id="boardAddMenuBtn">+ Element ▾</button>
+        <button class="icon-toolbtn labeled" id="boardAddMenuBtn" title="Element hinzufügen">➕<span class="tb-label">Element ▾</span></button>
         <div class="dropdown-panel hidden" id="boardAddMenu">
           <button class="dropdown-item" id="addTextBtn">📝 Text</button>
           <button class="dropdown-item" id="addImageBtn">🖼️ Bild</button>
@@ -674,7 +674,7 @@
       </div>
       <input type="file" accept="image/*" id="boardImageInput" style="display:none;">
       <div class="dropdown-wrap">
-        <button class="btn btn-outline" id="boardBgMenuBtn">🎨 Hintergrund ▾</button>
+        <button class="icon-toolbtn labeled" id="boardBgMenuBtn" title="Hintergrund">🎨<span class="tb-label">Hintergrund ▾</span></button>
         <div class="dropdown-panel hidden" id="boardBgMenu">
           <div class="dropdown-section-label">Farbe</div>
           <div class="board-bg-swatches">
@@ -708,7 +708,7 @@
         <button class="fmt-swatch" style="background:#ffffff; border-color:#94a3b8;" data-fmt-color="#ffffff"></button>
       </div>
       <span class="board-fmt-hint" id="boardFmtHint">Tipp: Text antippen, um ihn zu formatieren</span>
-      <button class="btn" id="presentModeBtn" style="margin-left:auto;">🖥️ Präsentieren</button>
+      <button class="icon-toolbtn labeled" id="presentModeBtn" style="margin-left:auto;" title="Präsentieransicht">🖥️<span class="tb-label">Präsentieren</span></button>
     </div>
     <div class="board-canvas-wrap" id="boardCanvasWrap">
       <div class="board-canvas" id="boardCanvas"></div>
@@ -725,7 +725,7 @@
 
   <!-- ZUFALLSSCHÜLER: Anzeige -->
   <div id="randomStudentView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-randompick>← Klassenwahl</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-randompick>← Klasse wählen</button></div>
     <h1 id="randomStudent_title"></h1>
     <div class="result-card" style="padding:40px 20px;">
       <div class="photo-drop" id="randomStudentPhoto" style="width:160px; height:160px; margin:0 auto 20px; font-size:3rem; cursor:default;"></div>
@@ -745,7 +745,7 @@
 
   <!-- GRUPPENERSTELLUNG: Setup & Ergebnis -->
   <div id="groupsSetupView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-groupspick>← Klassenwahl</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-groupspick>← Klasse wählen</button></div>
     <h1 id="groupsSetup_title"></h1>
     <div class="setup-card">
       <label class="field-label">Modus</label>
@@ -782,7 +782,7 @@
 
   <!-- BEWEGUNGSPAUSE: Übungsliste -->
   <div id="movementListView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-movementcats>← Kategorien</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-movementcats>← Bewegungspause</button></div>
     <h1 id="movementList_title"></h1>
     <div id="movementExerciseList"></div>
   </div>
@@ -1253,7 +1253,7 @@ const HOME_TILES = [
   { id: "randomPick", cls: "tile-random", icon: "🎯", title: "Zufallsschüler", sub: "Zufällig eine Person auswählen" },
   { id: "groupsPick", cls: "tile-groups", icon: "👨‍👩‍👧‍👦", title: "Gruppenerstellung", sub: "Zufallsgruppen bilden" },
   { id: "movementCats", cls: "tile-movement", icon: "🤸", title: "Bewegungspause", sub: "Kurze Auflockerungsübungen" },
-  { id: "checklistPick", cls: "tile-checklist", icon: "✅", title: "Klassenliste", sub: "Aufgaben pro Schüler:in ankreuzen" },
+  { id: "checklistPick", cls: "tile-checklist", icon: "✅", title: "Abhakliste", sub: "Aufgaben pro Schüler:in ankreuzen" },
   { id: "schreibraumPick", cls: "tile-writeroom", icon: "🖊️", title: "Schreib-Raum", sub: "Öffnet eigene Webseite (SuS antworten live per QR-Code)" }
 ];
 const HOME_ORDER_KEY = "kz_home_order";
@@ -1303,7 +1303,7 @@ function renderActiveClassBar() {
   document.getElementById("activeClassBar").style.display = names.length ? "" : "none";
   // Zurück-Knöpfe der Module führen bei gesetzter Klasse direkt zum Start
   document.querySelectorAll("[data-back-seatingpick], [data-back-behaviorpick], [data-back-randompick], [data-back-groupspick], [data-back-checklistpick]")
-    .forEach(b => { b.textContent = active ? "← Start" : "← Klassenwahl"; });
+    .forEach(b => { b.textContent = active ? "← Start" : "← Klasse wählen"; });
 }
 document.getElementById("activeClassSelect").addEventListener("change", (e) => setActiveClass(e.target.value || null));
 function navigateHome(target) {
