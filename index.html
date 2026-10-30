@@ -2,14 +2,14 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Klassenzimmer">
 <title>Klassenzimmer-Manager</title>
 <style>
   :root {
-    --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --muted: #64748b;
+    --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --muted: #475569; --control-border: #7c8799;
     --accent: #2563eb; --accent-dark: #1d4ed8; --danger: #dc2626; --success: #16a34a;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -46,20 +46,25 @@
   .backup-reminder-actions { display: flex; gap: 8px; }
   .backup-reminder .btn { padding: 8px 12px; font-size: 0.82rem; margin-bottom: 0; }
   .home-tile .ti { font-size: 1.8rem; flex-shrink: 0; }
-  .home-tile .sub-text { display: block; font-size: 0.72rem; font-weight: 500; opacity: 0.9; margin-top: 3px; }
+  .home-tile .sub-text { display: block; font-size: 0.78rem; font-weight: 500; margin-top: 3px; }
   .home-tile-ghost { position: fixed; z-index: 500; pointer-events: none; opacity: 0.9; border-radius: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.35); }
+  .storage-full-banner { position: sticky; top: 0; z-index: 900; background: #fef2f2; color: #991b1b; border-bottom: 2px solid var(--danger); padding: 10px 16px; font-size: 0.88rem; }
+  .storage-full-banner.hidden { display: none; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 950; display: flex; align-items: center; gap: 14px; max-width: calc(100% - 32px); background: #0f172a; color: white; padding: 12px 16px; border-radius: 12px; font-size: 0.92rem; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .toast.hidden { display: none; }
+  .toast button { background: none; border: none; color: #93c5fd; font-weight: 800; font-size: 0.92rem; cursor: pointer; padding: 4px 2px; white-space: nowrap; }
   .settings-fab { position: fixed; bottom: 18px; right: 18px; width: 52px; height: 52px; border-radius: 50%; background: #334155; color: white; border: none; font-size: 1.4rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 40; }
   .settings-tile-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--border); }
   .settings-tile-row:last-child { border-bottom: none; }
-  .tile-classes { background: linear-gradient(135deg, #2563eb, #1e3a8a); }
-  .tile-seating { background: linear-gradient(135deg, #16a34a, #14532d); }
-  .tile-behavior { background: linear-gradient(135deg, #d97706, #92400e); }
-  .tile-board { background: linear-gradient(135deg, #7c3aed, #4c1d95); }
-  .tile-random { background: linear-gradient(135deg, #db2777, #831843); }
-  .tile-groups { background: linear-gradient(135deg, #0d9488, #134e4a); }
-  .tile-movement { background: linear-gradient(135deg, #ea580c, #7c2d12); }
-  .tile-checklist { background: linear-gradient(135deg, #059669, #064e3b); }
-  .tile-writeroom { background: linear-gradient(135deg, #dc2626, #7f1d1d); }
+  .tile-classes { background: linear-gradient(135deg, #1d4ed8, #1e3a8a); }
+  .tile-seating { background: linear-gradient(135deg, #15803d, #14532d); }
+  .tile-behavior { background: linear-gradient(135deg, #b45309, #92400e); }
+  .tile-board { background: linear-gradient(135deg, #6d28d9, #4c1d95); }
+  .tile-random { background: linear-gradient(135deg, #be185d, #831843); }
+  .tile-groups { background: linear-gradient(135deg, #0f766e, #134e4a); }
+  .tile-movement { background: linear-gradient(135deg, #c2410c, #7c2d12); }
+  .tile-checklist { background: linear-gradient(135deg, #047857, #064e3b); }
+  .tile-writeroom { background: linear-gradient(135deg, #b91c1c, #7f1d1d); }
 
   /* LISTS / CARDS */
   .list-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
@@ -73,7 +78,7 @@
   .empty-hint { color: var(--muted); text-align: center; padding: 30px 10px; }
 
   input[type="text"], input[type="date"], select, textarea {
-    border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 1rem; width: 100%; background: white; color: var(--text); font-family: inherit;
+    border: 1px solid var(--control-border); border-radius: 8px; padding: 10px; font-size: 1rem; width: 100%; background: white; color: var(--text); font-family: inherit; min-height: 44px;
   }
   label.field-label { font-size: 0.82rem; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; margin-top: 12px; }
   .setup-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
@@ -87,7 +92,8 @@
   .student-meta { flex: 1; min-width: 0; }
   .student-name { font-weight: 700; }
   .student-gender-badge { font-size: 0.75rem; color: var(--muted); }
-  .student-card.absent-today { opacity: 0.55; background: #fef2f2; }
+  .student-card.absent-today { background: #fef2f2; box-shadow: inset 4px 0 0 var(--danger); }
+  .student-card.absent-today .photo-drop { opacity: 0.6; }
   .absent-toggle { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
   .gender-m { color: #2563eb; } .gender-w { color: #db2777; } .gender-d { color: #16a34a; }
 
@@ -142,7 +148,7 @@
   .zoom-controls { display: flex; align-items: center; gap: 6px; }
   .zoom-controls button { width: 34px; height: 34px; border-radius: 8px; border: 2px solid var(--border); background: white; font-weight: 800; font-size: 1rem; cursor: pointer; }
   .zoom-controls .zoom-label { font-size: 0.82rem; font-weight: 700; color: var(--muted); min-width: 42px; text-align: center; }
-  .seat { width: 50px; height: 50px; border-radius: 50%; background: white; border: 2px solid #94a3b8; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: grab; overflow: hidden; touch-action: none; text-align: center; flex-shrink: 0; }
+  .seat { width: 50px; height: 50px; border-radius: 50%; background: white; border: 2px solid var(--control-border); display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: grab; overflow: hidden; touch-action: none; text-align: center; flex-shrink: 0; }
   .seat.empty { border-style: dashed; color: var(--muted); font-size: 0.7rem; cursor: default; }
   .seat .seat-photo { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-bottom: 2px; -webkit-user-drag: none; user-drag: none; user-select: none; }
   .seat, .pool-chip, .pool-chip .photo-drop img { -webkit-user-drag: none; user-drag: none; }
@@ -218,12 +224,12 @@
   #app.board-fullwidth #boardEditorView:not(.hidden) { display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
   #app.board-fullwidth #boardEditorView:not(.hidden) .board-canvas-wrap { flex: 1; min-height: 0; }
   .board-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .board-toolbar .btn { padding: 9px 13px; font-size: 0.82rem; margin-bottom: 0; }
+  .board-toolbar .btn { margin-bottom: 0; }
   .board-toolbar { position: relative; z-index: 40; }
   .board-toolbar .dropdown-panel { min-width: 220px; }
   .board-bg-swatches { display: flex; gap: 8px; padding: 4px 10px 6px; }
   .board-fmt-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-  .board-fmt-group .fmt-btn { width: 30px; height: 30px; }
+  .board-fmt-group .fmt-btn { width: 44px; height: 44px; border-radius: 10px; }
   .board-fmt-group .fmt-swatch { width: 22px; height: 22px; }
   #boardEditor_title { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .board-fmt-group.hidden, .board-fmt-hint.hidden { display: none; }
@@ -266,7 +272,8 @@
   .material-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 6px 10px 2px; }
   .material-icon { border-radius: 12px; padding: 8px 4px; cursor: pointer; position: relative; font-size: 1.7rem; border: 3px solid; user-select: none; }
   .material-icon.allowed { border-color: var(--success); background: #f0fdf4; }
-  .material-icon.forbidden { border-color: var(--danger); background: #fef2f2; opacity: 0.55; }
+  .material-icon.forbidden { border-color: var(--danger); background: #fef2f2; }
+  .material-icon.forbidden .mat-icon-inner { filter: grayscale(1); opacity: 0.6; }
   .material-icon .mat-badge { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: white; }
   .material-icon.allowed .mat-badge { background: var(--success); }
   .material-icon.forbidden .mat-badge { background: var(--danger); }
@@ -346,9 +353,49 @@
   .checklist-check { width: 30px; height: 30px; cursor: pointer; accent-color: var(--success); }
   .checklist-empty-cols { padding: 30px 16px; text-align: center; color: var(--muted); }
   .filter-row select, .filter-row input { width: auto; flex: 1; min-width: 140px; }
+
+  /* ---- Bedienbarkeit auf dem iPad (Apple HIG 44 pt, Material 48 dp / 8 dp Abstand, WCAG 2.2) ---- */
+  .btn, .display-opt-btn, .dropdown-item, .icon-toolbtn { min-height: 44px; }
+  .icon-btn { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }
+  .icon-btn:hover { background: var(--bg); }
+  .toggle-line { min-height: 44px; cursor: pointer; }
+  .toggle-line input[type="checkbox"] { width: 22px; height: 22px; flex-shrink: 0; }
+  .student-card .absent-toggle { padding: 0 6px; }
+  /* 👍 und 👎 liegen nebeneinander: gross, farbig unterscheidbar und mit Abstand, damit kein falscher Eintrag entsteht */
+  .quick-behavior-btns { gap: 12px; margin-right: 4px; }
+  .quick-behavior-btn { width: 48px; height: 48px; font-size: 1.25rem; border: 2px solid; }
+  .quick-behavior-btn.positive { background: #f0fdf4; border-color: #16a34a; }
+  .quick-behavior-btn.negative { background: #fef2f2; border-color: #dc2626; }
+  .checklist-cell { display: inline-flex; align-items: center; justify-content: center; min-width: 48px; min-height: 48px; cursor: pointer; }
+  .checklist-check { width: 32px; height: 32px; }
+  .checklist-col-actions { gap: 8px; }
+  .display-opt-btn { min-width: 44px; }
+  .checklist-col-actions button { min-width: 44px; min-height: 44px; font-size: 1rem; }
+  .board-timer-controls button { min-height: 44px; min-width: 64px; font-size: 0.9rem; padding: 8px 14px; }
+  .volume-mode-btn { min-height: 44px; }
+  /* Griffe an Tischen/Elementen: sichtbar klein, aber 44 px Trefferfläche über ein unsichtbares Feld */
+  .table-remove-btn, .table-rotate-handle, .table-resize-handle,
+  .board-item .item-remove-btn, .board-item .item-drag-handle, .board-item .item-resize-handle { width: 32px; height: 32px; }
+  .table-remove-btn::after, .table-rotate-handle::after, .table-resize-handle::after,
+  .board-item .item-remove-btn::after, .board-item .item-drag-handle::after, .board-item .item-resize-handle::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; }
+  .table-remove-btn { top: -16px; right: -16px; } .table-rotate-handle { bottom: -16px; right: -16px; } .table-resize-handle { bottom: -16px; left: -16px; }
+  /* Material entfernen löscht ohne Rückfrage: bewusst kleiner als 44 px, damit es nicht in die Umschalt-Fläche ragt (WCAG-Untergrenze 24 px) */
+  .material-icon .mat-remove-btn { width: 26px; height: 26px; top: -10px; left: -10px; font-size: 0.75rem; }
+  .material-icon .mat-label { font-size: 0.72rem; }
+  /* «Hinzufügen» im Sitzplan: einklappbar, damit es keine Tische verdeckt */
+  .room-objects-mini { padding: 0; gap: 0; }
+  .room-objects-mini > summary { list-style: none; cursor: pointer; min-height: 44px; display: flex; align-items: center; justify-content: center; padding: 0 14px; font-weight: 800; font-size: 0.9rem; color: var(--accent); }
+  .room-objects-mini > summary::-webkit-details-marker { display: none; }
+  .room-objects-mini[open] > summary { border-bottom: 1px solid var(--border); }
+  .room-objects-mini .room-objects-body { display: flex; flex-direction: column; gap: 8px; padding: 8px; }
+  .room-objects-mini .btn { padding: 8px 12px; font-size: 0.85rem; }
+  .room-objects-mini .toolbar-label { font-size: 0.78rem; }
+  .icon-btn + .icon-btn { margin-left: 8px; }
 </style>
 </head>
 <body>
+<div class="storage-full-banner hidden" id="storageFullBanner" role="alert">⚠️ <b>Speicher voll – die letzte Änderung wurde NICHT gespeichert.</b> Bitte jetzt unter ⚙️ Einstellungen ein Backup exportieren und danach grosse Bilder (Leinwand-Hintergründe, Fotos) oder alte Klassen entfernen.</div>
+<div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
 <div id="app">
 
   <!-- HOME -->
@@ -385,7 +432,7 @@
 
   <!-- KLASSEN: Import aus Excel/CSV -->
   <div id="importClassView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-classes>← Klassen</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-classes>← Klassen verwalten</button></div>
     <h1>📥 Klasse importieren</h1>
     <h2 class="sub">Unterstützt .xlsx (Excel) und .csv – es werden nur Vorname, Nachname und (falls vorhanden) Geschlecht übernommen.</h2>
     <div class="setup-card">
@@ -415,7 +462,7 @@
 
   <!-- KLASSEN: Schülerliste einer Klasse -->
   <div id="rosterView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-classes>← Klassen</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-classes>← Klassen verwalten</button></div>
     <h1 id="roster_title"></h1>
     <div class="list-card" id="rosterList"></div>
     <div class="row">
@@ -433,7 +480,7 @@
 
   <!-- SITZORDNUNG: Liste der Sitzordnungen einer Klasse -->
   <div id="seatingListView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-seatingpick>← Klassenwahl</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-seatingpick>← Klasse wählen</button></div>
     <h1 id="seatingList_title"></h1>
     <div class="list-card" id="seatingListList"></div>
     <button class="btn btn-big" id="addSeatingBtn">+ Neue Sitzordnung</button>
@@ -509,7 +556,9 @@
         <div style="font-size:0.85rem; color:var(--muted); margin-bottom:12px;">Am schnellsten mit einer fertigen Raum-Vorlage starten –<br>oder rechts einzelne Tische hinzufügen.</div>
         <button class="btn" id="seatingEmptyTemplateBtn">📐 Mit Vorlage starten</button>
       </div>
-      <div class="room-objects-mini hide-in-presentation">
+      <details class="room-objects-mini hide-in-presentation" id="roomObjectsPanel">
+        <summary>➕ Hinzufügen</summary>
+        <div class="room-objects-body">
         <span class="toolbar-label">Tische &amp; Plätze</span>
         <button class="btn btn-outline" id="addTable1erBtn">+ 1er-Tisch</button>
         <button class="btn btn-outline" id="addTable2erBtn">+ 2er-Tisch</button>
@@ -521,7 +570,8 @@
         <button class="btn btn-outline" data-add-object="tafel">+ Tafel</button>
         <button class="btn btn-outline" data-add-object="tuere">+ Türe</button>
         <button class="btn btn-outline" data-add-object="lavabo">+ Lavabo</button>
-      </div>
+        </div>
+      </details>
     </div>
   </div>
 
@@ -534,11 +584,12 @@
 
   <!-- SCHÜLERVERHALTEN: Hauptansicht -->
   <div id="behaviorView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-behaviorpick>← Klassenwahl</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-behaviorpick>← Klasse wählen</button></div>
     <h1 id="behavior_title"></h1>
     <div class="list-card" id="behaviorStudentList"></div>
     <div class="row">
       <button class="btn btn-outline" id="behaviorSummaryToggleBtn">📊 Auswertung anzeigen</button>
+      <button class="btn btn-outline" id="behaviorExportBtn" title="Gefilterte Einträge als Tabelle (Excel/Numbers) exportieren">📤 Als Tabelle exportieren</button>
     </div>
     <div class="list-card hidden" id="behaviorSummaryBox" style="margin-top:10px;"></div>
     <div class="behavior-table-wrap">
@@ -563,13 +614,13 @@
   <!-- KLASSENLISTE: Klasse wählen -->
   <div id="checklistPickView" class="view hidden">
     <div class="row back-row"><button class="btn btn-secondary" data-back-home>← Start</button></div>
-    <h1>✅ Klassenliste – Klasse wählen</h1>
+    <h1>✅ Abhakliste – Klasse wählen</h1>
     <div class="list-card" id="checklistClassList"></div>
   </div>
 
   <!-- KLASSENLISTE: Hauptansicht -->
   <div id="checklistView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-checklistpick>← Klassenwahl</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-checklistpick>← Klasse wählen</button></div>
     <h1 id="checklist_title"></h1>
     <div class="row" style="margin-bottom:14px;">
       <button class="btn btn-outline" id="checklistAddColBtn">+ Spalte hinzufügen</button>
@@ -607,11 +658,11 @@
   <!-- LEINWAND: Editor / Präsentation -->
   <div id="boardEditorView" class="view hidden" style="max-width:none; padding:0;">
     <div class="board-toolbar" id="boardToolbarMain">
-      <button class="btn btn-secondary" data-back-boardslist>← Leinwände</button>
+      <button class="btn btn-secondary" data-back-boardslist>← Leinwand</button>
       <span style="font-weight:800;" id="boardEditor_title"></span>
       <div class="board-toolbar-sep"></div>
       <div class="dropdown-wrap">
-        <button class="btn" id="boardAddMenuBtn">+ Element ▾</button>
+        <button class="icon-toolbtn labeled" id="boardAddMenuBtn" title="Element hinzufügen">➕<span class="tb-label">Element ▾</span></button>
         <div class="dropdown-panel hidden" id="boardAddMenu">
           <button class="dropdown-item" id="addTextBtn">📝 Text</button>
           <button class="dropdown-item" id="addImageBtn">🖼️ Bild</button>
@@ -624,7 +675,7 @@
       </div>
       <input type="file" accept="image/*" id="boardImageInput" style="display:none;">
       <div class="dropdown-wrap">
-        <button class="btn btn-outline" id="boardBgMenuBtn">🎨 Hintergrund ▾</button>
+        <button class="icon-toolbtn labeled" id="boardBgMenuBtn" title="Hintergrund">🎨<span class="tb-label">Hintergrund ▾</span></button>
         <div class="dropdown-panel hidden" id="boardBgMenu">
           <div class="dropdown-section-label">Farbe</div>
           <div class="board-bg-swatches">
@@ -658,7 +709,7 @@
         <button class="fmt-swatch" style="background:#ffffff; border-color:#94a3b8;" data-fmt-color="#ffffff"></button>
       </div>
       <span class="board-fmt-hint" id="boardFmtHint">Tipp: Text antippen, um ihn zu formatieren</span>
-      <button class="btn" id="presentModeBtn" style="margin-left:auto;">🖥️ Präsentieren</button>
+      <button class="icon-toolbtn labeled" id="presentModeBtn" style="margin-left:auto;" title="Präsentieransicht">🖥️<span class="tb-label">Präsentieren</span></button>
     </div>
     <div class="board-canvas-wrap" id="boardCanvasWrap">
       <div class="board-canvas" id="boardCanvas"></div>
@@ -675,7 +726,7 @@
 
   <!-- ZUFALLSSCHÜLER: Anzeige -->
   <div id="randomStudentView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-randompick>← Klassenwahl</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-randompick>← Klasse wählen</button></div>
     <h1 id="randomStudent_title"></h1>
     <div class="result-card" style="padding:40px 20px;">
       <div class="photo-drop" id="randomStudentPhoto" style="width:160px; height:160px; margin:0 auto 20px; font-size:3rem; cursor:default;"></div>
@@ -695,7 +746,7 @@
 
   <!-- GRUPPENERSTELLUNG: Setup & Ergebnis -->
   <div id="groupsSetupView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-groupspick>← Klassenwahl</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-groupspick>← Klasse wählen</button></div>
     <h1 id="groupsSetup_title"></h1>
     <div class="setup-card">
       <label class="field-label">Modus</label>
@@ -732,7 +783,7 @@
 
   <!-- BEWEGUNGSPAUSE: Übungsliste -->
   <div id="movementListView" class="view hidden">
-    <div class="row back-row"><button class="btn btn-secondary" data-back-movementcats>← Kategorien</button></div>
+    <div class="row back-row"><button class="btn btn-secondary" data-back-movementcats>← Bewegungspause</button></div>
     <h1 id="movementList_title"></h1>
     <div id="movementExerciseList"></div>
   </div>
@@ -789,6 +840,7 @@
     <input type="text" id="studentLastNameInput" placeholder="Nachname">
     <label class="field-label">Geschlecht</label>
     <select id="studentGenderInput">
+      <option value="">– keine Angabe –</option>
       <option value="m">Junge</option>
       <option value="w">Mädchen</option>
       <option value="d">Divers</option>
@@ -1002,8 +1054,93 @@
    ========================================================================= */
 function escapeHtml(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-function todayISO() { const d = new Date(); return d.toISOString().slice(0, 10); }
+// Lokales Datum (nicht UTC), sonst landen Einträge zwischen 0 und 2 Uhr auf dem Vortag
+function todayISO() { const d = new Date(); const pad = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
 function formatDateDE(iso) { if (!iso) return ""; const [y, m, d] = iso.split("-"); return `${d}.${m}.${y}`; }
+
+/* ---- Kurze Rückmeldung unten am Bildschirm, optional mit Aktion (z.B. Rückgängig) ---- */
+let toastTimer = null;
+function showToast(message, actionLabel, onAction, durationMs) {
+  const box = document.getElementById("toast");
+  box.innerHTML = `<span>${escapeHtml(message)}</span>` + (actionLabel ? `<button type="button">${escapeHtml(actionLabel)}</button>` : "");
+  box.classList.remove("hidden");
+  const btn = box.querySelector("button");
+  if (btn) btn.addEventListener("click", () => { box.classList.add("hidden"); clearTimeout(toastTimer); onAction(); });
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => box.classList.add("hidden"), durationMs || (actionLabel ? 6000 : 3500));
+}
+
+/* ---- Speichern mit Prüfung: ist der Browser-Speicher voll, wird das sichtbar gemeldet statt still verworfen ---- */
+let storageFullWarned = false;
+function safeSetItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    if (storageFullWarned) { storageFullWarned = false; document.getElementById("storageFullBanner").classList.add("hidden"); }
+    return true;
+  } catch (err) {
+    storageFullWarned = true;
+    document.getElementById("storageFullBanner").classList.remove("hidden");
+    return false;
+  }
+}
+function storageUsageChars() {
+  let n = 0;
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); n += k.length + (localStorage.getItem(k) || "").length; }
+  return n;
+}
+
+/* ---- Importierte Dateien (Vorlagen, Backups) bereinigen: kein fremder Code im Klassenzimmer-Speicher ---- */
+const SAFE_DATA_IMAGE = /^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=\s]+$/;
+const FREE_TEXT_KEYS = new Set(["text", "name", "firstName", "lastName", "label", "title"]);
+const ID_KEYS = /^(id|ids|seats|colors|[a-z]+Id)$/;
+const RICH_TAGS = new Set(["B", "I", "U", "STRONG", "EM", "FONT", "DIV", "SPAN", "P", "BR", "UL", "OL", "LI"]);
+const RICH_ATTRS = new Set(["size", "color", "style"]);
+function sanitizeRichHtml(html) {
+  const doc = new DOMParser().parseFromString(`<div>${String(html || "")}</div>`, "text/html");
+  const walk = (node) => {
+    [...node.children].forEach(child => {
+      if (!RICH_TAGS.has(child.tagName)) { child.replaceWith(document.createTextNode(child.textContent || "")); return; }
+      [...child.attributes].forEach(a => {
+        const bad = !RICH_ATTRS.has(a.name.toLowerCase()) || /url\s*\(|expression|javascript:/i.test(a.value);
+        if (bad) child.removeAttribute(a.name);
+      });
+      walk(child);
+    });
+  };
+  const root = doc.body.firstElementChild;
+  walk(root);
+  return root.innerHTML;
+}
+function sanitizeImported(value, key) {
+  if (Array.isArray(value)) return value.map(v => sanitizeImported(v, key));
+  if (value && typeof value === "object") {
+    const out = {};
+    Object.keys(value).forEach(k => { if (k !== "__proto__" && k !== "constructor") out[k] = sanitizeImported(value[k], k); });
+    return out;
+  }
+  if (typeof value !== "string") return value;
+  if (key === "html") return sanitizeRichHtml(value);
+  if (key === "photo" || key === "src" || key === "bgImage") return SAFE_DATA_IMAGE.test(value) ? value : null;
+  if (key === "hex") return /^#[0-9a-f]{3,8}$/i.test(value) ? value : "#94a3b8";
+  if (ID_KEYS.test(key || "")) return value.replace(/[^\w-]/g, "");
+  if (FREE_TEXT_KEYS.has(key)) return value; // wird bei der Anzeige immer escaped
+  return value.replace(/[<>"'`]/g, "");
+}
+
+/* ---- Datei teilen (iPad: «In Dateien sichern») oder herunterladen ---- */
+function shareOrDownloadFile(file, onDone) {
+  const done = onDone || (() => {});
+  if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: file.name })
+      .then(done)
+      .catch(err => { if (err && err.name !== "AbortError") { downloadBackupFile(file); done(); } });
+    return;
+  }
+  downloadBackupFile(file);
+  done();
+}
+// Gleiches Geschlecht nur, wenn beide eindeutig m oder w sind (divers/unbekannt zählt nie)
+function sameGender(a, b) { return (a.gender === "m" || a.gender === "w") && a.gender === b.gender; }
 
 let confirmCb = null;
 function openConfirm(message, onConfirm, confirmLabel) {
@@ -1058,12 +1195,12 @@ let colorsData = JSON.parse(localStorage.getItem(COLORS_KEY) || "{}");
 let checklistData = JSON.parse(localStorage.getItem(CHECKLIST_KEY) || "{}");
 let absenceData = JSON.parse(localStorage.getItem(ABSENCE_KEY) || "{}");
 
-function persistClasses() { localStorage.setItem(CLASSES_KEY, JSON.stringify(classesData)); }
-function persistSeatings() { localStorage.setItem(SEATINGS_KEY, JSON.stringify(seatingsData)); }
-function persistBehavior() { localStorage.setItem(BEHAVIOR_KEY, JSON.stringify(behaviorData)); }
-function persistColors() { localStorage.setItem(COLORS_KEY, JSON.stringify(colorsData)); }
-function persistChecklist() { localStorage.setItem(CHECKLIST_KEY, JSON.stringify(checklistData)); }
-function persistAbsence() { localStorage.setItem(ABSENCE_KEY, JSON.stringify(absenceData)); }
+function persistClasses() { safeSetItem(CLASSES_KEY, JSON.stringify(classesData)); }
+function persistSeatings() { safeSetItem(SEATINGS_KEY, JSON.stringify(seatingsData)); }
+function persistBehavior() { safeSetItem(BEHAVIOR_KEY, JSON.stringify(behaviorData)); }
+function persistColors() { safeSetItem(COLORS_KEY, JSON.stringify(colorsData)); }
+function persistChecklist() { safeSetItem(CHECKLIST_KEY, JSON.stringify(checklistData)); }
+function persistAbsence() { safeSetItem(ABSENCE_KEY, JSON.stringify(absenceData)); }
 function getTodayAbsentIds(className) {
   const entry = absenceData[className];
   if (!entry || entry.date !== todayISO()) return [];
@@ -1117,7 +1254,7 @@ const HOME_TILES = [
   { id: "randomPick", cls: "tile-random", icon: "🎯", title: "Zufallsschüler", sub: "Zufällig eine Person auswählen" },
   { id: "groupsPick", cls: "tile-groups", icon: "👨‍👩‍👧‍👦", title: "Gruppenerstellung", sub: "Zufallsgruppen bilden" },
   { id: "movementCats", cls: "tile-movement", icon: "🤸", title: "Bewegungspause", sub: "Kurze Auflockerungsübungen" },
-  { id: "checklistPick", cls: "tile-checklist", icon: "✅", title: "Klassenliste", sub: "Aufgaben pro Schüler:in ankreuzen" },
+  { id: "checklistPick", cls: "tile-checklist", icon: "✅", title: "Abhakliste", sub: "Aufgaben pro Schüler:in ankreuzen" },
   { id: "schreibraumPick", cls: "tile-writeroom", icon: "🖊️", title: "Schreib-Raum", sub: "Öffnet eigene Webseite (SuS antworten live per QR-Code)" }
 ];
 const HOME_ORDER_KEY = "kz_home_order";
@@ -1131,14 +1268,14 @@ function getHomeOrder() {
   ids.forEach(id => { if (!filtered.includes(id)) filtered.push(id); });
   return filtered;
 }
-function saveHomeOrder(order) { localStorage.setItem(HOME_ORDER_KEY, JSON.stringify(order)); }
+function saveHomeOrder(order) { safeSetItem(HOME_ORDER_KEY, JSON.stringify(order)); }
 function getHomeHidden() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(HOME_HIDDEN_KEY) || "null"); } catch (e) {}
   const ids = HOME_TILES.map(t => t.id);
   return Array.isArray(saved) ? saved.filter(id => ids.includes(id)) : [];
 }
-function saveHomeHidden(hidden) { localStorage.setItem(HOME_HIDDEN_KEY, JSON.stringify(hidden)); }
+function saveHomeHidden(hidden) { safeSetItem(HOME_HIDDEN_KEY, JSON.stringify(hidden)); }
 /* ---- Aktive Klasse: einmal auf der Startseite wählen, alle Module öffnen sie direkt ---- */
 const ACTIVE_CLASS_KEY = "kz_active_class";
 const CLASS_PICK_TARGETS = {
@@ -1153,7 +1290,7 @@ function getActiveClass() {
   return name && classesData[name] ? name : null;
 }
 function setActiveClass(name) {
-  if (name) localStorage.setItem(ACTIVE_CLASS_KEY, name);
+  if (name) safeSetItem(ACTIVE_CLASS_KEY, name);
   else localStorage.removeItem(ACTIVE_CLASS_KEY);
   renderActiveClassBar();
 }
@@ -1167,7 +1304,7 @@ function renderActiveClassBar() {
   document.getElementById("activeClassBar").style.display = names.length ? "" : "none";
   // Zurück-Knöpfe der Module führen bei gesetzter Klasse direkt zum Start
   document.querySelectorAll("[data-back-seatingpick], [data-back-behaviorpick], [data-back-randompick], [data-back-groupspick], [data-back-checklistpick]")
-    .forEach(b => { b.textContent = active ? "← Start" : "← Klassenwahl"; });
+    .forEach(b => { b.textContent = active ? "← Start" : "← Klasse wählen"; });
 }
 document.getElementById("activeClassSelect").addEventListener("change", (e) => setActiveClass(e.target.value || null));
 function navigateHome(target) {
@@ -1242,7 +1379,7 @@ function buildBackupFile() {
   return new File([JSON.stringify(payload, null, 2)], `klassenzimmer-backup-${dateStr}.json`, { type: "application/json" });
 }
 function markBackupDone() {
-  localStorage.setItem(LAST_BACKUP_KEY, String(Date.now()));
+  safeSetItem(LAST_BACKUP_KEY, String(Date.now()));
   localStorage.removeItem(BACKUP_SNOOZE_KEY);
   renderBackupStatus();
   renderBackupReminder();
@@ -1255,16 +1392,8 @@ function downloadBackupFile(file) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 function exportBackup() {
-  const file = buildBackupFile();
   // iPad/iPhone: Teilen-Menü → «In Dateien sichern», Speicherort selbst wählen
-  if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
-    navigator.share({ files: [file], title: file.name })
-      .then(markBackupDone)
-      .catch(err => { if (err && err.name !== "AbortError") { downloadBackupFile(file); markBackupDone(); } });
-    return;
-  }
-  downloadBackupFile(file);
-  markBackupDone();
+  shareOrDownloadFile(buildBackupFile(), markBackupDone);
 }
 function renderBackupStatus() {
   const el = document.getElementById("backupStatusText");
@@ -1273,13 +1402,16 @@ function renderBackupStatus() {
   const lastText = last ? `Letzte Sicherung: ${formatDateTimeDE(last)}` : "Noch keine Sicherung erstellt.";
   const persistText = storagePersisted === true ? "Speicher auf diesem Gerät: dauerhaft ✓"
     : storagePersisted === false ? "Speicher: vom Browser verwaltet – App am besten über den Home-Bildschirm öffnen." : "";
-  el.innerHTML = `${escapeHtml(lastText)}${persistText ? "<br>" + escapeHtml(persistText) : ""}`;
+  // Browser erlauben pro Webseite nur rund 5 Mio. Zeichen – Fotos und Leinwand-Bilder belegen den Grossteil
+  const usedPct = Math.min(100, Math.round(storageUsageChars() / 5000000 * 100));
+  const usageText = `Belegter Speicher: ca. ${usedPct} %` + (usedPct >= 80 ? " – fast voll! Bilder auf Leinwänden oder alte Klassen entfernen." : "");
+  el.innerHTML = `${escapeHtml(lastText)}${persistText ? "<br>" + escapeHtml(persistText) : ""}<br>${escapeHtml(usageText)}`;
 }
 function renderBackupReminder() {
   const box = document.getElementById("backupReminder");
   const hasData = Object.keys(classesData).length > 0;
   const now = Date.now();
-  if (hasData && !getMetaNum(FIRST_DATA_KEY)) localStorage.setItem(FIRST_DATA_KEY, String(now));
+  if (hasData && !getMetaNum(FIRST_DATA_KEY)) safeSetItem(FIRST_DATA_KEY, String(now));
   const last = getMetaNum(LAST_BACKUP_KEY);
   const due = last ? now - last > 14 * DAY_MS : (hasData && now - getMetaNum(FIRST_DATA_KEY) > 3 * DAY_MS);
   const show = hasData && due && now > getMetaNum(BACKUP_SNOOZE_KEY);
@@ -1294,7 +1426,7 @@ function renderBackupReminder() {
 document.getElementById("exportBackupBtn").addEventListener("click", exportBackup);
 document.getElementById("backupReminderBtn").addEventListener("click", exportBackup);
 document.getElementById("backupReminderLaterBtn").addEventListener("click", () => {
-  localStorage.setItem(BACKUP_SNOOZE_KEY, String(Date.now() + 3 * DAY_MS));
+  safeSetItem(BACKUP_SNOOZE_KEY, String(Date.now() + 3 * DAY_MS));
   renderBackupReminder();
 });
 document.getElementById("importBackupBtn").addEventListener("click", () => document.getElementById("importBackupFileInput").click());
@@ -1303,18 +1435,41 @@ document.getElementById("importBackupFileInput").addEventListener("change", (e) 
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
+    let incoming;
     try {
       const parsed = JSON.parse(reader.result);
-      const data = parsed.data || parsed;
-      let count = 0;
+      const data = (parsed && parsed.data) || parsed || {};
+      incoming = {};
       Object.keys(data).forEach(key => {
-        if (key.startsWith("kz_")) { localStorage.setItem(key, data[key]); count++; }
+        if (!key.startsWith("kz_") || typeof data[key] !== "string") return;
+        let value;
+        try { value = JSON.stringify(sanitizeImported(JSON.parse(data[key]))); }
+        catch (err) { value = data[key].replace(/[<>"'`]/g, ""); } // z.B. aktive Klasse als reiner Text
+        incoming[key] = value;
       });
-      if (count === 0) { openConfirm("Diese Datei enthält keine passenden Klassenzimmer-Manager-Daten.", null, "OK"); return; }
-      openConfirm(`${count} Datenbereiche importiert. Die Seite wird jetzt neu geladen.`, () => location.reload(), "OK");
     } catch (err) {
       openConfirm("Datei konnte nicht gelesen werden: " + err.message, null, "OK");
+      return;
     }
+    const keys = Object.keys(incoming);
+    if (keys.length === 0) { openConfirm("Diese Datei enthält keine passenden Klassenzimmer-Manager-Daten.", null, "OK"); return; }
+    const when = (() => { try { return formatDateTimeDE(Date.parse(JSON.parse(reader.result).exportedAt)); } catch (e) { return ""; } })();
+    openConfirm(`Backup${when ? " vom " + when : ""} einspielen? ALLE aktuellen Daten auf diesem Gerät (Klassen, Sitzordnungen, Kommentare, Leinwände) werden dadurch ersetzt.`, () => {
+      // Alles oder nichts: alte Daten merken, bei vollem Speicher vollständig zurückschreiben
+      const previous = {};
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith("kz_")) previous[k] = localStorage.getItem(k); }
+      try {
+        Object.keys(previous).forEach(k => localStorage.removeItem(k));
+        keys.forEach(k => localStorage.setItem(k, incoming[k]));
+      } catch (err) {
+        Object.keys(incoming).forEach(k => localStorage.removeItem(k));
+        Object.keys(previous).forEach(k => { try { localStorage.setItem(k, previous[k]); } catch (e) {} });
+        openConfirm("Import abgebrochen: Der Speicher dieses Geräts reicht für das Backup nicht aus. Ihre bisherigen Daten sind unverändert.", null, "OK");
+        return;
+      }
+      // Sofort neu laden: sonst würden die alten Daten im Arbeitsspeicher das Backup beim nächsten Speichern überschreiben
+      location.reload();
+    }, "Ersetzen");
   };
   reader.readAsText(file, "utf-8");
   e.target.value = "";
@@ -1441,7 +1596,7 @@ document.getElementById("classModalSave").addEventListener("click", () => {
       absenceData[name] = absenceData[classModalEditingName]; delete absenceData[classModalEditingName];
       if (!checklistData[name]) delete checklistData[name];
       if (!absenceData[name]) delete absenceData[name];
-      if (localStorage.getItem(ACTIVE_CLASS_KEY) === classModalEditingName) localStorage.setItem(ACTIVE_CLASS_KEY, name);
+      if (localStorage.getItem(ACTIVE_CLASS_KEY) === classModalEditingName) safeSetItem(ACTIVE_CLASS_KEY, name);
       persistSeatings(); persistBehavior(); persistColors();
       persistChecklist(); persistAbsence();
     }
@@ -1490,9 +1645,8 @@ function renderRoster() {
   el.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => {
     const id = b.dataset.del;
     const s = getStudent(currentClass, id);
-    openConfirm(`${s.firstName} ${s.lastName || ""} wirklich aus der Klasse entfernen?`, () => {
-      classesData[currentClass] = classesData[currentClass].filter(x => x.id !== id);
-      persistClasses();
+    openConfirm(`${s.firstName} ${s.lastName || ""} wirklich aus der Klasse entfernen? Auch alle Kommentare, Häkchen, Sitzplätze und Sitzverbote dieser Person werden gelöscht.`, () => {
+      removeStudentEverywhere(currentClass, id);
       renderRoster();
     }, "Entfernen");
   }));
@@ -1505,6 +1659,22 @@ function renderRoster() {
   });
 }
 
+function removeStudentEverywhere(className, id) {
+  classesData[className] = (classesData[className] || []).filter(x => x.id !== id);
+  if (behaviorData[className]) behaviorData[className] = behaviorData[className].filter(e => e.studentId !== id);
+  if (checklistData[className] && checklistData[className].checks) delete checklistData[className].checks[id];
+  if (absenceData[className] && absenceData[className].ids) absenceData[className].ids = absenceData[className].ids.filter(x => x !== id);
+  (seatingsData[className] || []).forEach(seating => {
+    (seating.tables || []).forEach(t => { t.seats = t.seats.map(sid => (sid === id ? null : sid)); });
+    if (seating.poolPositions) delete seating.poolPositions[id];
+  });
+  const banColor = (colorsData[className] || []).find(c => c.banOwnerId === id);
+  if (banColor) {
+    colorsData[className] = colorsData[className].filter(c => c !== banColor);
+    classesData[className].forEach(st => { if (st.colors) st.colors = st.colors.filter(cid => cid !== banColor.id); });
+  }
+  persistClasses(); persistBehavior(); persistChecklist(); persistAbsence(); persistSeatings(); persistColors();
+}
 function openPhotoPicker(studentId, context) {
   const input = document.createElement("input");
   input.type = "file"; input.accept = "image/*";
@@ -1540,7 +1710,8 @@ function renderStudentColorsCheckboxes(selected) {
       ${escapeHtml(c.name)} <span style="color:var(--muted); font-size:0.78rem;">(${c.mode === "together" ? "zusammen" : "Abstand"})</span>
     </label>`).join("");
   el.querySelectorAll("input[data-color-id]").forEach(cb => cb.addEventListener("change", () => {
-    const checked = [...el.querySelectorAll("input[data-color-id]:checked")];
+    const banIds = new Set(list.filter(c => c.banOwnerId).map(c => c.id));
+    const checked = [...el.querySelectorAll("input[data-color-id]:checked")].filter(x => !banIds.has(x.dataset.colorId));
     if (checked.length > 2) { cb.checked = false; alert("Maximal 2 Farben pro Schüler:in."); }
   }));
 }
@@ -1551,7 +1722,7 @@ function openStudentModal(studentId) {
   document.getElementById("studentModalTitle").textContent = studentId ? "Schüler:in bearbeiten" : "Neue/r Schüler:in";
   document.getElementById("studentFirstNameInput").value = s ? s.firstName : "";
   document.getElementById("studentLastNameInput").value = s ? s.lastName || "" : "";
-  document.getElementById("studentGenderInput").value = s ? s.gender : "m";
+  document.getElementById("studentGenderInput").value = s ? (s.gender || "") : "";
   modalPhotoDataUrl = s ? s.photo : null;
   document.getElementById("studentPhotoDrop").innerHTML = modalPhotoDataUrl ? `<img src="${modalPhotoDataUrl}">` : "📷";
   renderStudentColorsCheckboxes(s && s.colors ? s.colors : []);
@@ -1678,7 +1849,7 @@ document.getElementById("importConfirmBtn").addEventListener("click", () => {
     const firstName = firstCol >= 0 ? String(row[firstCol] || "").trim() : "";
     const lastName = lastCol >= 0 ? String(row[lastCol] || "").trim() : "";
     if (!firstName && !lastName) return;
-    let gender = "m";
+    let gender = ""; // ohne Angabe nicht raten – sonst verfälscht es "♂♀ nebeneinander" und Gruppen
     if (genderCol >= 0) {
       const raw = String(row[genderCol] || "").trim().toLowerCase();
       if (/^w|^f|mädchen|weiblich/.test(raw)) gender = "w";
@@ -1701,7 +1872,11 @@ function parseCsvFile(file) {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const text = String(reader.result);
+        // Excel speichert CSV oft als Windows-1252 (Umlaute!) – UTF-8 versuchen, sonst darauf ausweichen
+        let text;
+        try { text = new TextDecoder("utf-8", { fatal: true }).decode(reader.result); }
+        catch (e) { text = new TextDecoder("windows-1252").decode(reader.result); }
+        text = text.replace(/^\uFEFF/, "");
         const firstLine = text.split(/\r?\n/)[0] || "";
         const delim = firstLine.split(";").length > firstLine.split(",").length ? ";" : ",";
         const lines = text.split(/\r?\n/).filter(l => l.length > 0);
@@ -1709,7 +1884,7 @@ function parseCsvFile(file) {
       } catch (e) { reject(e); }
     };
     reader.onerror = () => reject(new Error("Lesefehler"));
-    reader.readAsText(file, "utf-8");
+    reader.readAsArrayBuffer(file);
   });
 }
 function parseCsvLine(line, delim) {
@@ -1736,7 +1911,8 @@ function parseXlsxFile(file) {
     const reader = new FileReader();
     reader.onload = () => {
       unzipXlsxEntries(reader.result).then(entries => {
-        const sheetName = Object.keys(entries).find(n => /^xl\/worksheets\/sheet\d*\.xml$/.test(n));
+        const sheetNum = n => Number((n.match(/sheet(\d*)\.xml$/) || [])[1] || 0);
+        const sheetName = Object.keys(entries).filter(n => /^xl\/worksheets\/sheet\d*\.xml$/.test(n)).sort((a, b) => sheetNum(a) - sheetNum(b))[0];
         if (!sheetName) { reject(new Error("Kein Arbeitsblatt in der Datei gefunden.")); return; }
         const sharedStrings = entries["xl/sharedStrings.xml"] ? parseSharedStrings(entries["xl/sharedStrings.xml"]) : [];
         resolve(parseSheetXml(entries[sheetName], sharedStrings));
@@ -1746,31 +1922,40 @@ function parseXlsxFile(file) {
     reader.readAsArrayBuffer(file);
   });
 }
+// Liest die Einträge über das zentrale Verzeichnis am Dateiende. Das ist nötig, weil viele
+// Programme (Schulverwaltungen, Google Tabellen, Numbers) die Grössen nicht im lokalen Kopf ablegen.
 async function unzipXlsxEntries(arrayBuffer) {
   const view = new DataView(arrayBuffer);
   const bytes = new Uint8Array(arrayBuffer);
+  const wanted = (name) => name === "xl/sharedStrings.xml" || /^xl\/worksheets\/sheet\d*\.xml$/.test(name);
+  let eocd = -1;
+  for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65557); i--) {
+    if (view.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error("Keine gültige Excel-Datei (ZIP-Verzeichnis fehlt).");
+  const entryCount = view.getUint16(eocd + 10, true);
+  let p = view.getUint32(eocd + 16, true);
   const results = {};
-  let offset = 0;
-  while (offset + 4 <= bytes.length) {
-    const sig = view.getUint32(offset, true);
-    if (sig !== 0x04034b50) break;
-    const compMethod = view.getUint16(offset + 8, true);
-    const compSize = view.getUint32(offset + 18, true);
-    const nameLen = view.getUint16(offset + 26, true);
-    const extraLen = view.getUint16(offset + 28, true);
-    const name = new TextDecoder().decode(bytes.slice(offset + 30, offset + 30 + nameLen));
-    const dataStart = offset + 30 + nameLen + extraLen;
+  for (let n = 0; n < entryCount && p + 46 <= bytes.length; n++) {
+    if (view.getUint32(p, true) !== 0x02014b50) break;
+    const compMethod = view.getUint16(p + 10, true);
+    const compSize = view.getUint32(p + 20, true);
+    const nameLen = view.getUint16(p + 28, true);
+    const extraLen = view.getUint16(p + 30, true);
+    const commentLen = view.getUint16(p + 32, true);
+    const localOffset = view.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(bytes.slice(p + 46, p + 46 + nameLen));
+    p += 46 + nameLen + extraLen + commentLen;
+    if (!wanted(name)) continue;
+    const dataStart = localOffset + 30 + view.getUint16(localOffset + 26, true) + view.getUint16(localOffset + 28, true);
     const compData = bytes.slice(dataStart, dataStart + compSize);
-    if (name === "xl/sharedStrings.xml" || /^xl\/worksheets\/sheet\d*\.xml$/.test(name)) {
-      let outBytes;
-      if (compMethod === 0) outBytes = compData;
-      else {
-        const stream = new Blob([compData]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
-        outBytes = new Uint8Array(await new Response(stream).arrayBuffer());
-      }
-      results[name] = new TextDecoder("utf-8").decode(outBytes);
-    }
-    offset = dataStart + compSize;
+    let outBytes;
+    if (compMethod === 0) outBytes = compData;
+    else if (compMethod === 8) {
+      const stream = new Blob([compData]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+      outBytes = new Uint8Array(await new Response(stream).arrayBuffer());
+    } else continue;
+    results[name] = new TextDecoder("utf-8").decode(outBytes);
   }
   return results;
 }
@@ -1962,7 +2147,7 @@ function importSeatingTemplateFile(file) {
       openConfirm("Datei konnte nicht gelesen werden: " + err.message, null, "OK");
       return;
     }
-    const src = parsed && parsed.seating ? parsed.seating : parsed;
+    const src = sanitizeImported(parsed && parsed.seating ? parsed.seating : parsed);
     if (!src || !Array.isArray(src.tables)) {
       openConfirm("Diese Datei enthält keine gültige Sitzordnungs-Vorlage.", null, "OK");
       return;
@@ -2338,6 +2523,7 @@ function renderSeatingCanvas() {
     tableEl.querySelector("[data-remove-table]").addEventListener("click", (e) => {
       e.stopPropagation();
       openConfirm(isBare ? "Diesen Platz entfernen? Zugeteilte SuS werden wieder frei im Raster platziert." : "Diesen Tisch entfernen? Zugeteilte SuS werden wieder frei im Raster platziert.", () => {
+        resetSeatingUndo();
         currentSeating.tables = currentSeating.tables.filter(x => x.id !== t.id);
         saveSeating(); renderSeatingCanvas(); renderSeatingPool();
       }, "Entfernen");
@@ -2352,6 +2538,7 @@ function renderSeatingCanvas() {
   renderSeatingPool();
   const isEmpty = !currentSeating.tables.length && !(currentSeating.objects || []).length;
   document.getElementById("seatingEmptyHint").classList.toggle("hidden", !isEmpty || presentationMode);
+  if (isEmpty) document.getElementById("roomObjectsPanel").open = true;
 }
 function seatNameSizeClass(name) {
   const len = name.length;
@@ -2424,6 +2611,8 @@ function addTable(type) {
 }
 document.getElementById("clearSeatsBtn").addEventListener("click", () => {
   openConfirm("Alle Plätze leeren (Tische bleiben stehen)?", () => {
+    snapshotSeats();
+    resetSeatingUndo();
     currentSeating.tables.forEach(t => t.seats = t.seats.map(() => null));
     saveSeating(); renderSeatingCanvas(); renderSeatingPool();
   }, "Leeren");
@@ -2502,6 +2691,8 @@ function applyLayoutTemplate(kind) {
   const gen = LAYOUT_TEMPLATES[kind];
   if (!gen) return;
   const { tables, objects } = gen();
+  resetSeatingUndo();
+  document.getElementById("roomObjectsPanel").open = false; // Vorlage steht, Panel soll keine Tische verdecken
   currentSeating.tables = tables;
   currentSeating.objects = objects;
   saveSeating();
@@ -2515,7 +2706,7 @@ document.getElementById("layoutTemplateCancel").addEventListener("click", () => 
 document.querySelectorAll("[data-apply-template]").forEach(btn => btn.addEventListener("click", () => {
   const kind = btn.dataset.applyTemplate;
   if (!currentSeating.tables.length && !(currentSeating.objects || []).length) { applyLayoutTemplate(kind); return; }
-  openConfirm("Aktuelle Tische und Raum-Objekte werden durch die Vorlage ersetzt (zugeteilte SuS werden wieder frei im Raster platziert). Fortfahren?", () => applyLayoutTemplate(kind), null, "Vorlage laden");
+  openConfirm("Aktuelle Tische und Raum-Objekte werden durch die Vorlage ersetzt (zugeteilte SuS werden wieder frei im Raster platziert). Fortfahren?", () => applyLayoutTemplate(kind), "Vorlage laden");
 }));
 
 /* ---- Toolbar-Dropdowns (Vorlagen / Sitzplatzverteilung / Ansicht) ---- */
@@ -2719,7 +2910,7 @@ document.getElementById("randomAssignBtn").addEventListener("click", () => {
 });
 document.getElementById("swapSeatsBtn").addEventListener("click", () => {
   const occupiedCount = currentSeating.tables.reduce((n, t) => n + t.seats.filter(Boolean).length, 0);
-  if (occupiedCount < 2) { openConfirm("Es sind zu wenige Plätze belegt zum Tauschen.", null, null, "OK"); return; }
+  if (occupiedCount < 2) { openConfirm("Es sind zu wenige Plätze belegt zum Tauschen.", null, "OK"); return; }
   openConfirm("Die SuS auf den bereits belegten Plätzen werden untereinander getauscht. Nicht benutzte Tische bleiben leer. Fortfahren?", () => randomlyAssignSeats(document.getElementById("alternateGenderCheck").checked, true), "Tauschen");
 });
 function shuffleArr(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
@@ -2731,6 +2922,22 @@ function seatWorldPos(table, seatIndex) {
   const dx = localX - dims.w / 2, dy = localY - dims.h / 2;
   const rx = dx * Math.cos(rad) - dy * Math.sin(rad), ry = dx * Math.sin(rad) + dy * Math.cos(rad);
   return { x: table.x + dims.w / 2 + rx, y: table.y + dims.h / 2 + ry };
+}
+const SEAT_BAN_COST = 100000;
+// Kosten eines Paares aus Farben/Sitzverboten. Ein Sitzverbot gilt nur zwischen der Person,
+// für die es angelegt wurde, und den ausgewählten SuS – nicht unter den Ausgewählten selbst.
+function colorPairCost(student, other, colorDefs, useWishes) {
+  let cost = 0;
+  (student.colors || []).forEach(cid => {
+    if (!(other.colors || []).includes(cid)) return;
+    const def = colorDefs.find(x => x.id === cid);
+    if (!def) return;
+    if (def.banOwnerId) { if (student.id === def.banOwnerId || other.id === def.banOwnerId) cost += SEAT_BAN_COST; return; }
+    if (!useWishes) return;
+    if (def.mode === "apart") cost += 3;
+    else if (def.mode === "together") cost -= 2;
+  });
+  return cost;
 }
 function pairKey(id1, id2) { return id1 < id2 ? `${id1}|${id2}` : `${id2}|${id1}`; }
 // Ermittelt alle Nachbar-Paare (gleicher Tisch ODER Tisch in der Nähe) für eine gegebene
@@ -2795,21 +3002,15 @@ function randomlyAssignSeats(alternateGender, onlyOccupied) {
     neighborPairsForSeats(currentSeating.tables, histSeatsById, neighborThreshold).forEach(p => recentPairs.add(p));
   });
   const colorDefs = colorsData[currentSeatingClass] || [];
-  function colorMode(colorId) { const c = colorDefs.find(x => x.id === colorId); return c ? c.mode : null; }
   function placementCost(student, seatIdx, placement) {
     let cost = 0;
+    // Sitzverbote stehen über allem (auch über "keine Wiederholung"); Wiederholungen über Wünschen
     neighborsOf[seatIdx].forEach(j => {
       const other = placement[j];
       if (!other) return;
       if (recentPairs.has(pairKey(student.id, other.id))) cost += 1000;
-      if (alternateGender && student.gender !== "d" && other.gender !== "d" && student.gender === other.gender) cost += 1;
-      (student.colors || []).forEach(cid => {
-        if ((other.colors || []).includes(cid)) {
-          const mode = colorMode(cid);
-          if (mode === "apart") cost += 3;
-          else if (mode === "together") cost -= 2;
-        }
-      });
+      if (alternateGender && sameGender(student, other)) cost += 1;
+      cost += colorPairCost(student, other, colorDefs, true);
     });
     return cost;
   }
@@ -2840,10 +3041,17 @@ function randomlyAssignSeats(alternateGender, onlyOccupied) {
   }
   const placement = best.placement;
   snapshotSeats();
+  resetSeatingUndo();
   seatSlots.forEach((s, i) => { s.table.seats[s.seatIndex] = placement[i] ? placement[i].id : null; });
   saveSeating();
   renderSeatingCanvas();
   renderSeatingPool();
+  const seatedCount = placement.filter(Boolean).length;
+  const studentCount = onlyOccupied ? seatedCount : (classesData[currentSeatingClass] || []).length;
+  const brokenBans = placement.some((st, i) => st && neighborsOf[i].some(j => placement[j] && colorPairCost(st, placement[j], colorDefs, false) >= SEAT_BAN_COST));
+  if (brokenBans) showToast("Achtung: Nicht alle Sitzverbote liessen sich einhalten – zu wenig Plätze mit Abstand.");
+  else if (studentCount > seatedCount) showToast(`${studentCount - seatedCount} Schüler:in(nen) ohne Platz – es fehlen Tische.`);
+  else showToast("Sitzplätze neu verteilt. Frühere Verteilungen: 🕘 Verlauf.");
 }
 
 /* ---- Letzte Sitzordnungen (Verlauf der Zuteilungen, nach Zufällig verteilen / Plätze tauschen) ---- */
@@ -2883,6 +3091,7 @@ document.getElementById("seatHistoryList").addEventListener("click", (e) => {
   const entry = (currentSeating.assignmentHistory || []).find(x => x.id === row.dataset.historyId);
   if (!entry) return;
   openConfirm(`Sitzordnung vom ${formatDateTimeDE(entry.date)} wiederherstellen? Die aktuelle Zuteilung wird ersetzt.`, () => {
+    resetSeatingUndo();
     entry.tables.forEach(snap => {
       const t = currentSeating.tables.find(x => x.id === snap.id);
       if (t) t.seats = [...snap.seats];
@@ -2896,6 +3105,12 @@ document.getElementById("seatHistoryList").addEventListener("click", (e) => {
 let seatingUndoStack = [];
 let seatingRedoStack = [];
 const SEATING_UNDO_MAX = 30;
+function resetSeatingUndo() {
+  seatingUndoStack = [];
+  seatingRedoStack = [];
+  updateCanvasUndoBtn();
+  updateCanvasRedoBtn();
+}
 function pushSeatingUndo(action) {
   seatingUndoStack.push(action);
   if (seatingUndoStack.length > SEATING_UNDO_MAX) seatingUndoStack.shift();
@@ -2986,10 +3201,18 @@ function renderBehaviorStudentList() {
 function quickAddBehavior(studentId, type) {
   if (!behaviorData[currentBehaviorClass]) behaviorData[currentBehaviorClass] = [];
   const label = type === "positive" ? "Positiv" : "Negativ";
-  behaviorData[currentBehaviorClass].push({ id: uid(), studentId, date: todayISO(), text: label, type });
+  const entry = { id: uid(), studentId, date: todayISO(), text: label, type };
+  behaviorData[currentBehaviorClass].push(entry);
   persistBehavior();
   renderBehaviorTable();
   refreshBehaviorSummaryIfOpen();
+  const s = getStudent(currentBehaviorClass, studentId);
+  const className = currentBehaviorClass;
+  showToast(`${type === "positive" ? "👍" : "👎"} für ${s ? s.firstName : ""} erfasst`, "Rückgängig", () => {
+    behaviorData[className] = (behaviorData[className] || []).filter(x => x.id !== entry.id);
+    persistBehavior();
+    if (currentBehaviorClass === className) { renderBehaviorTable(); refreshBehaviorSummaryIfOpen(); }
+  });
 }
 function refreshBehaviorSummaryIfOpen() {
   const box = document.getElementById("behaviorSummaryBox");
@@ -3075,7 +3298,8 @@ document.getElementById("commentModalSave").addEventListener("click", () => {
   renderBehaviorTable();
   refreshBehaviorSummaryIfOpen();
 });
-function renderBehaviorTable() {
+// Gefilterte und sortierte Einträge – gemeinsam für Tabelle und Export
+function getBehaviorRows() {
   const list = (behaviorData[currentBehaviorClass] || []).slice();
   const studentFilter = document.getElementById("behaviorFilterStudent").value;
   const textFilter = document.getElementById("behaviorFilterText").value.trim().toLowerCase();
@@ -3088,6 +3312,24 @@ function renderBehaviorTable() {
     if (av > bv) return behaviorSort.dir === "asc" ? 1 : -1;
     return 0;
   });
+  return rows;
+}
+function exportBehaviorCsv() {
+  const rows = getBehaviorRows();
+  if (rows.length === 0) { showToast("Keine Einträge zum Exportieren."); return; }
+  // Semikolon + BOM: öffnet sich in Excel (CH/DE) direkt mit korrekten Spalten und Umlauten
+  // Führendes = + @ würde Excel als Formel ausführen
+  const cell = v => `"${String(v == null ? "" : v).replace(/^([=+@\t\r])/, "'$1").replace(/"/g, '""')}"`;
+  const typeLabel = { positive: "positiv", negative: "negativ" };
+  const lines = [["Datum", "Schüler:in", "Art", "Kommentar"].map(cell).join(";")]
+    .concat(rows.map(r => [formatDateDE(r.date), r.name, typeLabel[r.type] || "", r.text].map(cell).join(";")));
+  const safeName = currentBehaviorClass.replace(/[^a-z0-9äöüß]+/gi, "-").replace(/^-+|-+$/g, "") || "klasse";
+  const file = new File(["\uFEFF" + lines.join("\r\n")], `verhalten-${safeName}-${todayISO()}.csv`, { type: "text/csv" });
+  shareOrDownloadFile(file);
+}
+document.getElementById("behaviorExportBtn").addEventListener("click", exportBehaviorCsv);
+function renderBehaviorTable() {
+  const rows = getBehaviorRows();
   document.querySelectorAll("#behaviorTable th[data-sort] .sort-arrow").forEach(sp => sp.textContent = "");
   const activeTh = document.querySelector(`#behaviorTable th[data-sort="${behaviorSort.col}"] .sort-arrow`);
   if (activeTh) activeTh.textContent = behaviorSort.dir === "asc" ? "▲" : "▼";
@@ -3166,7 +3408,7 @@ function renderChecklistTable() {
     </td>`;
     cl.columns.forEach(col => {
       const checked = !!(cl.checks[s.id] && cl.checks[s.id][col.id]);
-      html += `<td><input type="checkbox" class="checklist-check" data-student="${s.id}" data-col="${col.id}" ${checked ? "checked" : ""}></td>`;
+      html += `<td><label class="checklist-cell"><input type="checkbox" class="checklist-check" data-student="${s.id}" data-col="${col.id}" ${checked ? "checked" : ""}></label></td>`;
     });
     html += "</tr>";
   });
@@ -3220,7 +3462,7 @@ document.getElementById("checklistColModalSave").addEventListener("click", () =>
    ========================================================================= */
 const BOARDS_KEY = "kz_boards";
 let boardsData = JSON.parse(localStorage.getItem(BOARDS_KEY) || "[]");
-function persistBoards() { localStorage.setItem(BOARDS_KEY, JSON.stringify(boardsData)); }
+function persistBoards() { safeSetItem(BOARDS_KEY, JSON.stringify(boardsData)); }
 let currentBoard = null;
 let lastFocusedTextEl = null;
 let currentFmtSize = 3;
@@ -3286,7 +3528,7 @@ function importBoardTemplateFile(file) {
       openConfirm("Datei konnte nicht gelesen werden: " + err.message, null, "OK");
       return;
     }
-    const boardSrc = parsed && parsed.board ? parsed.board : parsed;
+    const boardSrc = sanitizeImported(parsed && parsed.board ? parsed.board : parsed);
     if (!boardSrc || !Array.isArray(boardSrc.elements)) {
       openConfirm("Diese Datei enthält keine gültige Leinwand-Vorlage.", null, "OK");
       return;
@@ -4109,7 +4351,7 @@ function processBoardImageFile(file, callback) {
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
       canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      callback(canvas.toDataURL("image/jpeg", 0.85), w, h);
+      callback(canvas.toDataURL("image/jpeg", 0.75), w, h);
     };
     img.src = e.target.result;
   };
@@ -4257,6 +4499,7 @@ function updateRandomRemainingLabel() {
 document.getElementById("randomDrawBtn").addEventListener("click", () => {
   if (!classesData[currentRandomClass] || classesData[currentRandomClass].length === 0) { alert("Diese Klasse hat noch keine Schüler:innen."); return; }
   if (randomRemainingIds.length === 0) resetRandomPool();
+  if (randomRemainingIds.length === 0) { showToast("Alle Schüler:innen sind heute als abwesend markiert."); return; }
   const idx = Math.floor(Math.random() * randomRemainingIds.length);
   const studentId = randomRemainingIds.splice(idx, 1)[0];
   const student = getStudent(currentRandomClass, studentId);
@@ -4296,18 +4539,9 @@ document.querySelectorAll("[data-groupmode]").forEach(b => b.addEventListener("c
 }));
 function groupsPairCost(student, other, proportional, useColors, colorDefs) {
   let cost = 0;
-  if (proportional && student.gender !== "d" && other.gender !== "d" && student.gender === other.gender) cost += 1;
-  if (useColors) {
-    (student.colors || []).forEach(cid => {
-      if ((other.colors || []).includes(cid)) {
-        const def = colorDefs.find(x => x.id === cid);
-        const mode = def ? def.mode : null;
-        if (mode === "apart") cost += 3;
-        else if (mode === "together") cost -= 2;
-      }
-    });
-  }
-  return cost;
+  if (proportional && sameGender(student, other)) cost += 1;
+  // Sitzverbote gelten immer, Farb-Wünsche nur mit Häkchen
+  return cost + colorPairCost(student, other, colorDefs, useColors);
 }
 function buildGroupsWithConstraints(students, numGroups, proportional, useColors) {
   const targetSize = Math.ceil(students.length / numGroups);
@@ -4349,7 +4583,8 @@ document.getElementById("createGroupsBtn").addEventListener("click", () => {
     numGroups = Math.max(1, Math.round(students.length / currentGroupSize));
   }
   let groups;
-  if (!proportional && !useColors) {
+  const hasBans = (colorsData[currentGroupsClass] || []).some(c => c.banOwnerId);
+  if (!proportional && !useColors && !hasBans) {
     groups = Array.from({ length: numGroups }, () => []);
     shuffleArr(students).forEach((s, i) => groups[i % numGroups].push(s));
   } else {
